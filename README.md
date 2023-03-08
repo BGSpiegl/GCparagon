@@ -59,13 +59,15 @@ an existing [conda installation][conda install].
 For computing a fast estimate of a sample's GC bias, `--use-parameter-preset 1`.
 
 Code contributions:
-- Benjamin Spiegl (benjamin.spiegl@medunigraz.at)
+- Benjamin Spiegl ([BGSpiegl][github user])
 - Marharyta Papakina
 
-Copyright: Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl (benjamin.spiegl@medunigraz.at)
+Copyright: Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl
 Original work on benchmark_mprof.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
 Software license: [GNU AFFERO GENERAL PUBLIC LICENSE v3](LICENSE)
+
+Intended for research use only.
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -405,6 +407,7 @@ GCparagon developed at the [D&F Research Center of Molecular Biomedicine][molbio
 [Medical University of Graz, Austria][mug]
 
 
+[github user]: https://github.com/BGSpiegl
 [hardware_requirements]: https://github.com/BGSpiegl/GCparagon#hardware-requirements
 [software_dependencies]: https://github.com/BGSpiegl/GCparagon#software-dependencies
 [usage]: https://github.com/BGSpiegl/GCparagon#usage

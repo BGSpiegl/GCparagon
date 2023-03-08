@@ -1,0 +1,14 @@
+CMDLINE /home/benjamin/mambaforge/envs/GCparagon_public_test_env/bin/python3.10 /home/benjamin/GitHub_Local_Clones/GCparagon_dev/GCparagon.py --use-parameter-preset 1 --bam /home/benjamin/GitHub_Local_Clones/GCparagon_dev/test_BAM_files/B01.bam --two-bit-reference-genome /home/benjamin/GitHub_Local_Clones/GCparagon_dev/2bit_reference/hg38.analysisSet.2bit --out-dir /home/benjamin/GitHub_Local_Clones/GCparagon_dev/test_BAM_files/1/B01 --temporary-directory /tmp/tmp.y73mK2y53C --write-chunk-exclusion --threads 12
+MEM 0.628906 1678114293.4562
+MEM 118.007812 1678114303.4629
+MEM 118.007812 1678114313.4733
+MEM 118.007812 1678114323.4836
+MEM 118.007812 1678114333.4940
+MEM 118.007812 1678114343.5043
+MEM 118.007812 1678114353.5147
+MEM 118.007812 1678114363.5251
+MEM 118.007812 1678114373.5355
+MEM 118.007812 1678114383.5458
+MEM 118.007812 1678114393.5561
+MEM 135.867188 1678114403.5665
+MEM 331.839844 1678114413.5769

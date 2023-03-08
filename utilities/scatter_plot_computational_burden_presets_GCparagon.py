@@ -38,7 +38,7 @@ if __name__ == '__main__':
     out_path = SOURCE_ROOT_PATH / 'preset_computation/benchmark_results/'
     performance_metrics = pd.read_table(out_path / 'benchmarking_summary.tsv', sep='\t')
     # create new preset column
-    performance_metrics = performance_metrics.assign(preset_str="prefix " + performance_metrics.preset.astype(str))
+    performance_metrics = performance_metrics.assign(preset_str="preset " + performance_metrics.preset.astype(str))
     # create linear correlation plot
     lin_corr_duration_result = scpst_linregress(performance_metrics['processed_fragments'],
                                                 performance_metrics['duration'])

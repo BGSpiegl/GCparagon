@@ -115,10 +115,7 @@ You can create the environment using the following command: `mamba env create -f
 ## Required Files
 The reference genome used to create the 4 BAM files in the publication can be downloaded using the 
 [EXECUTE_reference_download.sh](/2bit_reference/EXECUTE_reference_download.sh) bash script.
-To recreate the output which was used in the publication, run [this driver script](/driver_scripts/drv_compute_GC_presets.sh) 
-after setting up the conda env and downloading the 2bit reference genome file.
-
-A hg38 lowercase-masked standard analysis set reference file in FastA.gz format is downloaded from 
+A hg38 lowercase-masked standard analysis set reference file in 2bit format is downloaded from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
 
 Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
@@ -126,7 +123,11 @@ containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_an
 (see comment on the bottom of [EXECUTE_reference_download.sh](/2bit_reference/EXECUTE_reference_download.sh))
 
 The BAM files used in the publication can be requested for download from EGA via the accession [EGAS00001006963][EGAS00001006963].
-An EGA account can be created for free there if non is available to the user.
+If required, a new EGA account can be created for free.
+
+To recreate the output which was used in the publication, run [this driver script](/driver_scripts/drv_compute_GC_presets.sh) 
+after setting up the conda env and downloading the 2bit reference genome file.
+
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -402,7 +403,7 @@ Output (excluding BAM) files which can be created using the [drv_compute_GC_pres
 script can be found in the `preset_computation` folder.
 Used WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963][EGAS00001006963] for preset testing.
 Instructions for FastA reference genome sequence download can be found [here](/2bit_reference/EXECUTE_reference_download.sh).
-Code for genomic regions blacklist creation and genomic chunk preselection in folder `accessory_files`.
+Code for genomic regions blacklist creation and genomic chunk preselection can be found in folder `accessory_files`.
 Results from correction validation in `test/corrected_gc_distribution`.
 Benchmarking results from using the [benchmark_mprof.py](benchmark_mprof.py) script are stored in `preset_computation/benchmark_results`.
 

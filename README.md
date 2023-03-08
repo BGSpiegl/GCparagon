@@ -41,6 +41,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 GCparagon is a Python commandline tool for rapid calculation and correction of GC biases in WGS cfDNA datasets from 
 liquid biopsy samples that takes fragment length into account.
 
+IMPORTANT: you are on the branch that contains the analysis results from the publication related to the EGAS00001006963 dataset.
+      Please switch over to the main branch if you want to download only the GCparagon GC bias correction code and not dozens of plots and tables!
+
 Floating point values are assigned to each fragment as weights which can either be read as 'GC'-tags from the alignments
 (enable tagged BAM writing using the `--output-bam` flag), or from one of the `<SAMPLE_ID>_gc_weights_*.gz` output 
 gzipped text files that can be loaded in Python using the `numpy.loadtxt()` function or the 

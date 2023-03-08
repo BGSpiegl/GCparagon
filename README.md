@@ -102,7 +102,6 @@ will install the following dependencies:
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
-  - memory_profiler
   - pybedtools
 
 You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
@@ -110,20 +109,16 @@ You can create the environment using the following command: `mamba env create -f
 -------------------------------------------------------------------------------------------------------------------
 
 ## Required Files
-The reference genome used to create the 4 BAM files in the publication can be downloaded using the 
+The hg38 reference genome analysis set FastA file can be downloaded using the 
 [EXECUTE_reference_download.sh](/2bit_reference/EXECUTE_reference_download.sh) bash script.
-To recreate the output which was used in the publication, run [this driver script](/driver_scripts/drv_compute_GC_presets.sh) 
-after setting up the conda env and downloading the 2bit reference genome file.
-
 A hg38 lowercase-masked standard analysis set reference file in FastA.gz format is downloaded from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
-
 Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
 containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
 (see comment on the bottom of [EXECUTE_reference_download.sh](/2bit_reference/EXECUTE_reference_download.sh))
 
-The BAM files used in the publication can be requested for download from EGA via the accession [EGAS00001006963][EGAS00001006963].
-An EGA account can be created for free there if non is available to the user.
+After setting up the conda environment and downloading the 2bit reference genome file you are good to go!
+
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -248,7 +243,7 @@ Processing options:
                         from 1 to 3 define presets with increasing input data usage and required processing time
                         (expected computation times preset 1-3: 2:40, 15:15, and 50:40 (mm:ss)). Computation time
                         of preset 3 depends on the average DoC of the sample. Average across 4 samples and 3
-                        iterations each computed using 12 cores and the benchmark_mprof.py script. Memory
+                        iterations each computed using 12 cores. Memory
                         consumption preset 1-3: 340 MiB, 290 MiB, and 300 MiB respectively.If preset is not zero,
                         any customized parameters conflicting with the preset will be ignored. A non-zero preset
                         will set the following parameters: number of simulations, the target number of processed
@@ -395,13 +390,8 @@ The following table shows pre-defined parameters for each preset.
 -------------------------------------------------------------------------------------------------------------------
 
 ## Repository Structure
-Output (excluding BAM) files which can be created using the [drv_compute_GC_presets.sh](/driver_scripts/drv_compute_GC_presets.sh) 
-script can be found in the `preset_computation` folder.
-Used WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963][EGAS00001006963] for preset testing.
 Instructions for FastA reference genome sequence download can be found [here](/2bit_reference/EXECUTE_reference_download.sh).
 Code for genomic regions blacklist creation and genomic chunk preselection in folder `accessory_files`.
-Results from correction validation in `test/corrected_gc_distribution`.
-Benchmarking results from using the [benchmark_mprof.py](benchmark_mprof.py) script are stored in `preset_computation/benchmark_results`.
 
 GCparagon developed at the [D&F Research Center of Molecular Biomedicine][molbiomed graz], [Institute of Human Genetics][humgen graz], 
 [Medical University of Graz, Austria][mug]
@@ -420,4 +410,3 @@ GCparagon developed at the [D&F Research Center of Molecular Biomedicine][molbio
 [conda install]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 [hg38_std_analysis_set]: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/
 [hg38_decoy_analysis_set]: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/
-[EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963

@@ -1,4 +1,0 @@
-# place the 4 BAM files of EGA dataset "EGAS00001006963" here for testing.
-# BAM index files will be created on the fly.
-# Alternatively, any other BAM files can be placed here for processing with the driver script ''
-# Code globs for *.bam files

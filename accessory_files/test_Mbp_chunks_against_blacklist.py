@@ -10,23 +10,10 @@ from natsort import humansorted
 from pathlib import Path
 
 SCRIPT_ROOT_PATH = Path(__file__).parent
-SCRIPT_ROOT_DIR = str(SCRIPT_ROOT_PATH)
 
-blacklist = '/home/benjamin/GitHub_Local_Clones/GCparagon_public/accessory_files/hg38_GCcorrection_blacklist.merged.sorted.bed'  # 46.2 MB
-
-# '/home/benjamin/GitHub_Local_Clones/GCparagon_dev/test/BAM_intersection/'\
-# 'hg38_GCcorrection_blacklist.merged.bed'
-
-# or: '/home/benjamin/GitHub_Local_Clones/GCparagon_dev/test/BAM_intersection/' \
-#      'hg38_GCcorrection_blacklist.merged.bed'
-simulate_bed = '/home/benjamin/GitHub_Local_Clones/GCparagon_dev/test/BAM_intersection/' \
-               'NPH_004.simulate.bed'  # more entries (10x)
-fetch_bed = '/home/benjamin/GitHub_Local_Clones/GCparagon_dev/test/BAM_intersection/' \
-            'NPH_004.fetch.bed'  # fewer entries
-large_bam_path = '/media/benjamin/Analyses/GC_correction_benchmarks/benchmarking_samples/NPH_004.bam'  # 64.4 GB
-small_bam_path = '/media/benjamin/Analyses/GC_correction_benchmarks/benchmarking_samples/B58_3.bam'  # 28.5 GB
-genome_file_path = '/media/benjamin/Analyses/GC_correction_benchmarks/benchmarking_samples/NPH_004.genome_file.tsv'
-output_path = '/test/BAM_intersection'
+blacklist = SCRIPT_ROOT_PATH / 'accessory_files/hg38_GCcorrection_blacklist.merged.sorted.bed'
+genome_file_path = SCRIPT_ROOT_PATH / 'accessory_files/GRCh38.genome_file.tsv'
+output_path = SCRIPT_ROOT_PATH / 'accessory_files/chunk_preselection'
 
 bedtools_path = sh_which('bedtools')
 
@@ -46,7 +33,7 @@ def read_bed_file(bed_path: str) -> List[Tuple[str, int, int]]:
                                                                          for bed_line in f_bed.readlines()])]
 
 
-def get_stdchrom_chunks(genome_file: str, chunk_size=CHUNK_SIZE, offset=0) -> list:
+def get_stdchrom_chunks(genome_file: Union[str, Path], chunk_size=CHUNK_SIZE, offset=0) -> list:
     with open(genome_file, 'rt') as f_gen:
         whole_genome_regions = [(chrom, offset, int(stop))
                                 for chrom, stop, *_ in filter(lambda x: x != '',
@@ -107,7 +94,7 @@ if __name__ == '__main__':
     # read original blacklist
     blacklist_content = read_bed_file(bed_path=blacklist)
     # find blacklist chunks larger than 1kb (or multiples of this)
-    multiples = (0, )  # 1, 2, 3, 4, 5, 6, 7, 8, 9, 10, 20, 50, 100)  # 0 represents all blacklisted regions
+    multiples = (0, 1, 2, 3, 4, 5, 6, 7, 8, 9)  # 0 represents all blacklisted regions
     num_multiples = {}.fromkeys(multiples)
     sub_blacklists = {}.fromkeys(multiples)
     for k in sub_blacklists.keys():
@@ -143,7 +130,7 @@ if __name__ == '__main__':
         if chunk_offset == 0:
             current_output_dir = output_path
         else:
-            current_output_dir = f"{output_path.rstrip(pth_sep)}_{chunk_offset//1000}kbp_chunkOffset"
+            current_output_dir = output_path / f"{chunk_offset//1000}kbp_chunkOffset"
             os_mkdirs(current_output_dir, exist_ok=True)
         # chunk up the genome
         std_chunks = get_stdchrom_chunks(genome_file=genome_file_path, chunk_size=CHUNK_SIZE, offset=chunk_offset)
@@ -187,7 +174,7 @@ if __name__ == '__main__':
         with open(output_overlaps_table, 'wt') as f_total_table:
             f_total_table.writelines(stats_out_lines)
 
-        # sort list of chunks according to lowest number of overlapping bases
+        # sort list of chunks according to the lowest number of overlapping bases
         with open(output_overlaps_table, 'rt') as f_total_table:
             header_lines = (f_total_table.readline().strip().split('\t'),
                             f_total_table.readline().strip().split('\t'))

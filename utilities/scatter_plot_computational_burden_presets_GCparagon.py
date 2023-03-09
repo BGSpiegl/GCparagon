@@ -6,7 +6,7 @@ from scipy.stats import linregress as scpst_linregress
 from math import floor, log10
 
 
-SOURCE_ROOT_PATH = pathlib.Path(__file__).parent
+SOURCE_ROOT_PATH = pathlib.Path(__file__).parent.parent
 SOURCE_ROOT_DIR = str(SOURCE_ROOT_PATH)
 
 

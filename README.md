@@ -31,6 +31,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 
 ## Contents:
 - [Description](#description)
+  - [Contributors](#contributors)
+  - [Copyright](#copyright)
+  - [Software License](#software-license)
   - [How to use cfDNA fragment weights](#how-to-use-cfdna-fragment-weights)
 - [Result of GC Bias Correction](#result-of-gc-bias-correction)
 - [Output](#output)
@@ -62,15 +65,15 @@ Mamba can be added to an existing [conda installation][conda install].
 
 For computing a fast estimate of a sample's GC bias, `--use-parameter-preset 1`.
 
-Code contributions:
+### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])
 - Marharyta Papakina
 
-**Copyright:**
+### Copyright
 - Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl
 - Original work on benchmark_mprof.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
-**Software license:**
+### Software license
 [GNU AFFERO GENERAL PUBLIC LICENSE v3](LICENSE)
 
 Intended for research use only.
@@ -204,7 +207,7 @@ Per default, the following dependencies will be installed into the conda env nam
   - samtools=1.16
   - bedtools=2.30
   - python=3.10
-  - pip=22.3.1
+  - pip=22.3
   - numpy=1.23
   - pysam=0.19
   - natsort=8.2
@@ -218,6 +221,7 @@ Per default, the following dependencies will be installed into the conda env nam
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
+  - matplotlib=3.6
   - memory_profiler
   - pybedtools
 

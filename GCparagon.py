@@ -39,22 +39,26 @@ VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 github_url = 'https://github.com/BGSpiegl/GCparagon'
 
 # dependencies (see "GCparagon_py3.10_env.yml" file for conda env creation):
-#   - samtools
-#   - bedtools
+#   - samtools=1.16
+#   - bedtools=2.30
 #   - python=3.10
-#   - pip
-#   - numpy
-#   - pysam
-#   - natsort
-#   - py2bit
-#   - cycler
-#   - pandas
-#   - ucsc-fatotwo_bit
-#   - two_bitreader
-#   - plotly-express
-#   - python-kaleido
-#   - psutil
-#   - requests
+#   - pip=22.3
+#   - numpy=1.23
+#   - pysam=0.19
+#   - natsort=8.2
+#   - py2bit=0.3
+#   - cycler=0.11
+#   - pandas=1.5
+#   - scipy=1.9
+#   - ucsc-fatotwobit=377
+#   - twobitreader=3.1
+#   - plotly_express=0.4
+#   - python-kaleido=0.2
+#   - psutil=5.9
+#   - requests=2.28
+#   - matplotlib=3.6
+#   - memory_profiler
+#   - pybedtools
 
 # definition for multiprocessing behavior
 # word of warning from docs: spawn cannot currently be used with “frozen” executables (i.e., binaries produced by

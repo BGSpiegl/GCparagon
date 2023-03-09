@@ -55,6 +55,9 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 #   - python-kaleido
 #   - psutil
 #   - requests
+#   - matplotlib = 3.6
+#   - memory_profiler
+#   - pybedtools
 
 # definition for multiprocessing behavior
 # word of warning from docs: spawn cannot currently be used with “frozen” executables (i.e., binaries produced by

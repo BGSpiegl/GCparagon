@@ -207,7 +207,7 @@ Per default, the following dependencies will be installed into the conda env nam
   - samtools=1.16
   - bedtools=2.30
   - python=3.10
-  - pip=22.3.1
+  - pip=22.3
   - numpy=1.23
   - pysam=0.19
   - natsort=8.2
@@ -221,6 +221,7 @@ Per default, the following dependencies will be installed into the conda env nam
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
+  - matplotlib=3.6
   - memory_profiler
   - pybedtools
 

@@ -40,6 +40,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 - [Performance](#performance)
 - [Hardware Requirements](#hardware-requirements)
 - [Software Dependencies](#software-dependencies)
+- [Required Files](#required-files)
 - [Usage](#usage)
   - [Parameter Presets](#parameter-presets)
 - [Genomic Region Preselection](#genomic-region-preselection)
@@ -232,8 +233,8 @@ You can create the environment using the following command: `mamba env create -f
 
 
 ## Required Files
-The reference genome used to create the 4 BAM files in the publication can be downloaded using the 
-[EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh) bash script.
+GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned input BAM file.
+The hg38 2bit reference file can be downloaded using the [EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
 
@@ -241,6 +242,8 @@ Alternatively, you can download a hg38 reference genome file in FastA.gz format 
 containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
 (see comment on the bottom of [EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh))
 
+GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via [BED file](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed).
+Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
 
 -------------------------------------------------------------------------------------------------------------------
 

@@ -173,7 +173,7 @@ The scatterplot below shows the computation time in relation to the preset choic
 
 The amount of consumed memory is independent of the number of processed fragments.
 In general, it depends on the DoC of a sample and the chosen rounds of simulations (i.e. the chosen parameter preset).
-The user can expect a memory usage below 500 MiB if default settings are used (12 cores).
+The user can expect a memory usage between 1 and 2 GiB for default settings (12 cores).
 
 ![linregress_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_memory_consumption_presets_SSD-ref.png?raw=true)
 
@@ -192,7 +192,7 @@ directory before running GCparagon with `--output-bam`!
 
 ## Hardware Requirements
 - 12 cores are default, more cores are better
-- at least 1 GB of RAM, \>8 recommended (max. observed memory usage was 350 MiB @ 12 cores)
+- at least 4 GB of RAM, \>8 recommended (max. observed memory usage was 2 GiB @ 24 cores)
 - SSD scratch drive for `--temporary-directory`
 
 Computation time might increase significantly if hardware requirements are not met.

@@ -118,7 +118,7 @@ GC bias. Hence, the corrected DoC profiles of H01 are still very similar to its 
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (P01/B01) is due to the increased GC content
-of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences. these promoter sequences tend 
+of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences. These promoter sequences tend 
 to contain the [TATA-box] element (approx. every 3rd promoter).
 
 
@@ -234,7 +234,8 @@ You can create the environment using the following command: `mamba env create -f
 
 ## Required Files
 GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned input BAM file.
-The hg38 2bit reference file can be downloaded using the [EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh) bash script.
+The reference genome used to create the 4 BAM files in the publication can be downloaded using the
+[EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
 

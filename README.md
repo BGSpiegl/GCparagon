@@ -118,7 +118,7 @@ GC bias. Hence, the corrected DoC profiles of H01 are still very similar to its 
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (P01/B01) is due to the increased GC content
-of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences. these promoter sequences tend 
+of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences. These promoter sequences tend 
 to contain the [TATA-box] element (approx. every 3rd promoter).
 
 

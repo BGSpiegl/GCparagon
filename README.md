@@ -10,15 +10,15 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
 .  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
-                                                                              
+                                                                             
  ██████╗  ██████╗██████╗  █████╗ ██████╗  █████╗  ██████╗  ██████╗ ███╗   ██╗
 ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗████╗  ██║
 ██║  ███╗██║     ██████╔╝███████║██████╔╝███████║██║  ███╗██║   ██║██╔██╗ ██║
 ██║   ██║██║     ██╔═══╝ ██╔══██║██╔══██╗██╔══██║██║   ██║██║   ██║██║╚██╗██║
 ╚██████╔╝╚██████╗██║     ██║  ██║██║  ██║██║  ██║╚██████╔╝╚██████╔╝██║ ╚████║
  ╚═════╝  ╚═════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝
-                                                                              
- _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._  
+                                                                             
+ _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._
 `.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-   
 .  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
@@ -26,7 +26,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
                                                                              
 ^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^
------------------------------------------------------------------------------                                                                             
+-----------------------------------------------------------------------------
 ```
 
 ## Contents:
@@ -92,34 +92,38 @@ For sample-wide effects see additional figures in the [correction_result_example
 GC bias correction results using parameter preset 1 (~2:40 m:ss) of 4 human cfDNA samples (paired-end WGS, [EGAS00001006963]) are visualized below.
 For each sample, the original GC (dashed lines), the corrected GC (solid lines),
 and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black lines) are displayed.
-The GC content of fragments was estimated either from the read sequence if template length read sequence,
+The GC content of fragments was estimated either from the read sequence if template length is shorter or equal than the read sequence length,
 or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
 
 ![preset1_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/test/corrected_gc_distribution/fragment_GCcontent_plots/all_samples/GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_Preset1_cfDNAref.png?raw=true)
-(note: y-axis shows the relative frequency for 2 bp bins, not individual GC percentages)
+(fragment GC content in 2 %GC bins, spline interpolated)
 
 Residual bias depends on the strength of GC bias (i.e. over-representation of high GC content fragments).
 
-When applied to multiple transcription start sites (TSSs) of allegedly inactive genes 
+When applied to multiple transcription start sites (TSSs) of genes expected to be inactive 
 ([975 genes](accessory_files/gene_lists/PAU_genes.hg38.txt) as derived from the protein atlas),
 and active genes ([1179 "housekeeping" genes](accessory_files/gene_lists/housekeeping_genes_hg38.txt)) of WGS cfDNA data,
 a GC bias manifests as changes in the average DoC across these 5' -> 3' oriented sites. Active genes are expected to show 
 a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes should show
 a somewhat flat DoC profile.
 
-A comparison of the effect of positive (P01) and negative GC bias (B01) on the average DoC for unexpressed and expressed 
-genes is shown below (fragments reduced to their central 60 bp portion in silico). The H01 sample shows the weakest 
-GC bias. Hence, the corrected DoC profiles of H01 are still very similar to its original DoC profiles. 
+Examples of the effect of positive (C01, P01) and negative GC bias (B01) on the average DoC for unexpressed and expressed 
+genes is shown below (fragments reduced to their central 60 bp portion in silico). The H01 sample has the lowest deviation 
+of average GC content from the expected 40.4% and shows the weakest GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
 ![doc_p01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_P01.png?raw=true)
 
 ![doc_b01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_B01.png?raw=true)
 
+![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_C01.png?raw=true)
+
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (P01/B01) is due to the increased GC content
-of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences. These promoter sequences tend 
-to contain the [TATA-box] element (approx. every 3rd promoter).
+of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. These promoter sequences tend 
+to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd promoter).
+
+![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
 
 
 -------------------------------------------------------------------------------------------------------------------
@@ -181,9 +185,9 @@ Memory consumption over time can be visualized using the [benchmark_mprof.py](be
 
 ![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_GCparagon.py_2023-03-06_23-53-22/plot_1.png?raw=true)
 
-Writing of tagged BAM files also uses multiprocessing. This step takes longer than the bias 
-computation itself. A test run using 12 cores and preset 1 computation on a 30 GB BAM file took 25 minutes for 
-computing GC weight tags and writing the tagged BAM file.
+Writing of tagged BAM files also uses multiprocessing. This step usually takes longer than the bias 
+computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB BAM file took 25 minutes 
+(computing GC weights + writing tagged BAM file).
 
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
 directory before running GCparagon with `--output-bam`!
@@ -192,7 +196,7 @@ directory before running GCparagon with `--output-bam`!
 
 ## Hardware Requirements
 - 12 cores are default, more cores are better
-- at least 4 GB of RAM, \>8 recommended (max. observed memory usage was 2 GiB @ 24 cores)
+- min. 4 GB of RAM, \>8 recommended (max. observed memory usage was 2 GiB @ 24 cores, preset 1)
 - SSD scratch drive for `--temporary-directory`
 
 Computation time might increase significantly if hardware requirements are not met.
@@ -234,7 +238,7 @@ You can create the environment using the following command: `mamba env create -f
 
 ## Required Files
 GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned input BAM file.
-The reference genome used to create the 4 BAM files in the publication can be downloaded using the
+The reference genome used to create the 4 BAM files in plots can be downloaded using the 
 [EXECUTE_reference_download.sh](2bit_reference/EXECUTE_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
@@ -245,6 +249,12 @@ containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_an
 
 GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via [BED file](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed).
 Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
+
+To recreate the presented GC correction results, run [this driver script](driver_scripts/drv_compute_GC_presets.sh) 
+after setting up the conda env and downloading the 2bit reference genome file and the [EGAS00001006963] BAMs.
+The BAM files used in plots can be requested for download from EGA via the accession [EGAS00001006963].
+If required, a new EGA account can be created for free.
+
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -553,9 +563,18 @@ across the whole genome and two chromosomes is provided [here](accessory_files/c
 -------------------------------------------------------------------------------------------------------------------
 
 ## Repository Structure
+Output (which can be created using the [drv_compute_GC_presets.sh](driver_scripts/drv_compute_GC_presets.sh) 
+script) excluding BAM files can be found in the [preset_computation](preset_computation) folder.
+
+WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963] was used for preset testing.
+
 Instructions for FastA reference genome sequence download can be found [here](2bit_reference/EXECUTE_reference_download.sh).
 
 Code for genomic regions blacklist creation and genomic chunk preselection can be found in folder [accessory_files](accessory_files).
+
+Results of the correction validation are located in [test/corrected_gc_distribution](test/corrected_gc_distribution).
+
+Results from the [benchmark_mprof.py](benchmark_mprof.py) script are stored in [preset_computation/benchmark_results](preset_computation/benchmark_results).
 
 -------------------------------------------------------------------------------------------------------------------
 

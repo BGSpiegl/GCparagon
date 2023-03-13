@@ -111,11 +111,11 @@ Examples of the effect of positive (C01, P01) and negative GC bias (B01) on the 
 genes is shown below (fragments reduced to their central 60 bp portion in silico). The H01 sample has the lowest deviation 
 of average GC content from the expected 40.4% and shows the weakest GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
+![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_C01.png?raw=true)
+
 ![doc_p01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_P01.png?raw=true)
 
 ![doc_b01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_B01.png?raw=true)
-
-![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_C01.png?raw=true)
 
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 

@@ -38,8 +38,8 @@ def load_reference_genes(reference_genes_tsv: Union[str, Path]) -> Dict[str, Tup
     return ref_gene_tuples
 
 
-def get_gc_content(target_gene_ids: Dict[str, Tuple[str]],
-                   reference_gene_dict: Dict[str, Tuple[str, str, int, int]], window_size=10001) -> Dict[str, np.array]:
+def get_gc_content(target_gene_ids: Dict[str, Tuple[str]], reference_gene_dict: Dict[str, Tuple[str, str, int, int]],
+                   window_size=10001, as_percentage=True) -> Dict[str, np.array]:
     gc_arrays = {}.fromkeys(target_gene_ids)
     actual_window_size = int(window_size//2) * 2 + 1
     if actual_window_size != window_size:
@@ -96,6 +96,8 @@ def get_gc_content(target_gene_ids: Dict[str, Tuple[str]],
                 total_loci += 1
         # compute GC content per relative position:
         gc_window /= total_loci
+        if as_percentage:
+            gc_window *= 100.
         gc_arrays[target_id] = gc_window
     return gc_arrays
 

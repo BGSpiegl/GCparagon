@@ -157,7 +157,7 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
 
 def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
                         signal_colors: Dict[str, Tuple[int, int, int]], output_file_path: pathlib.Path,
-                        fig_width=1500, fig_height=1000, fig_fontsize=24):  # , spline_interpolation=True
+                        fig_width=1500, fig_height=1000, fig_fontsize=24, y_is_percentage=True):
     color_map = {}
     data_frame_lines = []
     for data_id, plot_data_signals in data_to_plot.items():
@@ -177,8 +177,9 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
     figure_data = pd.DataFrame(data_frame_lines,
                                columns=['gene group, processing', 'relative position / bp', 'GC percentage / %'])
     gene_group_gc_fig = px.line(figure_data,
-                                x='relative position / bp', y='GC percentage / %', color='gene group, processing',
-                                template="simple_white", width=fig_width, height=fig_height,
+                                x='relative position / bp', color='gene group, processing', template="simple_white",
+                                y='GC percentage / %' if y_is_percentage else 'GC content / 1',
+                                width=fig_width, height=fig_height,
                                 title='Gene Group GC Content at TSSs',
                                 color_discrete_map=color_map)
     # change details

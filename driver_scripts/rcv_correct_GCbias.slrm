@@ -63,7 +63,7 @@ tmp_out_dir="$(mktemp -d)"  # should create dir in user-specific temp dir
 
 sample_id="$(basename -- "${bam_file}" | cut -d '.' -f 1)"
 echo "i: Processing sample: ${sample_id} using preset ${preset} ..."
-"${python3_path}" "${GCparagon_script}" --use-parameter-preset 1 --bam "${bam_file}" \
+"${python3_path}" "${GCparagon_script}" --use-parameter-preset "${preset}" --bam "${bam_file}" \
 --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${output_dir}" --temporary-directory "${tmp_out_dir}" \
 --write-chunk-exclusion --threads "${n_processes}" --output-bam
 echo "i: Done processing '${sample_id}', preset ${preset})."

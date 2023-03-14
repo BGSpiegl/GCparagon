@@ -9,7 +9,7 @@ from typing import Union, Dict, Tuple
 from plot_distributions import plot_ref_gc_content
 
 CONTENT_ROOT_DIR = Path(__file__).parent.parent
-
+PERCENTAGE_PLOT = True
 two_bit_reference_file = CONTENT_ROOT_DIR / '2bit_reference/hg38.analysisSet.2bit'
 hg38_genes_file = CONTENT_ROOT_DIR / 'accessory_files/gene_lists/hg38_MANE_hg38.bed'
 target_genes_per_class = {'HK': CONTENT_ROOT_DIR / 'accessory_files/gene_lists/housekeeping_genes_hg38.txt',
@@ -38,8 +38,8 @@ def load_reference_genes(reference_genes_tsv: Union[str, Path]) -> Dict[str, Tup
     return ref_gene_tuples
 
 
-def get_gc_content(target_gene_ids: Dict[str, Tuple[str]],
-                   reference_gene_dict: Dict[str, Tuple[str, str, int, int]], window_size=10001) -> Dict[str, np.array]:
+def get_gc_content(target_gene_ids: Dict[str, Tuple[str]], reference_gene_dict: Dict[str, Tuple[str, str, int, int]],
+                   window_size=10001, as_percentage=True) -> Dict[str, np.array]:
     gc_arrays = {}.fromkeys(target_gene_ids)
     actual_window_size = int(window_size//2) * 2 + 1
     if actual_window_size != window_size:
@@ -96,6 +96,8 @@ def get_gc_content(target_gene_ids: Dict[str, Tuple[str]],
                 total_loci += 1
         # compute GC content per relative position:
         gc_window /= total_loci
+        if as_percentage:
+            gc_window *= 100.
         gc_arrays[target_id] = gc_window
     return gc_arrays
 
@@ -183,9 +185,9 @@ def main() -> int:
             figure_output_path = CONTENT_ROOT_DIR / 'accessory_files/gene_lists/' \
                                                     f'gene_groups_ref_gc_content_{view_window}bp_' \
                                                     f'{hamming_window_length}bpHammingSmoothed.png'
-            plot_ref_gc_content(data_to_plot=data_to_plot, transparencies=transparent_signals,
-                                signal_colors={'HK': (31, 119, 180), 'PAU': (255, 127, 14)},
-                                output_file_path=figure_output_path, fig_width=1000, fig_height=1000, fig_fontsize=24)
+            plot_ref_gc_content(data_to_plot=data_to_plot, transparencies=transparent_signals, fig_fontsize=24,
+                                signal_colors={'HK': (31, 119, 180), 'PAU': (255, 127, 14)}, fig_height=1000,
+                                output_file_path=figure_output_path, fig_width=1000, y_is_percentage=PERCENTAGE_PLOT)
     return 0
 
 

@@ -257,6 +257,50 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
     length_distribution_fig.write_image(out_file)
 
 
+def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
+                        signal_colors: Dict[str, Tuple[int, int, int]], output_file_path: pathlib.Path,
+                        fig_width=1500, fig_height=1000, fig_fontsize=24, y_is_percentage=True):
+    color_map = {}
+    data_frame_lines = []
+    for data_id, plot_data_signals in data_to_plot.items():
+        for signal_id, signal in plot_data_signals.items():
+            midpoint_idx = int(len(signal) // 2)
+            data_frame_lines.extend([[f'{signal_id}, {data_id}', abs_pos-midpoint_idx, val]
+                                     for abs_pos, val in enumerate(signal)])
+            sig_col = signal_colors[signal_id]
+            sig_r, sig_g, sig_b = sig_col
+            try:
+                sig_alph = transparencies[data_id]
+            except KeyError:
+                sig_alph = 1.
+            color_map.update({f'{signal_id}, {data_id}': f'rgba({sig_r}, {sig_g}, {sig_b}, {sig_alph})'})
+    if data_frame_lines is None:
+        return 1
+    figure_data = pd.DataFrame(data_frame_lines,
+                               columns=['gene group, processing', 'relative position / bp', 'GC percentage / %'])
+    gene_group_gc_fig = px.line(figure_data,
+                                x='relative position / bp', color='gene group, processing',
+                                y='GC percentage / %' if y_is_percentage else 'GC content / 1',
+                                template="simple_white", width=fig_width, height=fig_height,
+                                title='Gene Group GC Content at TSSs',
+                                color_discrete_map=color_map)
+    # change details
+    for dat_idx in range(len(gene_group_gc_fig.data)):
+        trace_name = gene_group_gc_fig.data[dat_idx].name  # .split(', ')[0]  # only if single preset per plot
+        if 'original' in trace_name:
+            gene_group_gc_fig.data[dat_idx].line.width = 2
+        gene_group_gc_fig.data[dat_idx].name = re.sub('hamming', 'Hamming',
+                                                      re.sub(', original', '',
+                                                             re.sub('_', ' ', trace_name)))
+    gene_group_gc_fig.update_layout(showlegend=True, font_family="Ubuntu", font_size=fig_fontsize,
+                                    legend={'orientation': 'h', 'xanchor': 'center', 'yanchor': 'top',
+                                            'x': 0.5, 'y': -0.2, 'title': ''})
+    gene_group_gc_fig.show()
+    output_file_path.parent.mkdir(parents=True, exist_ok=True)
+    gene_group_gc_fig.write_image(output_file_path)
+    return 0
+
+
 def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
                            out_dir_path: pathlib.Path,
                            reference_dists: defaultdict[str,

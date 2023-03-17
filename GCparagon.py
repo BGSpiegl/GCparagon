@@ -146,7 +146,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 -----------------------------------------------------------------------------
                                                                              
 """
-        f'           GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
+        f'             GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
+        f'                 Copyright (c) 2023 Benjamin Spiegl\n'
         f'            GitHub: {github_url}\n\n'
         '^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^'
         'v^v^v^v^v^v^\n____________________________________________________'

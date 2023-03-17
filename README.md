@@ -175,6 +175,11 @@ The scatterplot below shows the computation time in relation to the preset choic
 
 ![presets_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_computation_time_presetsAndSamplesSSD-ref.png?raw=true)
 
+The variability of the preset 1 calculation time over the actual fragments processed measured for more than 600 samples
+is shown in the figure below.
+
+![preset1_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_computation_time_preset1_vs_processed_fragments_cluster_683BAMs.png?raw=true)
+
 The amount of consumed memory is independent of the number of processed fragments.
 In general, it depends on the DoC of a sample and the chosen rounds of simulations (i.e. the chosen parameter preset).
 The user can expect a memory usage between 1 and 2 GiB for default settings (12 cores).

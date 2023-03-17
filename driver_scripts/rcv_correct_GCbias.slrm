@@ -14,7 +14,6 @@ echo "ENTERED PRESET COMPUTATION SCRIPT"
 
 # CONDA WARNING - the conda that you use must be the one that is referenced in your .bashrc file!
 #                  (and the env must be from that conda)
-# for conda environment activation to work, you must source the user's .bashrc file' first:
 eval "$(conda shell.bash hook)"
 # Still old conda will be used. Mamba install does not seem to work
 conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE

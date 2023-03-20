@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 # DISCLAIMER
 # the code below was taken from stackoverflow.com/questions/489861/locking-a-file-in-python

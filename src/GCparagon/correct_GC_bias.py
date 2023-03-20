@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import multiprocessing
 import time
 import datetime
@@ -32,7 +32,7 @@ from utilities.gc_logging import set_up_logging, log, gib_cmd_logger
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 5
-PATCH_NUMBER = 1
+PATCH_NUMBER = 2
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link

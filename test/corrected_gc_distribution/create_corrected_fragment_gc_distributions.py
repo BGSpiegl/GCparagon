@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 # tested with GCparagon_oy3.10 conda environment
 import os
 import sys

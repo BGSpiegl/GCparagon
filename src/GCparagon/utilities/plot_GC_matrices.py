@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import logging
 import pathlib
 import scipy
@@ -6,7 +6,7 @@ import plotly.express as px
 import numpy as np
 from pandas import DataFrame as pd_DF
 from scipy.ndimage import gaussian_filter
-from utilities.gc_logging import log
+from src.GCparagon.utilities.gc_logging import log
 
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
 USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainbow', 'plotly3', or 'blackbody'

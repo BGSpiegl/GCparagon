@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 
 from typing import List, Tuple, Dict, Union
 from os.path import join as pth_join, sep as pth_sep

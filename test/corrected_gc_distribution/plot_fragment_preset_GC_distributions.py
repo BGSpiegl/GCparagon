@@ -1,10 +1,10 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import sys
 import numpy as np
 from pathlib import Path
 from collections import defaultdict
 from typing import Optional, Union, Dict, Tuple
-from utilities.plot_distributions import plot_fragment_gc_dists
+from src.GCparagon.utilities import plot_fragment_gc_dists
 
 SCRIPT_ROOT_PATH = Path(__file__).parent
 SCRIPT_ROOT_DIR = str(SCRIPT_ROOT_PATH)

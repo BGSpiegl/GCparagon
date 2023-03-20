@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import sys
 import gzip
 import logging
@@ -12,7 +12,7 @@ from collections import defaultdict
 from typing import List, Tuple, Optional, Union, Dict
 
 
-from utilities.gc_logging import log, gib_cmd_logger
+from src.GCparagon.utilities.gc_logging import log, gib_cmd_logger
 
 
 def get_cmdline_args():

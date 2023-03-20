@@ -1,4 +1,4 @@
-#!/usr/bin/python3
+#!/usr/bin/env python3
 import multiprocessing
 import time
 import datetime
@@ -24,15 +24,15 @@ from collections import deque
 from twobitreader import TwoBitFile, TwoBitSequence
 from natsort import humansorted
 # module imports:
-from utilities.plot_GC_matrices import plot_statistic_matrices, limit_extreme_outliers, smooth_2d_gc_weights
-from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta
-from utilities.secure_file_handling import AtomicOpen
-from utilities.gc_logging import set_up_logging, log, gib_cmd_logger
+from src.GCparagon.utilities import plot_statistic_matrices, limit_extreme_outliers, smooth_2d_gc_weights
+from src.GCparagon.utilities import plot_fragment_length_dists, load_txt_to_matrix_with_meta
+from src.GCparagon.utilities import AtomicOpen
+from src.GCparagon.utilities import set_up_logging, log, gib_cmd_logger
 
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 5
-PATCH_NUMBER = 1
+PATCH_NUMBER = 2
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link

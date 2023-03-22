@@ -86,7 +86,7 @@ Mamba can be added to an existing [conda installation][conda install].
 
 For a detailed list of dependencies (manual installation, not recommended!) please go to [Software Dependencies](#software-dependencies)
 
-### Recomended Installation Procedure
+### Recommended Installation Procedure
 First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] repository:
 
 `git clone https://github.com/BGSpiegl/GCparagon`

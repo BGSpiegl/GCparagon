@@ -2,8 +2,8 @@
 #SBATCH --job-name=GCparagon                         # Job name
 #SBATCH --nodes=1                                    # Run computation on a single NODE (i.e. 'server')
 #SBATCH --mem=20G                                    # memory to use
-#SBATCH --ntasks=1                                   # Run a single task (you can define tasks and allocate specific resources to them below in the command section)
-#SBATCH --cpus-per-task=24                           # Number of CPUs to use for multithread/processing job
+#SBATCH --ntasks=1                                   # Run a single task (define tasks and allocate resources below)
+#SBATCH --cpus-per-task=12                           # Number of CPUs to use for multithread/processing job
 #SBATCH --output=GCparagon-%j.log                    # Standard output log
 #SBATCH --error=GCparagon-%j.err                     # Error log
 # ------------------------------ COMMAND SECTION -------------------------------------------
@@ -20,7 +20,6 @@ conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
 
 echo "conda environment activated"
 
-
 # process input arguments
 echo "processing ${#} argument(s):"
 args=("${@}")
@@ -28,7 +27,7 @@ echo "  received argument 0: ${args[0]}"  # BAM file
 echo "  received argument 1: ${args[1]}"  # output directory
 echo "  received argument 2: ${args[2]}"  # preset
 
-bam_file="${args[1]}"
+bam_file="${args[0]}"
 if [ ! "${bam_file}" ]; then
   echo "ERROR: test BAM not found at: ${bam_file}"
   exit 1
@@ -41,33 +40,34 @@ fi
 preset="${args[2]}"
 
 # analysis definitions
-n_processes=24  # max. 2 jobs per node -> faster and risk of tmp space crammed is reduced
+n_processes=12
 python3_path="$(which python3)"
-# script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
-content_root="/home/data/humangenetik/ANALYSES/Benjamin/GC_correction/GCparagon_dev"
-GCparagon_script="${content_root}/GCparagon.py"
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
+content_root="$(dirname "${script_dir}")"
+GCparagon_script="${content_root}/src/GCparagon/correct_GC_bias.py"
 if [ ! "${GCparagon_script}" ]; then
-  echo "ERROR: GCparagon.py script not found at: ${GCparagon_script}"
+  echo "ERROR: correct_GC_bias.py script not found at: ${GCparagon_script}"
   exit 1
 fi
-TWOBIT_REF_GENOME="${content_root}/2bit_reference/hg38.analysisSet.2bit"
+TWOBIT_REF_GENOME="${content_root}/src/GCparagon/2bit_reference/hg38.analysisSet.2bit"  # CHANGE REFERENCE GENOME PATH..
+# ..HERE --------------------------^ IF REQUIRED!
 if [ ! "${TWOBIT_REF_GENOME}" ]; then
   echo "ERROR: 2bit version of hg38 reference genome not found at: ${TWOBIT_REF_GENOME}." \
 "Please download using the EXECUTE_reference_download.sh script there to obtain it!"
   exit 1
 fi
 
-sample_id="$(basename -- "${bam_file}" | cut -d '.' -f 1)"
-echo "i: Processing sample: ${sample_id} using preset ${preset} ..."
-
 # create a temporary directory
 tmp_out_dir="$(mktemp -d)"  # should create dir in user-specific temp dir
-echo "   temporary directory is '${tmp_out_dir}'"
+echo "  WARNING: all output will be written temporarily to ${tmp_out_dir}. Please be sure enough storage space is
+available there or terminate this script!"
 
+sample_id="$(basename -- "${bam_file}" | cut -d '.' -f 1)"
+echo "  i: processing sample: ${sample_id} using preset ${preset} ..."
 "${python3_path}" "${GCparagon_script}" --use-parameter-preset "${preset}" --bam "${bam_file}" \
 --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${output_dir}" --temporary-directory "${tmp_out_dir}" \
 --write-chunk-exclusion --threads "${n_processes}" --output-bam
-echo "i: Done processing '${sample_id}', preset ${preset})."
+echo "  i: done processing '${sample_id}', preset ${preset})."
 # try to delete temp dir if still exists after all analyses; leave no traces!
 if [ -d "${tmp_out_dir}" ]; then
   rm -r "${tmp_out_dir}"

@@ -61,15 +61,14 @@ in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was develo
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
 or from one of the `*_gc_weights_*.txt.gz` output files.
-These can be loaded in Python using the `numpy.loadtxt()` function or the `load_txt_to_matrix_with_meta()` function 
+The latter can be loaded in Python using the `numpy.loadtxt()` function or the `load_txt_to_matrix_with_meta()` function 
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-
 ### How to use cfDNA fragment weights
-Instead of counting fragment occurrences or their attributes, the user can sum 
-the GC bias correction weights of these fragments to obtain an unbiased result for their signal extraction. An example 
-could be depth of coverage computation for specific groups of transcription start sites as shown for samples B01, C01, 
+Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
+fragments to obtain an unbiased result for signal extraction. An example could be depth of coverage computation for 
+specific groups of transcription start sites as shown for samples B01, C01, 
 P01, and H01 in the next section "[Result of GC Bias Correction](#result-of-gc-bias-correction)".
 
 
@@ -84,10 +83,12 @@ software dependencies via the provided [GCparagon_py3.10_env.yml](conda_env/GCpa
 The author recommends to use [mamba/micromamba][mamba install] for environment creation/resolving of dependencies.
 Mamba can be added to an existing [conda installation][conda install].
 
-For a detailed list of dependencies (manual installation, not recommended!) please go to [Software Dependencies](#software-dependencies)
+For a detailed list of dependencies (manual installation, not recommended!) please go to 
+[Software Dependencies](#software-dependencies)
 
 ### Recommended Installation Procedure
-First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] repository:
+First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
+repository:
 
 `git clone https://github.com/BGSpiegl/GCparagon`
 
@@ -95,7 +96,8 @@ After making sure that conda is available on your system and up-to-date, move in
 
 `cd GCparagon`
 
-and create the GCparagon software environment using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file:
+and create the GCparagon software environment using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) 
+file:
 
 `mamba env create -f conda_env/GCparagon_py3.10_env.yml` 
 
@@ -117,10 +119,10 @@ After successful setup, GCparagon should be available via the `gcparagon` comman
 
 See [Usage](#usage) for a complete explanation of commandline options.
 Default output created by GCparagon is described [here](#result-of-gc-bias-correction).
-There are several options available to alter plotting behaviour or to keep intermediate data created during 
+There are several options available to alter plotting behaviour or to keep intermediate data created during
 simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output**.
 To activate BAM output, use the `--output-bam` flag.
-Be mindful of setting the `--temporary-directory` to a reasonable path! (high IOPS hardware if available +
+Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
 
 ### Contributors
@@ -132,18 +134,20 @@ sufficient storage space available for tagged BAM etc.)
 - Original work on benchmark_mprof.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
 ### Software license
-[GNU Affero General Public License v3](src/GCparagon/LICENSE)
+[GNU General Public License v3](src/GCparagon/LICENSE)
 
 Intended for research use only.
-
 
 ## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using parameter preset 1 (~2:40 m:ss) of 4 human cfDNA samples (paired-end WGS, [EGAS00001006963]) are visualized below.
+GC bias correction results using parameter preset 1 (~2:40 m:ss) of 4 human cfDNA samples (paired-end WGS, 
+[EGAS00001006963]) are visualized below.
 For each sample, the original GC (dashed lines), the corrected GC (solid lines),
-and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black lines) are displayed.
-The GC content of fragments was estimated either from the read sequence if template length is shorter or equal to the read sequence length,
+and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black 
+lines) are displayed.
+The GC content of fragments was estimated either from the read sequence if template length is shorter or equal to the 
+read sequence length,
 or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
 
 ![preset1_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/test/corrected_gc_distribution/fragment_GCcontent_plots/all_samples/GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_Preset1_cfDNAref.png?raw=true)
@@ -172,9 +176,10 @@ and corrected DoC profiles are very similar.
 
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 
-The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (C01,P01/B01) is due to the increased GC content
-of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. These promoter sequences tend 
-to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd promoter).
+The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (C01,P01/B01) is due to the increased 
+GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. 
+These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd 
+promoter).
 
 ![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
 
@@ -195,7 +200,8 @@ Default outputs are:
 
 ![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.O_gc.heatmap.png?raw=true)
 
-- simulated fragment attributes using reference genome and fragment length distribution (plot, data in `*_simulated_attributes_matrix.txt.gz`)
+- simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
+`*_simulated_attributes_matrix.txt.gz`)
 
 ![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.S_gc.heatmap.png?raw=true)
 
@@ -207,11 +213,13 @@ Default outputs are:
 
 ![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc.heatmap.png?raw=true)
 
-- correction weights matrix, extreme outliers capped at threshold (plot; data in `*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
+- correction weights matrix, extreme outliers capped at threshold (plot; data in 
+`*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
 
 ![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
 
-- correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in `*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
+- correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
+`*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
 
 ![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
@@ -221,7 +229,8 @@ Default outputs are:
 -------------------------------------------------------------------------------------------------------------------
 The GC bias computation time depends linearly on the portion of the input data which is processed.
 The average DoC of the visualized samples is between 10x and 30x.
-For preset 1 and preset 2, the duration of bias computation was found to be no longer than 3 and 16 minutes respectively.
+For preset 1 and preset 2, the duration of bias computation was found to be no longer than 3 and 16 minutes 
+respectively.
 
 ![linregress_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_computation_time_linRegress_SSD-ref.png?raw=true)
 The scatterplot below shows the computation time in relation to the preset choice.
@@ -239,7 +248,8 @@ The user can expect a memory usage between 1 and 2 GiB for default settings (12 
 
 ![linregress_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_memory_consumption_presets_SSD-ref.png?raw=true)
 
-Memory consumption over time can be visualized using the [benchmark_mprof.py](src/GCparagon/benchmark_mprof.py) script (figure: P01, preset 1):
+Memory consumption over time can be visualized using the [benchmark_mprof.py](src/GCparagon/benchmark_mprof.py) script 
+(figure: P01, preset 1):
 
 ![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_GCparagon.py_2023-03-06_23-53-22/plot_1.png?raw=true)
 
@@ -304,7 +314,8 @@ It downloads the hg38 lowercase-masked standard analysis set reference file in 2
 
 Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
 containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
-(see comment on the bottom of [EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh))
+(see comment on the bottom of 
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh))
 
 GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via 
 [BED file](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed).
@@ -334,9 +345,10 @@ script execution.
 Rich customization options are available. The `--use-parameter-preset 1` setup is recommended though.
 
 ```
-Usage: GCparagon.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-up Integer] [-to] [-rep Integer] [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File]
-                    [-nf Integer] [-mf Integer] [-anf] [-mtb] [-do] [-odm OutlierDetectionBasis] [-ods Integer] [-sw] [-sk KernelType] [-si Integer] [-v] [-o File] [-tmp File] [-np] [-os] [-k] [-ob]
-                    [-fp Integer] [-tg String] [-wce] [-nfp]
+Usage: GCparagon.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-up Integer] [-to] [-rep Integer]
+                    [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File] [-nf Integer] [-mf Integer] [-anf]
+                    [-mtb] [-do] [-odm OutlierDetectionBasis] [-ods Integer] [-sw] [-sk KernelType] [-si Integer] [-v]
+                    [-o File] [-tmp File] [-np] [-os] [-k] [-ob] [-fp Integer] [-tg String] [-wce] [-nfp]
 
 Options:
   -h, --help            show this help message and exit
@@ -583,7 +595,8 @@ Post-processing options:
 
 ### Parameter Presets
 Parameter presets are defined using `-up`/`--use-parameter-preset`.
-The following table shows pre-defined parameters for each preset along with the average computation time across the 4 samples from [EGAS00001006963].
+The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
+samples from [EGAS00001006963].
 (Preset 0 is the default which leaves all values at default and customizable.)
 
 |   Preset    | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing |   smoothing strength   | est. computation time |
@@ -599,51 +612,62 @@ The following table shows pre-defined parameters for each preset along with the 
 ## Genomic Region Preselection
 
 -------------------------------------------------------------------------------------------------------------------
-The code uses up to 1,702 [preselected 1 Mb genomic chunks](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed) of hg38 reference genome for processing.
-Preselection was carried on the basis of a [blacklisted regions BED file](accessory_files/hg38_GCcorrection_blacklist.merged.sorted.bed) to:
+The code uses up to 1,702 
+[preselected 1 Mb genomic chunks](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed) of 
+hg38 reference genome for processing. Preselection was carried on the basis of a 
+[blacklisted regions BED file](accessory_files/hg38_GCcorrection_blacklist.merged.sorted.bed) to:
 - reduce overlap of 1 Mb chunks with regions found to be problematic for short read sequencing/alignment algorithms
 - minimize inclusion of assembly gaps and errors
 - slightly optimize placement of chunks along the genome while ensuring preselection of only non-overlapping regions
 - enforce a threshold for maximum percentage of blacklisted bases per genomic chunk (33% max. overlap implemented)
 
-Creation of the blacklisted regions BED file, starting from the [ENCODE blacklisted regions v2 BED file](accessory_files/individual_bad_region_sets/hg38-ENCODE_blacklist.v2.bed),
+Creation of the blacklisted regions BED file, starting from the 
+[ENCODE blacklisted regions v2 BED file](accessory_files/individual_bad_region_sets/hg38-ENCODE_blacklist.v2.bed),
 is documented [here](accessory_files/GC_correction_blacklist_creation.info).
 The final blacklist includes 429,045,481 reference positions (=14.7% of GRCh38).
 
 Currently, only a preselection of GRCh38 genomic 1 Mb regions is available.
 Preselection for GRCh37/hg19 has to be carried out by the user using their own blacklist 
-and the scripts [test_Mbp_chunks_against_blacklist.py](accessory_files/test_Mbp_chunks_against_blacklist.py) and [select_low_scoring_regions_from_overlapping.py](accessory_files/select_low_scoring_regions_from_overlapping.py).
+and the scripts [test_Mbp_chunks_against_blacklist.py](accessory_files/test_Mbp_chunks_against_blacklist.py) and 
+[select_low_scoring_regions_from_overlapping.py](accessory_files/select_low_scoring_regions_from_overlapping.py).
 It is recommended to use at least the ENCODE blacklist to restrict genomic chunk preselection.
-Size of preselected chunks should be uniform and fit the application (i.e. larger chunks for shallow sequenced WGS data).
-A tradeoff was made for GRCh38 by choosing 1 Mb chunks.
+Size of preselected chunks should be uniform and fit the application (i.e. larger chunks for shallow sequenced WGS 
+data). A tradeoff was made for GRCh38 by choosing 1 Mb chunks.
 
-An IGV screenshot visualizing the distribution of [hg38 preselected 1Mb chunks](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed)
-across the whole genome and two chromosomes is provided [here](accessory_files/chunk_preselection/IGV_composite_preselected_chunks_hg38.png).
+An IGV screenshot visualizing the distribution of 
+[hg38 preselected 1Mb chunks](accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed)
+across the whole genome and two chromosomes is provided 
+[here](accessory_files/chunk_preselection/IGV_composite_preselected_chunks_hg38.png).
 
 
 ## Repository Structure
 
 -------------------------------------------------------------------------------------------------------------------
-Output excluding BAM files (which can be created using the [drv_compute_GC_presets.sh](driver_scripts/drv_compute_GC_presets.sh) 
-script) can be found in the [preset_computation](preset_computation) folder.
+Output excluding BAM files (which can be created using the 
+[drv_compute_GC_presets.sh](driver_scripts/drv_compute_GC_presets.sh) script) can be found in the 
+[preset_computation](preset_computation) folder.
 
 WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963] was used for preset testing.
 
-Instructions for FastA reference genome sequence download can be found [here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
+Instructions for FastA reference genome sequence download can be found 
+[here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
 
-Code for genomic regions blacklist creation and genomic chunk preselection can be found in folder [accessory_files](accessory_files).
+Code for genomic regions blacklist creation and genomic chunk preselection can be found in folder 
+[accessory_files](accessory_files).
 
 Results of the correction validation are located in [test/corrected_gc_distribution](test/corrected_gc_distribution).
 
-Results from the [benchmark_mprof.py](src/GCparagon/benchmark_mprof.py) script are stored in [preset_computation/benchmark_results](preset_computation/benchmark_results).
+Results from the [benchmark_mprof.py](src/GCparagon/benchmark_mprof.py) script are stored in 
+[preset_computation/benchmark_results](preset_computation/benchmark_results).
 
 -------------------------------------------------------------------------------------------------------------------
 
-GCparagon developed at the [D&F Research Center of Molecular Biomedicine][molbiomed graz], [Institute of Human Genetics][humgen graz], 
-[Medical University of Graz, Austria][mug]
+GCparagon developed at the [D&F Research Center of Molecular Biomedicine][molbiomed graz], 
+[Institute of Human Genetics][humgen graz], [Medical University of Graz, Austria][mug]
 
 GCparagon uses the [ENCODE Blacklist (The Boyle Lab, GitHub)][encode_blacklisted_regions_url]:
-Amemiya, H.M., Kundaje, A. & Boyle, A.P. The ENCODE Blacklist: Identification of Problematic Regions of the Genome. Sci Rep 9, 9354 (2019). https://doi.org/10.1038/s41598-019-45839-z
+Amemiya, H.M., Kundaje, A. & Boyle, A.P. The ENCODE Blacklist: Identification of Problematic Regions of the Genome. Sci 
+Rep 9, 9354 (2019). https://doi.org/10.1038/s41598-019-45839-z
 
 GCparagon uses resources from the [UCSC Genome browser][genome browser]
 

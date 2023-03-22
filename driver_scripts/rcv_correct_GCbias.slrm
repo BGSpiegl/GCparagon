@@ -2,7 +2,7 @@
 #SBATCH --job-name=GCparagon                         # Job name
 #SBATCH --nodes=1                                    # Run computation on a single NODE (i.e. 'server')
 #SBATCH --mem=20G                                    # memory to use
-#SBATCH --ntasks=1                                   # Run a single task (you can define tasks and allocate specific resources to them below in the command section)
+#SBATCH --ntasks=1                                   # Run a single task (define tasks and allocate resources below)
 #SBATCH --cpus-per-task=12                           # Number of CPUs to use for multithread/processing job
 #SBATCH --output=GCparagon-%j.log                    # Standard output log
 #SBATCH --error=GCparagon-%j.err                     # Error log
@@ -19,7 +19,6 @@ eval "$(conda shell.bash hook)"
 conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
 
 echo "conda environment activated"
-
 
 # process input arguments
 echo "processing ${#} argument(s):"

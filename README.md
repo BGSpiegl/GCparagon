@@ -87,8 +87,12 @@ For a detailed list of dependencies (manual installation, not recommended!) plea
 [Software Dependencies](#software-dependencies)
 
 ### Recommended Installation Procedure
-First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
-repository:
+First, move into the directory where you want to store the GCparagon code and clone **this branch** of the 
+[GitHub repository][github repo]:
+
+`git clone --branch including_EGAS00001006963_results --single-branch https://github.com/BGSpiegl/GCparagon.git`
+
+If you want to clone **the whole repository**, use the following command instead:
 
 `git clone https://github.com/BGSpiegl/GCparagon`
 
@@ -124,6 +128,14 @@ simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output*
 To activate BAM output, use the `--output-bam` flag.
 Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
+
+To recreate the output for all three presets and 4 samples from [EGAS00001006963], run the 
+[driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
+
+`python3 driver_scripts/drv_compute_GC_presets.sh`
+
+You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
+50 minutes for each sample.
 
 ### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])

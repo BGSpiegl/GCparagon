@@ -23,11 +23,6 @@ from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from collections import deque
 from twobitreader import TwoBitFile, TwoBitSequence
 from natsort import humansorted
-# module imports:
-from utilities.plot_GC_matrices import plot_statistic_matrices, limit_extreme_outliers, smooth_2d_gc_weights
-from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta
-from utilities.secure_file_handling import AtomicOpen
-from utilities.gc_logging import set_up_logging, log, gib_cmd_logger
 
 # version
 MAJOR_RELEASE = 0
@@ -39,29 +34,27 @@ VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 github_url = 'https://github.com/BGSpiegl/GCparagon'
 
 # dependencies (see "GCparagon_py3.10_env.yml" file for conda env creation):
-#   - samtools
-#   - bedtools
+#   - samtools=1.16
+#   - bedtools=2.30
 #   - python=3.10
-#   - pip
-#   - numpy
-#   - pysam
-#   - natsort
-#   - py2bit
-#   - cycler
-#   - pandas
-#   - ucsc-fatotwo_bit
-#   - two_bitreader
-#   - plotly-express
-#   - python-kaleido
-#   - psutil
-#   - requests
-#   - matplotlib = 3.6
+#   - pip=22.3
+#   - numpy=1.23
+#   - pysam=0.19
+#   - natsort=8.2
+#   - py2bit=0.3
+#   - cycler=0.11
+#   - pandas=1.5
+#   - scipy=1.9
+#   - ucsc-fatotwobit=377
+#   - twobitreader=3.1
+#   - plotly_express=0.4
+#   - python-kaleido=0.2
+#   - psutil=5.9
+#   - requests=2.28
+#   - matplotlib=3.6
 #   - memory_profiler
 #   - pybedtools
 
-# definition for multiprocessing behavior
-# word of warning from docs: spawn cannot currently be used with “frozen” executables (i.e., binaries produced by
-# packages like PyInstaller and cx_Freeze) on Unix
 # default definitions for analysis
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!
 DEFAULT_MAX_FRAGMENT_LENGTH = 550
@@ -89,9 +82,9 @@ DEFAULT_OUTLIER_DETECTION_STRINGENCY = 2
 DEFAULT_OUTLIER_DETECTION_METHOD = 'IQR'
 # random numbers:
 RANDOM_SEED = random.randint(1, 999)
-LOGGER = gib_cmd_logger()  # basically just to stop linter to assume it is None
 # PATH DEFINITIONS:
 SOURCE_CODE_ROOT_PATH = pathlib.Path(__file__).parent
+sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
 DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
@@ -103,6 +96,14 @@ BAD_CHUNKS_FILE_PATTERN_AS_PATH = pathlib.Path(f'bad_chunks_{TIMESTAMP_FORMAT}.b
 # define custom types
 BadChunksDict = Dict[Tuple[str, int, int], List[int]]
 ChunksList = List[Tuple[str, int, int, int]]
+
+# module imports:
+from utilities.plot_GC_matrices import plot_statistic_matrices, limit_extreme_outliers, smooth_2d_gc_weights
+from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta
+from utilities.secure_file_handling import AtomicOpen
+from utilities.gc_logging import set_up_logging, log, gib_cmd_logger
+
+LOGGER = gib_cmd_logger()  # basically just to stop linter to assume it is None
 
 
 # definitions of specific exceptions

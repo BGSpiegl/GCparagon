@@ -83,7 +83,7 @@ do
   for preset in "${presets[@]}"
   do
     echo "  i: preset is: ${preset}"
-    preset_out_dir="${bam_dir}/${preset}"  # subdir with sample_id will be created by the GCparagon script
+    preset_out_dir="${bam_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
     echo "  i: output for sample ${sample_id} will be moved to path ${preset_out_dir}"
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"

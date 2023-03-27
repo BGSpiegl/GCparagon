@@ -88,7 +88,7 @@ sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
 DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
-PREDEFINED_1MBP_CHUNKS_TO_PROCESS = SOURCE_CODE_ROOT_PATH / \
+PREDEFINED_1MBP_CHUNKS_TO_PROCESS = SOURCE_CODE_ROOT_PATH.parent.parent / \
                                     'accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed'
 TIMESTAMP_FORMAT = '%Y-%m-%d_%H-%M-%S'
 BAD_CHUNKS_FILE_PATTERN_AS_PATH = pathlib.Path(f'bad_chunks_{TIMESTAMP_FORMAT}.bed')

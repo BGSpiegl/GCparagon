@@ -87,8 +87,12 @@ For a detailed list of dependencies (manual installation, not recommended!) plea
 [Software Dependencies](#software-dependencies)
 
 ### Recommended Installation Procedure
-First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
-repository:
+First, move into the directory where you want to store the GCparagon code and clone **this branch** of the 
+[GitHub repository][github repo]:
+
+`git clone --branch including_EGAS00001006963_results --single-branch https://github.com/BGSpiegl/GCparagon.git`
+
+If you want to clone **the whole repository**, use the following command instead:
 
 `git clone https://github.com/BGSpiegl/GCparagon`
 
@@ -124,6 +128,14 @@ simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output*
 To activate BAM output, use the `--output-bam` flag.
 Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
+
+To recreate the output for all three presets and 4 samples from [EGAS00001006963], run the 
+[driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
+
+`python3 driver_scripts/drv_compute_GC_presets.sh`
+
+You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
+50 minutes for each sample.
 
 ### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])
@@ -181,7 +193,7 @@ GC content of human genomic exon 1 sequences compared to the immediate upstream 
 These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd 
 promoter).
 
-![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
+![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
 
 
 ## Output
@@ -194,34 +206,34 @@ Default outputs are:
 
 (P01 examples shown)
 
-![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01fragment_length_distribution.png?raw=true)
+![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01fragment_length_distribution.png?raw=true)
 
 - observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
 
-![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.O_gc.heatmap.png?raw=true)
+![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.O_gc.heatmap.png?raw=true)
 
 - simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
 `*_simulated_attributes_matrix.txt.gz`)
 
-![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.S_gc.heatmap.png?raw=true)
+![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.S_gc.heatmap.png?raw=true)
 
 - weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
 
-![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.Mask.heatmap.png?raw=true)
+![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.Mask.heatmap.png?raw=true)
 
 - correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
 
-![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc.heatmap.png?raw=true)
+![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
 
-![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
+![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
 
-![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
+![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 
 ## Performance

@@ -12,7 +12,12 @@ from collections import defaultdict
 from typing import List, Tuple, Optional, Union, Dict
 
 
-from src.GCparagon.utilities.gc_logging import log, gib_cmd_logger
+code_root = pathlib.Path(__file__).parent.parent
+if code_root not in sys.path:
+    sys.path.append(str(code_root))
+
+
+from utilities.gc_logging import log, gib_cmd_logger
 
 
 def get_cmdline_args():
@@ -258,8 +263,9 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
 
 
 def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
-                        signal_colors: Dict[str, Tuple[int, int, int]], output_file_path: pathlib.Path,
-                        fig_width=1500, fig_height=1000, fig_fontsize=24, y_is_percentage=True):
+                        figure_title: str, signal_colors: Dict[str, Tuple[int, int, int]],
+                        output_file_path: pathlib.Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
+                        y_is_percentage=True):
     color_map = {}
     data_frame_lines = []
     for data_id, plot_data_signals in data_to_plot.items():
@@ -278,26 +284,27 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
         return 1
     figure_data = pd.DataFrame(data_frame_lines,
                                columns=['gene group, processing', 'relative position / bp', 'GC percentage / %'])
-    gene_group_gc_fig = px.line(figure_data,
+    loci_group_gc_fig = px.line(figure_data,
                                 x='relative position / bp', color='gene group, processing',
                                 y='GC percentage / %' if y_is_percentage else 'GC content / 1',
                                 template="simple_white", width=fig_width, height=fig_height,
-                                title='Gene Group GC Content at TSSs',
-                                color_discrete_map=color_map)
+                                title=figure_title, color_discrete_map=color_map)
     # change details
-    for dat_idx in range(len(gene_group_gc_fig.data)):
-        trace_name = gene_group_gc_fig.data[dat_idx].name  # .split(', ')[0]  # only if single preset per plot
+    for dat_idx in range(len(loci_group_gc_fig.data)):
+        trace_name = loci_group_gc_fig.data[dat_idx].name  # .split(', ')[0]  # only if single preset per plot
         if 'original' in trace_name:
-            gene_group_gc_fig.data[dat_idx].line.width = 2
-        gene_group_gc_fig.data[dat_idx].name = re.sub('hamming', 'Hamming',
+            loci_group_gc_fig.data[dat_idx].line.width = 2
+        loci_group_gc_fig.data[dat_idx].name = re.sub('hamming', 'Hamming',
                                                       re.sub(', original', '',
                                                              re.sub('_', ' ', trace_name)))
-    gene_group_gc_fig.update_layout(showlegend=True, font_family="Ubuntu", font_size=fig_fontsize,
+    loci_group_gc_fig.update_layout(showlegend=True, font_family="Ubuntu", font_size=fig_fontsize,
                                     legend={'orientation': 'h', 'xanchor': 'center', 'yanchor': 'top',
                                             'x': 0.5, 'y': -0.2, 'title': ''})
-    gene_group_gc_fig.show()
+    loci_group_gc_fig.update_xaxes(showgrid=True, dtick=250, gridwidth=2)
+    loci_group_gc_fig.update_yaxes(showgrid=True, gridwidth=2)
+    loci_group_gc_fig.show()
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
-    gene_group_gc_fig.write_image(output_file_path)
+    loci_group_gc_fig.write_image(output_file_path)
     return 0
 
 

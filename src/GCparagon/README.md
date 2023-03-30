@@ -158,8 +158,8 @@ or from slices of the reference genome using the leftmost alignment position and
 Residual bias depends on the strength of GC bias (i.e. over-representation of high GC content fragments).
 
 When applied to multiple transcription start sites (TSSs) of genes expected to be inactive 
-([975 genes](accessory_files/gene_lists/PAU_genes.hg38.txt) as derived from the protein atlas),
-and active genes ([1179 "housekeeping" genes](accessory_files/gene_lists/housekeeping_genes_hg38.txt)) of WGS cfDNA 
+([975 genes](accessory_files/TSSs/PAU_genes.hg38.txt) as derived from the protein atlas),
+and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/housekeeping_genes_hg38.txt)) of WGS cfDNA 
 data, a GC bias manifests as changes in the average DoC across these 5' -> 3' oriented sites. Active genes are expected 
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
 should show an almost flat DoC profile.
@@ -169,13 +169,13 @@ expressed genes is shown below (fragments in silico reduced to their central 60 
 the lowest deviation of average GC content from the expected 40.4% and shows the weakest GC bias. Hence, the original 
 and corrected DoC profiles are very similar. 
 
-![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_C01.png?raw=true)
+![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_C01.png?raw=true)
 
-![doc_p01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_P01.png?raw=true)
+![doc_p01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_P01.png?raw=true)
 
-![doc_b01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_B01.png?raw=true)
+![doc_b01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_B01.png?raw=true)
 
-![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
+![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_H01.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (C01,P01/B01) is due to the increased 
 GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. 

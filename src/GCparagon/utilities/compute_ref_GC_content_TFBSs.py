@@ -22,7 +22,7 @@ target_regions_per_class = {'LYL1': CONTENT_ROOT_DIR / 'accessory_files/TFBSs/LY
 TFBS_COLORS = {'LYL1': (31, 119, 180), 'GRHL2': (0, 178, 18), 'EVX2': (255, 127, 14), 'CTCF': (50, 50, 50)}
 
 
-def load_bed_regions(region_list_dict: Dict[str, Union[str, Path]]) -> Dict[str, Tuple[str]]:
+def load_bed_regions(region_list_dict: Dict[str, Union[str, Path]]) -> Dict[str, Tuple[str, int, int]]:
     gene_data = {}.fromkeys(region_list_dict)
     for list_name, list_path in region_list_dict.items():
         with open(list_path, mode='rt') as f_gene_list:
@@ -147,11 +147,11 @@ def main() -> int:
     hg38_ref_regions = load_bed_regions(region_list_dict=target_regions_per_class)
     # load all_reference_genes
     # accumulate GC content
-    for view_window in (2001,):  # 10001, 6001, 4001, 3001,
+    for view_window in (2001,):
         gc_per_group = get_region_gc_content(reference_regions_dict=hg38_ref_regions,
                                              window_size=view_window, as_percentage=PERCENTAGE_PLOT)
         # create hamming window filtered versions
-        for hamming_window_length in (15, ):  # 11, 15, 17
+        for hamming_window_length in (15, ):
             transparent_signals = {'original': 0.15}
             data_to_plot = {'original': gc_per_group}
             data_to_plot.update({f'{hamming_window_length}bp_hamming_filtered': None})
@@ -167,6 +167,17 @@ def main() -> int:
                                                     f'{view_window}bp_{hamming_window_length}bpHammingSmoothed.png'
             plot_ref_gc_content(data_to_plot=data_to_plot, transparencies=transparent_signals, fig_fontsize=24,
                                 signal_colors=TFBS_COLORS, fig_height=1000,
+                                figure_title='TFBSs Average Reference GC Content',
+                                output_file_path=figure_output_path, fig_width=1000, y_is_percentage=PERCENTAGE_PLOT)
+            for del_key in ('original', f'{hamming_window_length}bp_hamming_filtered'):
+                del data_to_plot[del_key]['CTCF']
+                del data_to_plot[del_key]['EVX2']
+            regions_string = '-'.join(sorted(list(data_to_plot[list(data_to_plot.keys())[0]].keys())))
+            figure_output_path = CONTENT_ROOT_DIR / f'accessory_files/TFBSs/TFBSs_ref_gc_content_{regions_string}_' \
+                                                    f'{view_window}bp_{hamming_window_length}bpHammingSmoothed.png'
+            plot_ref_gc_content(data_to_plot=data_to_plot, transparencies=transparent_signals, fig_fontsize=24,
+                                signal_colors=TFBS_COLORS, fig_height=1000,
+                                figure_title='TFBSs Average Reference GC Content',
                                 output_file_path=figure_output_path, fig_width=1000, y_is_percentage=PERCENTAGE_PLOT)
     return 0
 

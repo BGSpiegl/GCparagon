@@ -102,7 +102,7 @@ file:
 
 `mamba env create -f conda_env/GCparagon_py3.10_env.yml` 
 
-OR 
+OR
 
 `conda env create -f conda_env/GCparagon_py3.10_env.yml`
 
@@ -178,10 +178,9 @@ and corrected DoC profiles are very similar.
 ![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/gene_lists/coverage_original-corrected_H01.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (C01,P01/B01) is due to the increased 
-GC content
-of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. These 
-promoter sequences tend 
-to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd promoter).
+GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. 
+These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd 
+promoter).
 
 ![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
 

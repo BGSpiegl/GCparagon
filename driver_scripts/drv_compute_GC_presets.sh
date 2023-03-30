@@ -88,9 +88,9 @@ do
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"
     fi
-    "${python3_path}" "${profiling_script}" --iter 2 --sampling-frequency 10 --output-path "${test_output_dir}" \
-    --script "${GCparagon_script}" --use-parameter-preset "${preset}" --bam "${test_bam}" \
-    --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
+    "${python3_path}" "${profiling_script}" --include-children --iter 2 --sampling-frequency 10 \
+    --output-path "${test_output_dir}" --script "${GCparagon_script}" --use-parameter-preset "${preset}" \
+    --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
     --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}"
   done
 done

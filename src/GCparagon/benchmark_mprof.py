@@ -27,6 +27,8 @@ def get_cmdline_args() -> tuple[Namespace, list[str]]:
     prsr.add_argument('-o', '--output-path', dest='abs_path', default=cwd,
                       help='Optional: Absolute path to the output directory. If none is specified, the current '
                            f'working directory will be used. [ DEFAULT: {cwd} ]')
+    prsr.add_argument('-tc', '--track-spawns', dest='track_spawned_processes', action='store_true',
+                      help="Optional flag which should be set if a program spawning child processes should be tracked.")
     return prsr.parse_known_args()
 
 
@@ -45,6 +47,7 @@ def main() -> int:
     with open(stats_file_out, 'wt') as f_bench:
         f_bench.write(info_message + f'\niteration\tmax. memory usage (MiB)\tduration (s)\ttimestamp (d-m-Y,H:M:S)\n')
     statistic_matrix = np.zeros((int(args[0].n_iteration), 2), )  # 1st column is time, 2nd column is memory usage
+    track_child_processes = args[0].track_spawned_processes
     print(info_message, flush=True)
     for ind in range(int(args[0].n_iteration)):
         print(f"------------------------------------------------------------------------------\n\n"
@@ -54,7 +57,8 @@ def main() -> int:
         iter_time = datetime.datetime.now().strftime("%Y-%m-%d_%H-%M-%S")
         iter_time_print = datetime.datetime.now().strftime("%d-%m-%Y,%H:%M:%S")
         start_iter = time.perf_counter()
-        os.system(f'mprof run -o "{dat_file}" -T {args[0].sample_freq} {arguments}')
+        os.system(f'mprof run {"--include-children " if track_child_processes else ""}-o "{dat_file}" -T '
+                  f'{args[0].sample_freq} {arguments}')
         end_iter = time.perf_counter()
         statistic_matrix[ind, 0] = round(end_iter - start_iter, 3)
         statistic_matrix[ind, 1] = round(max((np.loadtxt(dat_file, dtype=str, usecols=1)[1:]).astype(float)), ndigits=2)

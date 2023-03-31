@@ -69,8 +69,8 @@ if [ ! -d "${bam_dir}" ]; then
 fi
 # create a temporary directory
 tmp_out_dir="$(mktemp -d)"
-echo "  WARNING: all output will be written temporarily to ${tmp_out_dir}. Please be sure enough storage space is
-available there or terminate this script!"
+echo "  WARNING: all output will be written temporarily to ${tmp_out_dir}. Please be sure enough storage space is" \
+"available there or terminate this script!"
 
 # TASK: profile each one of the B01, H01, C01, P01 samples from the publication
 declare -a presets=(1 2 3)  # preset 1 suffices for local test

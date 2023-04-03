@@ -73,7 +73,7 @@ P01, and H01 in the next section "[Result of GC Bias Correction](#result-of-gc-b
 
 
 ### Installation
-Latest version provided here is v0.5.2.
+Latest version provided here is v0.5.3.
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 

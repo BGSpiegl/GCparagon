@@ -74,7 +74,7 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 
 
 ### Installation
-Latest version provided here is v0.5.2.
+Latest version provided here is v0.5.3.
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 

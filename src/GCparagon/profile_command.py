@@ -7,6 +7,9 @@ import numpy as np
 from pathlib import Path
 from argparse import ArgumentParser, Namespace
 
+# REQUIREMENT: conda install -c anaconda memory_profiler  # from https://pypi.org/project/memory-profiler
+# Copyright: Marharyta Papakina & Benjamin Spiegl, 2023
+# Use according to license: GPL3.0
 
 # ----------- DEFAULT SETUP ------------
 DEFAULT_SAMPLING_INTERVAL = 5  # seconds

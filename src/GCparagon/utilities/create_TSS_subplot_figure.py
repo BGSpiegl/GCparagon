@@ -571,9 +571,9 @@ def main() -> int:
         fig.update_xaxes(showgrid=True, dtick=250, gridwidth=2, row=row, col=1)
         if row == 1:
             fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1)
-        elif row == 7:
-            fig.update_xaxes(title_text='relative position to TSS / bp', row=row, col=1)
         else:
+            if row == 7:
+                fig.update_xaxes(title_text='relative position to TSS / bp', row=row, col=1)
             fig.update_yaxes(title_text='normalized average DoC / ratio', row=row, col=1)
             fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1, secondary_y=True)
     # set same y-range for PAU and for HK gene DoC plots (separately)

@@ -89,12 +89,12 @@ For a detailed list of dependencies (manual installation, not recommended!) plea
 [Software Dependencies](#software-dependencies)
 
 ### Recommended Installation Procedure
-First, move into the directory where you want to store the GCparagon code and clone **this branch** of the 
-[GitHub repository][github repo]:
+First, to get all the download instructions and additional output from the publication, move into the directory where
+you want to store the GCparagon code and clone **this branch** of the [GitHub repository][github repo] (~63 MiB):
 
 `git clone --branch including_EGAS00001006963_results --single-branch https://github.com/BGSpiegl/GCparagon.git`
 
-If you want to clone **the whole repository**, use the following command instead:
+If you want to clone **the latest release** instead, use the following command instead:
 
 `git clone https://github.com/BGSpiegl/GCparagon`
 
@@ -113,7 +113,7 @@ OR
 
 Activate the new environment:
 
-`conda activate GCparagon_py3.10`
+`conda activate GCparagon`
 
 Run the `setup.py` in combination with `pip` to make GCparagon directly executable from the 
 console afterwards:
@@ -134,7 +134,7 @@ sufficient storage space available for tagged BAM etc.)
 To recreate the tagged BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963], 
 run the [driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
 
-`python3 driver_scripts/drv_compute_GC_presets.sh`
+`bash driver_scripts/drv_compute_GC_presets.sh`
 
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.

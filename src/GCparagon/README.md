@@ -134,7 +134,7 @@ sufficient storage space available for tagged BAM etc.)
 To recreate the tagged BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963], 
 run the [driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
 
-`python3 driver_scripts/drv_compute_GC_presets.sh`
+`bash driver_scripts/drv_compute_GC_presets.sh`
 
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.

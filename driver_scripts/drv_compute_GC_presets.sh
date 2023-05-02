@@ -27,7 +27,7 @@ n_processes=12
 python3_path="$(which python3)"
 script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
 content_root="$(dirname "${script_dir}")"
-profiling_script="${content_root}/src/GCparagon/benchmark_mprof.py"
+profiling_script="${content_root}/src/GCparagon/profile_command.py"
 if [ ! "${profiling_script}" ]; then
   echo "  ERROR: profiling script not found at: ${profiling_script}"
   exit 1

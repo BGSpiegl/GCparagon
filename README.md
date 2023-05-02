@@ -131,8 +131,18 @@ To activate BAM output, use the `--output-bam` flag.
 Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
 
-To recreate the tagged BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963], 
-run the [driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
+To gain access to the four BAM files used in the publication, go to EGA, create an account and ask for access to dataset
+[EGAS00001006963].
+
+To recreate the **tagged** BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963],
+first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
+The reference genome used to create the 4 BAM files in plots can be downloaded using the 
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script:
+
+`bash src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`
+
+After the download has finished, you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
+**within the activated conda environment**:
 
 `bash driver_scripts/drv_compute_GC_presets.sh`
 

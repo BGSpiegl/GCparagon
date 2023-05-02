@@ -10,6 +10,7 @@ import pandas as pd
 import plotly.express as px
 from collections import defaultdict
 from typing import List, Tuple, Optional, Union, Dict
+from plotly import graph_objs as go
 
 
 code_root = pathlib.Path(__file__).parent.parent
@@ -120,7 +121,8 @@ def load_txt_to_matrix_with_meta(filename: Union[str, pathlib.Path], loading_log
 def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample_id: Optional[str],
                                matrix_file_list: Optional[List[Union[str, pathlib.Path]]], out_dir_path: pathlib.Path,
                                parent_logger: logging.Logger, fig_width=1500, fig_height=1000, fig_fontsize=24,
-                               normalize_to_dataset_size=True, strip_xaxis_end_zeros=True):
+                               expected_fragment_lengths=(167, 167+149), normalize_to_dataset_size=True,
+                               strip_xaxis_end_zeros=True):
     if matrix_data_frame is None:  # load from file list!
         if matrix_file_list is None:
             log(message="either a matrix in pd.DataFrame format or a list of matrix file paths must be "
@@ -144,19 +146,57 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
     if normalize_to_dataset_size:  # divide each dataset by number of total fragments and multiply with 100
         for sample in samples:
             matrix_data_frame[sample] /= matrix_data_frame[sample].sum() / 100.
+    y_label = f"{'relative frequency / ' if normalize_to_dataset_size else 'count / '}" + \
+              ('%' if normalize_to_dataset_size else '1')
     length_distribution_fig = px.line(matrix_data_frame, template="simple_white", width=fig_width, height=fig_height,
                                       labels={'index': 'fragment length / bp',
-                                              'value': f"fragment length "
-                                                       f"{'share' if normalize_to_dataset_size else 'count'} / "
-                                                       f"{'%' if normalize_to_dataset_size else '1'}"},
-                                      title='Observed Fragment Lengths for sample' +
-                                            (': ' if single_sample else 's: ') + ', '.join(samples) +
-                                            (f' ({int(tuple(sample_total_counts.values())[0][0]):,} fragments)'
-                                             if single_sample else ''))
-    length_distribution_fig.update_layout(showlegend=False, font_family="Ubuntu", font_size=fig_fontsize)
+                                              'value': y_label})
+    length_distribution_fig.update_layout(showlegend=False, font_family="Ubuntu", font_size=fig_fontsize,
+                                          title_font_size=fig_fontsize+2,
+                                          title={'text': 'Observed Fragment Lengths for sample' +
+                                                 (': ' if single_sample else 's: ') + ', '.join(samples) +
+                                                 (f' ({int(tuple(sample_total_counts.values())[0][0]):,} fragments)'
+                                                  if single_sample else ''),
+                                                 'font': {'family': 'Ubuntu', 'size': 28, 'color': 'rgb(20, 20, 20)'},
+                                                 'xanchor': 'center', 'yanchor': 'middle', 'x': 0.5})
+    length_distribution_fig.data[0].update(line={'width': 3})
+    length_distribution_fig.update_xaxes(showgrid=True, dtick=50, gridwidth=1.5, gridcolor='rgb(220, 220, 220)',
+                                         minor_showgrid=True, minor_dtick=25, minor_gridwidth=1, minor_griddash='dash',
+                                         minor_gridcolor='rgb(220, 220, 220)')
+    # add zero line
+    x_min = length_distribution_fig.data[0].x.min()
+    x_max = length_distribution_fig.data[0].x.max()
+    y_min = length_distribution_fig.data[0].y.min()
+    y_max = length_distribution_fig.data[0].y.max()
+    length_distribution_fig.add_trace(go.Scatter(x=(x_min, x_max), y=(y_min, y_min),
+                                                 line={'color': 'rgb(45, 45, 45)', 'width': 1.5}, mode='lines'))
+    added_annotations = 0
+    if expected_fragment_lengths is not None:
+        for expected_fragment_length in expected_fragment_lengths:
+            try:
+                upper_line_end = length_distribution_fig.data[0].y[
+                    length_distribution_fig.data[0].x == expected_fragment_length][0]
+                if upper_line_end < (y_max-y_min)*0.06:
+                    raise ValueError  # line would be too small
+            except (ValueError, IndexError):
+                continue  # skip this annotation - not in figure range
+            # add expected max at 167 bp an 316 bp:
+            length_distribution_fig.add_trace(go.Scatter(x=(expected_fragment_length, expected_fragment_length),
+                                                         y=(y_min, upper_line_end), mode='lines',
+                                                         line={'color': 'rgb(255, 45, 45)', 'width': 1.5}))
+            # add annotation at 167 bp and 316 bp:
+            length_distribution_fig.add_annotation(x=expected_fragment_length+15, y=(y_max-y_min)*0.1,
+                                                   text=f'{expected_fragment_length} bp', showarrow=False,
+                                                   font={'color': 'rgb(255, 45, 45)', 'family': 'Ubuntu', 'size': 22})
+            added_annotations += 1
+    # swap traces to have zero line on bottom
+    length_distribution_fig.data = tuple([length_distribution_fig.data[1]] +
+                                         [length_distribution_fig.data[2+i]
+                                          for i in range(added_annotations)] +
+                                         [length_distribution_fig.data[0]])
     length_distribution_fig.show()
     out_file = out_dir_path / f"{((samples[0] + '_') if single_sample else '') if sample_id is None else sample_id}" \
-                              f"fragment_length_distribution.png"
+                              f".fragment_length_distribution.png"
     length_distribution_fig.write_image(out_file)
 
 

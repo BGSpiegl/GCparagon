@@ -6,6 +6,7 @@ import datetime
 import numpy as np
 from pathlib import Path
 from argparse import ArgumentParser, Namespace
+from typing import Tuple, List
 
 # REQUIREMENT: conda install -c anaconda memory_profiler  # from https://pypi.org/project/memory-profiler
 # Copyright: Marharyta Papakina & Benjamin Spiegl, 2023
@@ -17,7 +18,7 @@ DEFAULT_REPETITIONS = 3
 # --------------------------------------
 
 
-def get_cmdline_args() -> tuple[Namespace, list[str]]:
+def get_cmdline_args() -> Tuple[Namespace, List[str]]:
     prsr = ArgumentParser()
     prsr.add_argument('-s', '--script', dest='script_path', required=True,
                       help='Path to a Python script that should be benchmarked. [ REQUIRED ]')

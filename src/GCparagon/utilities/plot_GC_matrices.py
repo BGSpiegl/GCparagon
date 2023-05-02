@@ -1,12 +1,12 @@
 #!/usr/bin/env python3
 import logging
 import pathlib
-import scipy
-import plotly.express as px
 import numpy as np
+from plotly import graph_objs as go
+import plotly.express as px
 from pandas import DataFrame as pd_DF
 from scipy.ndimage import gaussian_filter
-from src.GCparagon.utilities.gc_logging import log
+from utilities.gc_logging import log
 
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
 USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainbow', 'plotly3', or 'blackbody'
@@ -15,7 +15,7 @@ USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainb
 
 def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, parent_logger: logging.Logger,
                             output_dir=None, percentile_plot=None, sample_id=None, y_tick_label_offset=0,
-                            x_tick_label_offset=0, fig_width=2000, fig_height=2000, fig_fontsize=32):
+                            x_tick_label_offset=0, fig_width=1800, fig_height=2000, fig_fontsize=32):
     try:
         matrix_type = list(filter(lambda a: a is not None,
                                   [mat_type if mat_type in data_id_to_show else None
@@ -39,19 +39,21 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
     annotation = data_id_to_show[data_id_to_show.index(matrix_type) + len(matrix_type):].strip(
         '-').strip('_').strip('-')
     if 'Mask' == matrix_type:
+        figure_title = f"{sample_id if sample_id else ''} " \
+                       f"{matrix_type_mapping[matrix_type.lower()]}" \
+                       f"{' (' + annotation + ')' if annotation else ''}"
         fig = px.imshow(frq_data[data_id_to_show],
-                        title=f"{sample_id if sample_id else ''} "
-                              f"{matrix_type_mapping[matrix_type.lower()]}"
-                              f"{' (' + annotation + ')' if annotation else ''}",
+                        title=figure_title,
                         template="simple_white", width=fig_width, height=fig_height,
                         labels={'x': 'GC bases / bp',
                                 'y': 'fragment length / bp'},
                         color_continuous_scale=['white', 'black'])
     else:
+        figure_title = f"{sample_id if sample_id else ''} " \
+                              f"{matrix_type_mapping[matrix_type.lower()]}" \
+                              f"{' (' + annotation + ')' if annotation else ''}"
         fig = px.imshow(frq_data[data_id_to_show],
-                        title=f"{sample_id if sample_id else ''} "
-                              f"{matrix_type_mapping[matrix_type.lower()]}"
-                              f"{' (' + annotation + ')' if annotation else ''}",
+                        title=figure_title,
                         template="simple_white", width=fig_width, height=fig_height,
                         labels={'x': 'GC bases / bp',
                                 'y': 'fragment length / bp'},
@@ -59,7 +61,16 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
     fig.update_layout(font_family="Ubuntu",
                       font_size=fig_fontsize,
                       legend=dict(title=data_id_to_show,
-                                  orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"))
+                                  orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"),
+                      title={'text': figure_title,
+                             'font': {'family': 'Ubuntu', 'size': fig_fontsize+4, 'color': 'rgb(20, 20, 20)'},
+                             'xanchor': 'center', 'yanchor': 'middle', 'x': 0.5},
+                      margin=go.layout.Margin(
+                          l=5,   # left margin
+                          r=5,   # right margin
+                          b=5,   # bottom margin
+                          t=60)  # top margin
+                      )
     for idx in range(len(fig.data)):
         fig.data[idx].y = fig.data[idx].y + y_tick_label_offset
         fig.data[idx].x = fig.data[idx].x + x_tick_label_offset
@@ -162,7 +173,7 @@ def smooth_2d_gc_weights(smooth_matrix: np.array, min_flen: int, parent_logger: 
         window = np.ones((1 + 2*smoothing_intensity, 1 + 2*smoothing_intensity)) / \
                  ((1. + 2*smoothing_intensity) ** 2)  # kernel sum should be 1
         smoothed_matrix = scipy.signal.convolve2d(smooth_matrix, window, 'same', boundary='fill',
-                                                    fillvalue=default_matrix_value)
+                                                  fillvalue=default_matrix_value)
     elif smoothing_kernel == 'gauss':
         #   sigma, standard deviations of the Gaussian filter are given for each axis (1., 1.)
         #   order=0, derivatives of a Gaussian:  An order of 0 corresponds to convolution with a Gaussian kernel.

@@ -18,7 +18,7 @@ echo " ENTERED PRESET COMPUTATION SCRIPT"
 # for conda environment activation to work, you must source the user's .bashrc file' first:
 eval "$(conda shell.bash hook)"
 # Still old conda will be used. Mamba install does not seem to work
-conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
+conda activate GCparagon  # NAME OF CONDA ENV GOES HERE
 
 echo "  i: conda environment activated"
 
@@ -37,8 +37,8 @@ if [ ! "${GCparagon_script}" ]; then
   echo "  ERROR: correct_GC_bias.py script not found at: ${GCparagon_script}"
   exit 1
 fi
-TWOBIT_REF_GENOME="${content_root}/src/GCparagon/2bit_reference/hg38.analysisSet.2bit"  # CHANGE REFERENCE GENOME PATH..
-# ..HERE --------------------------^ IF REQUIRED!
+TWOBIT_REF_GENOME="${content_root}/src/GCparagon/2bit_reference/hg38.analysisSet.2bit"
+# !!!! CHANGE REFERENCE GENOME PATH HERE --------------------------^ IF REQUIRED!
 if [ ! "${TWOBIT_REF_GENOME}" ]; then
   echo "  ERROR: 2bit version of hg38 reference genome not found at: ${TWOBIT_REF_GENOME}." \
 "Please download using the EXECUTE_reference_download.sh script there to obtain it!"
@@ -84,14 +84,14 @@ do
   for preset in "${presets[@]}"
   do
     echo "  i: preset is: ${preset}"
-    preset_out_dir="${bam_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
+    preset_out_dir="${bam_dir}/${preset}"  # subdir with sample_id will be created by the GCparagon script
     echo "  i: output for sample ${sample_id} will be moved to path ${preset_out_dir}"
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"
     fi
-    "${python3_path}" "${profiling_script}"  --include-children --iter 2 --sampling-frequency 10 \
+    "${python3_path}" "${profiling_script}" --include-children --iter 2 --sampling-frequency 10 \
     --output-path "${test_output_dir}" --script "${GCparagon_script}" --use-parameter-preset "${preset}" \
     --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
-    --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}"
+    --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --track-spawns
   done
 done

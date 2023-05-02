@@ -1,4 +1,4 @@
-name: GCparagon_py3.10  # python 3.11 did not work; install with: mamba env create -f GCparagon_py3.10_env.yml; also works with conda
+name: GCparagon  # python 3.11 did not work; install with: mamba env create -f GCparagon_py3.10_env.yml; also works with conda
 channels:
   - bioconda
   - plotly  # encountered problem with the kaleido package from conda-forge channel chosen by mamba, so priority is given to plotly channel
@@ -26,3 +26,4 @@ dependencies:
   - matplotlib=3.6
   - memory_profiler
   - pybedtools
+  - polars

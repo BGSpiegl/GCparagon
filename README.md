@@ -68,12 +68,13 @@ The tag string can be redefined using the `--tag-name` parameter.
 ### How to use cfDNA fragment weights
 Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
 fragments to obtain an unbiased result for signal extraction. An example could be depth of coverage computation for 
-specific groups of transcription start sites as shown for samples B01, C01, 
-P01, and H01 in the next section "[Result of GC Bias Correction](#result-of-gc-bias-correction)".
+specific groups of transcription start sites as shown for samples B01, C01, P01, and H01 in the next section 
+"[Result of GC Bias Correction](#result-of-gc-bias-correction)". For sample-wide effects see additional figures in the 
+[correction_result_examples](correction_result_examples) directory.
 
 
 ### Installation
-Latest version provided here is v0.5.3.
+Latest version provided here is v0.5.4.
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
@@ -146,7 +147,7 @@ You might want to do this inside a tmux session from which you can detach. Prese
 - Original work on benchmark_mprof.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
 ### Software license
-[GNU General Public License v3](src/GCparagon/LICENSE)
+[MIT License](src/GCparagon/LICENSE)
 
 Intended for research use only.
 
@@ -175,25 +176,22 @@ data, a GC bias manifests as changes in the average DoC across these 5' -> 3' or
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
 should show an almost flat DoC profile.
 
-Examples of the effect of positive (C01, P01) and negative GC bias (B01) on the average DoC for unexpressed and 
-expressed genes is shown below (fragments in silico reduced to their central 60 bp portion). The original H01 sample has
-the lowest deviation of average GC content from the expected 40.4% and shows the weakest GC bias. Hence, the original 
-and corrected DoC profiles are very similar. 
+Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01) on the average DoC for expressed and 
+unexpressed genes is shown below (fragments in silico reduced to their central 60 bp portion).
+The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
+GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
-![doc_c01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_C01.png?raw=true)
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/DoC_bias_correction_effect_TSSs.png?raw=true)
 
-![doc_p01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_P01.png?raw=true)
+The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
+the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
+as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
+(approx. every 3rd promoter).
 
-![doc_b01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_B01.png?raw=true)
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TFBSs/DoC_bias_correction_effect_TFBSs.png?raw=true)
 
-![doc_h01_pau_vs_hk](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/coverage_original-corrected_H01.png?raw=true)
-
-The DoC increase/decrease after position 0 (= TSS) for positive/negative GC bias (C01,P01/B01) is due to the increased 
-GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences as shown below. 
-These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero (approx. every 3rd 
-promoter).
-
-![tss_gc_hk_pau](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/gene_groups_ref_gc_content_2001bp_15bpHammingSmoothed.png?raw=true)
+Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
+showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.
 
 
 ## Output

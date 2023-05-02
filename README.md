@@ -130,13 +130,24 @@ To activate BAM output, use the `--output-bam` flag.
 Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
 
-To recreate the output for all three presets and 4 samples from [EGAS00001006963], run the 
-[driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
+To recreate the tagged BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963], 
+run the [driver script](driver_scripts/drv_compute_GC_presets.sh) inside the activated conda environment:
 
 `python3 driver_scripts/drv_compute_GC_presets.sh`
 
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.
+
+To compute the depth of coverage validation results, one can either use the deposited [Zenodo DoC CSV data] and place it
+in the coverages folders ([TSSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages),
+and [TFBSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages)) OR create these coverage CSV files themselves
+using the [template driver script](src/utilities/c60bp_DoC_extraction_template.sh) which calls 
+the [DoC extraction script](src/utilities/analyse_coverage_pysam_presum_c60.py) on the BAM files.
+The template script must be completed with the appropriate paths before being called (see comments within file).
+
+The figure 3 plots can be created using the DoC & reference GC content computation scripts for 
+[TFBSs](src/utilities/create_TFBS_subplot_figure.py) and [TSSs](src/utilities/create_TSS_subplot_figure.py).
+
 
 ### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])
@@ -611,12 +622,12 @@ samples from [EGAS00001006963].
 
 |   Preset    | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing |   smoothing strength   | est. computation time |
 |:-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:----------------------:|----------------------:|
-| 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |            2:40 (m:s) |
-|      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |            2:40 (m:s) |
-|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |           15:15 (m:s) |
- |      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |          *50:40 (m:s) |
+| 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |               1-3 min |
+|      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |               1-3 min |
+|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |               ~15 min |
+ |      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
 
-*depends on DoC of BAM file
+*depends on actual DoC of BAM file
 
 
 ## Genomic Region Preselection
@@ -697,5 +708,6 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [hg38_std_analysis_set]: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/
 [hg38_decoy_analysis_set]: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/
 [EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963
+[Zenodo DoC CSV data]: https://doi.org/10.5281/zenodo.7886030
 [genome browser]: https://genome.ucsc.edu/
 [encode_blacklisted_regions_url]: https://github.com/Boyle-Lab/Blacklist/

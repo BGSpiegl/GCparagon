@@ -9,20 +9,21 @@ from collections import defaultdict, deque
 from twobitreader import TwoBitFile
 from typing import Tuple, Dict, Union, List
 
-SOURCE_CODE_ROOT_PATH = Path(__file__).parent.parent.parent
+SOURCE_CODE_ROOT_PATH = Path(__file__).parent.parent
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 
 mp.set_start_method('spawn', force=True)  # for safety reasons, don't fork (don't screw up file handles)
 
-hg38_2bit_ref_genome = SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit'  # needs to be downloaded using
+hg38_2bit_ref_genome = SOURCE_CODE_ROOT_PATH / 'src/GCparagon/2bit_reference/hg38.analysisSet.2bit'  # needs to be downloaded using
 # the EXECUTE_reference_download.sh script
-hg38_ref_genome_chrom_sizes = SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.chrom.sizes'
+hg38_ref_genome_chrom_sizes = SOURCE_CODE_ROOT_PATH / 'src/GCparagon/2bit_reference/hg38.analysisSet.chrom.sizes'
 draw_n_fragments = 500*10**6  # five hundred million
 n_processes = 24  # actually 1 per stdchrom -> chr1 will take the longest
 
 SCRIPT_ROOT_PATH = Path(__file__).parent
 out_path = SCRIPT_ROOT_PATH / 'simulated_hg38_ref_dists'
 
+# these must be computed first using the "driver_scripts/drv_compute_GC_presets.sh" script!
 observed_fragments = {'preset3': {'H01': SOURCE_CODE_ROOT_PATH /
                                   'preset_computation/3/H01/H01_observed_attributes_matrix.txt.gz',
                                   'P01': SOURCE_CODE_ROOT_PATH /

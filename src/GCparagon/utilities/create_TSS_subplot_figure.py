@@ -38,9 +38,8 @@ SAMPLE_COLORS = {'B01': 'rgba(51, 98, 255, 1)',
 # TSSs DoC definitions:
 tss_coverage_csv_paths = {'stem': CONTENT_ROOT_DIR / 'accessory_files/TSSs/coverages',
                           'relative': ('TSS_corrected', 'TSS_original')}
-output_path = Path(CONTENT_ROOT_DIR / 'accessory_files/TSSs')
-output_file_path = output_path / 'DoC_bias_correction_effect_TSSs.png'
-REF_GC_DUMP = output_path / 'TSS_ref_gc_content.npydct'
+output_file_path = CONTENT_ROOT_DIR / 'validation/DoC_bias_correction_effect_TSSs.png'
+REF_GC_DUMP = CONTENT_ROOT_DIR / 'accessory_files/TSSs/TSS_ref_gc_content.npydct'
 # created in the first iteration;  MUST be deleted if the reference regions in tss_coverage_csv_paths change!
 
 

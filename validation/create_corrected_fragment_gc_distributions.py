@@ -18,13 +18,13 @@ from typing import Union, Optional, Tuple, List
 target_alignment_number = None  # 40*10**6  # possible problem that we base our estimate only on chr1
 # -> process entire BAMs! # other choice tested: 2*10**7  # twenty million and 40*10**6
 
-SOURCE_CODE_ROOT_PATH = pathlib.Path(__file__).parent.parent.parent
+SOURCE_CODE_ROOT_PATH = pathlib.Path(__file__).parent.parent
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 
-hg38_2bit_ref_genome = SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit'
+hg38_2bit_ref_genome = SOURCE_CODE_ROOT_PATH / 'src/GCparagon/2bit_reference/hg38.analysisSet.2bit'
 # above is valid if the EXECUTE_reference_download.sh is used; REPLACE THE PATH ABOVE OTHERWISE!
 
-output_path = SOURCE_CODE_ROOT_PATH / 'test/corrected_gc_distribution'
+output_path = SOURCE_CODE_ROOT_PATH / 'test'
 output_path.mkdir(parents=True, exist_ok=True)
 
 input_path = SOURCE_CODE_ROOT_PATH / 'preset_computation'

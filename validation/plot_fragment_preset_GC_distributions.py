@@ -105,7 +105,7 @@ def main():
         if not original_gc_distributions_per_preset or not corrected_gc_distributions_per_preset:
             return 1
         # read in reference dist
-        reference_gc_dists = defaultdict(None)
+        # reference_gc_dists = defaultdict(None)
         # # required for all samples in a preset plot:
         # for sample_id, hg38_cfDNA_ref_dist in reference_gc_hg38_cfDNA.items():
         #     reference_gc_dists[sample_id] = read_normalized_tsv_data_to_dict(table_path=Path(hg38_cfDNA_ref_dist))

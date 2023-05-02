@@ -69,8 +69,9 @@ The tag string can be redefined using the `--tag-name` parameter.
 Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
 fragments to obtain an unbiased result for signal extraction. An example could be depth of coverage computation for 
 specific groups of transcription start sites as shown for samples B01, C01, P01, and H01 in the next section 
-"[Result of GC Bias Correction](#result-of-gc-bias-correction)". For sample-wide effects see additional figures in the 
-[correction_result_examples](correction_result_examples) directory.
+"[Result of GC Bias Correction](#result-of-gc-bias-correction)". To this end, Faruk Kapidzic created a Pysam fork which
+can directly use the tags. For sample-wide effects of GC correction using different presets see additional figures in
+the [validation](validation/fragment_GCcontent_plots) directory.
 
 
 ### Installation
@@ -138,14 +139,14 @@ run the [driver script](driver_scripts/drv_compute_GC_presets.sh) inside the act
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.
 
-To compute the depth of coverage validation results, one can either use the deposited [Zenodo DoC CSV data] and place it
-in the coverages folders ([TSSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages),
-and [TFBSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages)) OR create these coverage CSV files themselves
-using the [template driver script](src/utilities/c60bp_DoC_extraction_template.sh) which calls 
+To compute the validation results for the depth of coverage signals, one can either use the deposited [Zenodo DoC CSV data]
+and place it in the coverages folders ([TSSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages),
+and [TFBSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages)) OR create these coverage CSV files 
+themselves using the [template driver script](src/utilities/c60bp_DoC_extraction_template.sh) which calls 
 the [DoC extraction script](src/utilities/analyse_coverage_pysam_presum_c60.py) on the BAM files.
 The template script must be completed with the appropriate paths before being called (see comments within file).
 
-The figure 3 plots can be created using the DoC & reference GC content computation scripts for 
+The plots used in figure 3 can be created using the DoC & reference GC content computation scripts for 
 [TFBSs](src/utilities/create_TFBS_subplot_figure.py) and [TSSs](src/utilities/create_TSS_subplot_figure.py).
 
 
@@ -174,7 +175,7 @@ The GC content of fragments was estimated either from the read sequence if templ
 read sequence length,
 or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
 
-![preset1_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/test/corrected_gc_distribution/fragment_GCcontent_plots/all_samples/GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_Preset1_cfDNAref.png?raw=true)
+![preset1_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/fragment_GCcontent_plots/all_samples/GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_Preset1_cfDNAref.png?raw=true)
 
 (fragment GC content in 2 %GC bins, spline interpolated)
 
@@ -676,7 +677,7 @@ Instructions for FastA reference genome sequence download can be found
 Code for genomic regions blacklist creation and genomic chunk preselection can be found in folder 
 [accessory_files](accessory_files).
 
-Results of the correction validation are located in [test/corrected_gc_distribution](test/corrected_gc_distribution).
+Results of the correction validation are located in [validation](validation).
 
 Results from the [benchmark_mprof.py](src/GCparagon/benchmark_mprof.py) script are stored in 
 [preset_computation/benchmark_results](preset_computation/benchmark_results).

@@ -203,14 +203,14 @@ unexpressed genes is shown below (fragments in silico reduced to their central 6
 The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
 GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
-![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TSSs/DoC_bias_correction_effect_TSSs.png?raw=true)
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TSSs.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
 the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
 as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
 (approx. every 3rd promoter).
 
-![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/accessory_files/TFBSs/DoC_bias_correction_effect_TFBSs.png?raw=true)
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TFBSs.png?raw=true)
 
 Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
 showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.

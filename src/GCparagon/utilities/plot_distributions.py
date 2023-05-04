@@ -122,7 +122,7 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
                                matrix_file_list: Optional[List[Union[str, pathlib.Path]]], out_dir_path: pathlib.Path,
                                parent_logger: logging.Logger, fig_width=1500, fig_height=1000, fig_fontsize=24,
                                expected_fragment_lengths=(167, 167+149), normalize_to_dataset_size=True,
-                               strip_xaxis_end_zeros=True):
+                               strip_xaxis_end_zeros=True, show_figure=False):
     if matrix_data_frame is None:  # load from file list!
         if matrix_file_list is None:
             log(message="either a matrix in pd.DataFrame format or a list of matrix file paths must be "
@@ -194,7 +194,8 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
                                          [length_distribution_fig.data[2+i]
                                           for i in range(added_annotations)] +
                                          [length_distribution_fig.data[0]])
-    length_distribution_fig.show()
+    if show_figure:
+        length_distribution_fig.show()
     out_file = out_dir_path / f"{((samples[0] + '_') if single_sample else '') if sample_id is None else sample_id}" \
                               f".fragment_length_distribution.png"
     length_distribution_fig.write_image(out_file)
@@ -204,7 +205,7 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
                   out_dir_path: pathlib.Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
                   spline_interpolation=True, normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
                   reads='both', reference_dist=Union[Dict[str, float], defaultdict[float], None],
-                  reference_normalized=True):
+                  reference_normalized=True, show_figure=False):
     reads = reads.lower()
     if reads not in ('r1', 'r2', 'both'):
         raise AttributeError(f"invalid use of reads: '{reads}'. Attribute reads must be one of 'r1', 'r2', or 'both'.")
@@ -296,7 +297,8 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
     length_distribution_fig.update_layout(font_family="Ubuntu", font_size=fig_fontsize,
                                           legend={'orientation': 'h', 'xanchor': 'center', 'yanchor': 'top',
                                                   'x': 0.5, 'y': -0.2, 'title': ''})
-    length_distribution_fig.show()
+    if show_figure:
+        length_distribution_fig.show()
     out_dir_path.mkdir(parents=True, exist_ok=True)
     out_file = out_dir_path / f"GCparagon_GC_content_comparison_pre-post_correction_{re.sub(', ', '_', annotation)}.png"
     length_distribution_fig.write_image(out_file)
@@ -305,7 +307,7 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
 def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
                         figure_title: str, signal_colors: Dict[str, Tuple[int, int, int]],
                         output_file_path: pathlib.Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
-                        y_is_percentage=True):
+                        y_is_percentage=True, show_figure=False):
     color_map = {}
     data_frame_lines = []
     for data_id, plot_data_signals in data_to_plot.items():
@@ -342,7 +344,8 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
                                             'x': 0.5, 'y': -0.2, 'title': ''})
     loci_group_gc_fig.update_xaxes(showgrid=True, dtick=250, gridwidth=2)
     loci_group_gc_fig.update_yaxes(showgrid=True, gridwidth=2)
-    loci_group_gc_fig.show()
+    if show_figure:
+        loci_group_gc_fig.show()
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     loci_group_gc_fig.write_image(output_file_path)
     return 0
@@ -350,13 +353,10 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
 
 def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
                            out_dir_path: pathlib.Path,
-                           reference_dists: defaultdict[str,
-                                                        Union[Dict[int, float],
-                                                              defaultdict[float],
-                                                              None]
-                                                        ], markers=True,
-                           fig_width=1500, fig_height=1000, fig_fontsize=24, normalize_to_dataset_size=True,
-                           annotation=None, reduced_bins=True, spline_interpolation=True, reference_normalized=True):
+                           reference_dists: defaultdict[str, Union[Dict[int, float], defaultdict[float], None]],
+                           markers=True, fig_width=1500, fig_height=1000, fig_fontsize=24, show_figure=False,
+                           normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
+                           spline_interpolation=True, reference_normalized=True):
     # sample_R1\tDATA
     orig_samples = sorted(list(original_gc_data.keys()))
     corrected_samples = sorted(list(corrected_gc_data.keys()))
@@ -473,7 +473,8 @@ def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_d
                                           legend={'orientation': 'h', 'xanchor': 'center', 'yanchor': 'top',
                                                   'x': 0.5, 'y': -0.2, 'title': ''})
     length_distribution_fig.update_xaxes(range=[10, 85])
-    length_distribution_fig.show()
+    if show_figure:
+        length_distribution_fig.show()
     out_dir_path.mkdir(parents=True, exist_ok=True)
     out_file = out_dir_path / \
         (('individual_samples_and_presets_separate/' if len(orig_samples) == 1 else '') +
@@ -501,7 +502,7 @@ def main() -> int:
     output_dir.mkdir(parents=True, exist_ok=True)
     # create line plot
     plot_fragment_length_dists(matrix_data_frame=observation_matrix, matrix_file_list=None, out_dir_path=output_dir,
-                               normalize_to_dataset_size=normalize_datasets, sample_id=None,
+                               normalize_to_dataset_size=normalize_datasets, sample_id=None, show_figure=False,
                                strip_xaxis_end_zeros=strip_zero_counts, parent_logger=test_logger)
     return 0
 

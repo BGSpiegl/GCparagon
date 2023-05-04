@@ -19,6 +19,8 @@ if SOURCE_ROOT_DIR not in sys.path:
     sys.path.append(str(SOURCE_ROOT_DIR))
 CONTENT_ROOT_DIR = SOURCE_ROOT_DIR.parent.parent
 
+show_figure = False  # set to True for additional interactive plot in browser
+
 # ref GC content definitions:
 PERCENTAGE_PLOT = True
 two_bit_reference_file = SOURCE_ROOT_DIR / '2bit_reference/hg38.analysisSet.2bit'
@@ -212,7 +214,8 @@ def ref_gc_trace_name_replacemenet_func(trc_nm: str) -> str:
 
 def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
                         signal_colors: Dict[str, Tuple[int, int, int]], fig_fontsize=24,
-                        fig_width=1500, fig_height=1000, y_is_percentage=True) -> Union[int, go.Figure]:
+                        fig_width=1500, fig_height=1000, y_is_percentage=True) \
+        -> Union[int, go.Figure]:
     color_map = {}
     data_frame_lines = []
     for data_id, plot_data_signals in data_to_plot.items():
@@ -306,7 +309,7 @@ def main() -> int:
     # ------------------------------------------------------------------------------------------------------------------
     # create Multiplot:
     fig = make_subplots(rows=7, cols=1, shared_xaxes=False, shared_yaxes=False, vertical_spacing=0.03,
-                        subplot_titles=('average reference sequence GC content',
+                        subplot_titles=('reference sequence GC content',
                                         'B01 TFBS coverage LYL1 (-2.2% GC)',
                                         'H01 TFBS coverage LYL1 (+1.1% GC)',
                                         'P01 TFBS coverage LYL1 (+5.0% GC)',
@@ -324,7 +327,7 @@ def main() -> int:
     # 0.) LYL1/GRHL2 reference GC content
     ref_gc_content_traces = plot_ref_gc_content(data_to_plot=data_to_plot, transparencies=transparent_signals,
                                                 signal_colors=TFBS_COLORS, y_is_percentage=PERCENTAGE_PLOT,
-                                                fig_fontsize=24, fig_width=1000, fig_height=800)
+                                                fig_fontsize=26, fig_width=1000, fig_height=800)
     if ref_gc_content_traces == 1:
         raise ValueError("something went wrong during plotting of P01 LYL1")
     for ref_trace in ref_gc_content_traces.data:
@@ -339,7 +342,7 @@ def main() -> int:
     # 1.) B01 LYL1
     b01_lyl1_traces = get_multi_signals_plot(plot_data_signals=cov_data['B01']['LYL1'], data_category='LYL1',
                                              signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                             annotation='B01', y_axis_data_label='average relative coverage / 1')
+                                             annotation='B01', y_axis_data_label='relative coverage / 1')
     if b01_lyl1_traces == 1:
         raise ValueError("something went wrong during plotting of P01 LYL1")
     for doc_trace in b01_lyl1_traces.data:
@@ -347,7 +350,7 @@ def main() -> int:
     # 2.) H01 LYL1
     h01_lyl1_traces = get_multi_signals_plot(plot_data_signals=cov_data['H01']['LYL1'], data_category='LYL1',
                                              signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                             annotation='H01', y_axis_data_label='average relative coverage / 1')
+                                             annotation='H01', y_axis_data_label='relative coverage / 1')
     if h01_lyl1_traces == 1:
         raise ValueError("something went wrong during plotting of P01 LYL1")
     for doc_trace in h01_lyl1_traces.data:
@@ -355,7 +358,7 @@ def main() -> int:
     # 3.) P01 LYL1
     p01_lyl1_traces = get_multi_signals_plot(plot_data_signals=cov_data['P01']['LYL1'], data_category='LYL1',
                                              signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                             annotation='P01', y_axis_data_label='average relative coverage / 1')
+                                             annotation='P01', y_axis_data_label='relative coverage / 1')
     if p01_lyl1_traces == 1:
         raise ValueError("something went wrong during plotting of P01 LYL1")
     for doc_trace in p01_lyl1_traces.data:
@@ -363,7 +366,7 @@ def main() -> int:
     # 4.) B01 GRHL2
     b01_grhl2_traces = get_multi_signals_plot(plot_data_signals=cov_data['B01']['GRHL2'], data_category='GRHL2',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              annotation='B01', y_axis_data_label='average relative coverage / 1')
+                                              annotation='B01', y_axis_data_label='relative coverage / 1')
     if b01_grhl2_traces == 1:
         raise ValueError("something went wrong during plotting of B01 GRHL2")
     for doc_trace in b01_grhl2_traces.data:
@@ -371,7 +374,7 @@ def main() -> int:
     # 5.) H01 GRHL2
     h01_grhl2_traces = get_multi_signals_plot(plot_data_signals=cov_data['H01']['GRHL2'], data_category='GRHL2',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              annotation='H01', y_axis_data_label='average relative coverage / 1')
+                                              annotation='H01', y_axis_data_label='relative coverage / 1')
     if h01_grhl2_traces == 1:
         raise ValueError("something went wrong during plotting of H01 GRHL2")
     for doc_trace in h01_grhl2_traces.data:
@@ -379,7 +382,7 @@ def main() -> int:
     # 6.) P01 GRHL2
     p01_grhl2_traces = get_multi_signals_plot(plot_data_signals=cov_data['P01']['GRHL2'], data_category='GRHL2',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              annotation='P01', y_axis_data_label='average relative coverage / 1')
+                                              annotation='P01', y_axis_data_label='relative coverage / 1')
     if p01_grhl2_traces == 1:
         raise ValueError("something went wrong during plotting of P01 GRHL2")
     for doc_trace in p01_grhl2_traces.data:
@@ -456,21 +459,21 @@ def main() -> int:
             fig.data[dat_idx].showlegend = False
     # update overall figure formatting
     fig.update_layout(height=3400, width=1200, template='simple_white', showlegend=True,
-                      font={'family': 'Ubuntu', 'size': 22, 'color': 'rgb(20, 20, 20)'},
+                      font={'family': 'Ubuntu', 'size': 26, 'color': 'rgb(20, 20, 20)'},
                       title={'text': 'TFBS GC Bias',
-                             'font': {'family': 'Ubuntu', 'size': 30, 'color': 'rgb(20, 20, 20)'},
+                             'font': {'family': 'Ubuntu', 'size': 42, 'color': 'rgb(20, 20, 20)'},
                              'xanchor': 'center', 'yanchor': 'middle', 'x': 0.48},
                       legend=dict(orientation='h', xanchor='center', yanchor='top', x=0.5, y=-0.025,
-                                  traceorder='reversed'))
-    fig.update_annotations(font={'family': 'Ubuntu', 'size': 26, 'color': 'rgb(20, 20, 20)'})  # format subplot titles
+                                  traceorder='reversed', font=dict(size=18)))
+    fig.update_annotations(font={'family': 'Ubuntu', 'size': 32, 'color': 'rgb(20, 20, 20)'})  # format subplot titles
     fig.update_yaxes(showgrid=True, gridwidth=2, row=1, col=1)
     for row in range(1, 8):  # turn on y-grid
         fig.update_xaxes(showgrid=True, dtick=250, gridwidth=2, row=row, col=1)
         if row == 1:
-            fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1)
+            fig.update_yaxes(title_text='reference GC content / %', row=row, col=1)
         else:
-            fig.update_yaxes(title_text='normalized average DoC / ratio', row=row, col=1)
-            fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1, secondary_y=True)
+            fig.update_yaxes(title_text='normalized DoC / ratio', row=row, col=1)
+            fig.update_yaxes(title_text='reference GC content / %', row=row, col=1, secondary_y=True)
             if row == 7:
                 fig.update_xaxes(title_text='relative position to TFBS / bp', row=row, col=1)
     # update y ranges
@@ -486,7 +489,8 @@ def main() -> int:
             fig.update_yaxes(range=grhl2_limits, row=sec_idx, col=1, secondary_y=False)
         if sec_idx != 1:
             fig.update_yaxes(range=ref_limits, row=sec_idx, col=1, secondary_y=True)
-    fig.show()
+    if show_figure:
+        fig.show()
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_file_path)
     return 0

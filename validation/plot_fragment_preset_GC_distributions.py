@@ -12,15 +12,19 @@ SCRIPT_ROOT_DIR = str(SCRIPT_ROOT_PATH)
 output_dir = SCRIPT_ROOT_PATH / 'fragment_GCcontent_plots'  # output for final plots
 all_samples_dists_file = SCRIPT_ROOT_PATH / \
                          'STATISTICS_allSamples_GC-percentage_perFragmentSequence_FULL_24-02-2023.tsv'
-dist_files = {'B01': SCRIPT_ROOT_PATH / 'FRAGMENT_STATISTICS_B01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
-              'C01': SCRIPT_ROOT_PATH / 'FRAGMENT_STATISTICS_C01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
-              'H01': SCRIPT_ROOT_PATH / 'FRAGMENT_STATISTICS_H01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
-              'P01': SCRIPT_ROOT_PATH / 'FRAGMENT_STATISTICS_P01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv'}
+dist_files = {'B01': SCRIPT_ROOT_PATH / 'fragment_GCcontent_plots/'
+                                        'FRAGMENT_STATISTICS_B01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
+              'C01': SCRIPT_ROOT_PATH / 'fragment_GCcontent_plots/'
+                                        'FRAGMENT_STATISTICS_C01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
+              'H01': SCRIPT_ROOT_PATH / 'fragment_GCcontent_plots/'
+                                        'FRAGMENT_STATISTICS_H01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv',
+              'P01': SCRIPT_ROOT_PATH / 'fragment_GCcontent_plots/'
+                                        'FRAGMENT_STATISTICS_P01_GC-percentage_perFragmentSequence_FULL_07-03-2023.tsv'}
 reference_gc_hg38_cfDNA = {
-    'B01': SCRIPT_ROOT_PATH / 'hg38_ref_dists/B01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
-    'H01': SCRIPT_ROOT_PATH / 'hg38_ref_dists/H01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
-    'C01': SCRIPT_ROOT_PATH / 'hg38_ref_dists/C01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
-    'P01': SCRIPT_ROOT_PATH / 'hg38_ref_dists/P01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv'}
+    'B01': SCRIPT_ROOT_PATH / 'simulated_hg38_ref_gc/B01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
+    'H01': SCRIPT_ROOT_PATH / 'simulated_hg38_ref_gc/H01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
+    'C01': SCRIPT_ROOT_PATH / 'simulated_hg38_ref_gc/C01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv',
+    'P01': SCRIPT_ROOT_PATH / 'simulated_hg38_ref_gc/P01-preset3-fragLenDist_ref_GC_dist_500Mreads.tsv'}
 
 SPLINE_INTERPOLATION = True
 
@@ -67,16 +71,8 @@ def read_stats(stats_path: Union[str, Path]) -> Optional[Tuple[Dict[str, Dict[st
             continue
         cur_stt = line_content[status_column]
         cur_smpl = line_content[sample_column]
-        # change names
-        match cur_smpl:
-            case 'B58_3':
-                cur_smpl = 'B01'
-            case 'P244_7':
-                cur_smpl = 'P01'
-            case 'C219_5':
-                cur_smpl = 'C01'
-            case 'NPH_011':
-                cur_smpl = 'H01'
+        if cur_smpl not in ['B01', 'P01', 'C01', 'H01']:
+            raise ValueError(f"unknown sample name {cur_smpl}!")
         cur_prst = line_content[preset_column]
         cur_data = np.array(line_content[3:], dtype=float)
         assert len(cur_data) == 101
@@ -130,7 +126,7 @@ def main():
                                    out_dir_path=Path(output_dir), fig_width=1200, fig_height=800, fig_fontsize=24,
                                    normalize_to_dataset_size=True, annotation=f'{sample}-allPresets',
                                    # annotation=f'Preset{preset}',
-                                   reduced_bins=True, reference_dists=reference_gc_dists,
+                                   reduced_bins=True, reference_dists=reference_gc_dists, show_plot=False,
                                    spline_interpolation=SPLINE_INTERPOLATION, markers=plot_markers)
     return 0
 

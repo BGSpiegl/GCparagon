@@ -1,0 +1,12 @@
+CMDLINE /home/benjamin/mambaforge/envs/GCparagon/bin/python3.10 /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/src/GCparagon/correct_GC_bias.py --use-parameter-preset 1 --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/preset_computation/C01.bam --two-bit-reference-genome /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/src/GCparagon/2bit_reference/hg38.analysisSet.2bit --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/preset_computation/1 --temporary-directory /tmp/tmp.dLOsX6bYnB --write-chunk-exclusion --threads 12
+MEM 0.601562 1683045584.6826
+MEM 1855.082031 1683045594.7106
+MEM 2329.156250 1683045604.7441
+MEM 2351.812500 1683045614.7758
+MEM 2377.042969 1683045624.8075
+MEM 2379.148438 1683045634.8388
+MEM 2379.921875 1683045644.8705
+MEM 2380.433594 1683045654.9025
+MEM 2434.023438 1683045664.9363
+MEM 2217.238281 1683045674.9766
+MEM 792.160156 1683045685.0207

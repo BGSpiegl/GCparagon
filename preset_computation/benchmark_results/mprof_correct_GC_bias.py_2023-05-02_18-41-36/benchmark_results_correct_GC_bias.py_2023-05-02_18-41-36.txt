@@ -1,0 +1,17 @@
+Command called: /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/src/GCparagon/correct_GC_bias.py --use-parameter-preset 2 --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/preset_computation/C01.bam --two-bit-reference-genome /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/src/GCparagon/2bit_reference/hg38.analysisSet.2bit --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon/preset_computation/2 --temporary-directory /tmp/tmp.dLOsX6bYnB --write-chunk-exclusion --threads 12 
+Date and time of execution: 02-05-2023, 18:41:36
+Repeat computation 2 times, sampling every 10 seconds
+
+iteration	max. memory usage (MiB)	duration (s)	timestamp (d-m-Y,H:M:S)
+1	2349.36	612.347	02-05-2023,18:41:36
+2	2377.99	602.271	02-05-2023,18:51:50
+
+
+Overall time statistic (in seconds):
+ Average execution time: 607.309
+ Min execution time: 602.271
+ Max execution time: 612.347
+
+Average memory consumption (in MiB): 2363.675
+ Min memory usage: 2349.36
+ Max memory usage: 2377.99

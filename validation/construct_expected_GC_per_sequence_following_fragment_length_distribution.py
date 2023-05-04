@@ -21,17 +21,17 @@ draw_n_fragments = 500*10**6  # five hundred million
 n_processes = 24  # actually 1 per stdchrom -> chr1 will take the longest
 
 SCRIPT_ROOT_PATH = Path(__file__).parent
-out_path = SCRIPT_ROOT_PATH / 'simulated_hg38_ref_dists'
+out_path = SCRIPT_ROOT_PATH / 'simulated_hg38_ref_gc'
 
 # these must be computed first using the "driver_scripts/drv_compute_GC_presets.sh" script!
 observed_fragments = {'preset3': {'H01': SOURCE_CODE_ROOT_PATH /
-                                  'preset_computation/3/H01/H01_observed_attributes_matrix.txt.gz',
+                                  'preset_computation/preset3/H01/H01_observed_attributes_matrix.txt.gz',
                                   'P01': SOURCE_CODE_ROOT_PATH /
-                                  'preset_computation/3/P01/P01_observed_attributes_matrix.txt.gz',
+                                  'preset_computation/preset3/P01/P01_observed_attributes_matrix.txt.gz',
                                   'C01': SOURCE_CODE_ROOT_PATH /
-                                  'preset_computation/3/C01/C01_observed_attributes_matrix.txt.gz',
+                                  'preset_computation/preset3/C01/C01_observed_attributes_matrix.txt.gz',
                                   'B01': SOURCE_CODE_ROOT_PATH /
-                                  'preset_computation/3/B01/B01_observed_attributes_matrix.txt.gz'}}
+                                  'preset_computation/preset3/B01/B01_observed_attributes_matrix.txt.gz'}}
 
 
 def load_txt_to_matrix_with_meta(filename: Union[str, Path], to_dtype=np.float64) -> Tuple[np.array, range]:
@@ -224,3 +224,19 @@ def main():
 
 if __name__ == '__main__':
     sys.exit(main())
+
+
+# TOTAL NUMBER OF OBSERVED FRAGMENTS PER SAMPLE IN PRESET 3:
+# (as computed from the observed fragments np.array matrix sum in the flen range 20 bp to 550 bp)
+# sample    n_fragments
+# ---------------------
+# B01     124,748,600
+# H01     174,624,062
+# C01     153,353,501
+# P01     247,010,309
+#
+# # CODE WAS:
+# for sample, o_gc in observed_fragments['preset3'].items():
+#     sample_obs, flen_range = load_txt_to_matrix_with_meta(filename=o_gc, to_dtype=int)
+#     print(f"total number of fragments ({flen_range.start:,}bp-{flen_range.stop-1:,}bp) in '{sample}' "
+#           f"observed matrix: {sample_obs.sum():,} fragments")

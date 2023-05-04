@@ -21,6 +21,8 @@ if SOURCE_ROOT_DIR not in sys.path:
     sys.path.append(str(SOURCE_ROOT_DIR))
 CONTENT_ROOT_DIR = SOURCE_ROOT_DIR.parent.parent
 
+show_figure = False  # set to True fr interactive plot in browser
+
 # ref GC content definitions:
 PERCENTAGE_PLOT = True
 two_bit_reference_file = SOURCE_ROOT_DIR / '2bit_reference/hg38.analysisSet.2bit'
@@ -392,7 +394,7 @@ def main() -> int:
     # ------------------------------------------------------------------------------------------------------------------
     # create Multiplot:
     fig = make_subplots(rows=7, cols=1, shared_xaxes=False, shared_yaxes=False, vertical_spacing=0.03,
-                        subplot_titles=('average reference sequence GC content',
+                        subplot_titles=('reference sequence GC content',
                                         'B01 TSS coverage HK genes (-2.2% GC)',
                                         'H01 TSS coverage HK genes (+1.1% GC)',
                                         'P01 TSS coverage HK genes (+5.0% GC)',
@@ -428,7 +430,7 @@ def main() -> int:
     # 1.) B01 HK+PAU genes
     b01_hkpau_traces = get_multi_signals_plot(plot_data_signals=cov_data['B01'], annotation='B01',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              y_axis_data_label='average relative coverage / 1',
+                                              y_axis_data_label='relative coverage / 1',
                                               signal_dash={'corrected': 'solid', 'original': 'dot'},
                                               figure_width=1000, figure_height=380)
     if b01_hkpau_traces == 1:
@@ -449,7 +451,7 @@ def main() -> int:
     # 2.) H01  HK+PAU genes
     h01_hkpau_traces = get_multi_signals_plot(plot_data_signals=cov_data['H01'], annotation='H01',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              y_axis_data_label='average relative coverage / 1',
+                                              y_axis_data_label='relative coverage / 1',
                                               signal_dash={'corrected': 'solid', 'original': 'dot'},
                                               figure_width=1000, figure_height=380)
     if h01_hkpau_traces == 1:
@@ -470,7 +472,7 @@ def main() -> int:
     # 3.) P01 HK+PAU genes
     p01_hkpau_traces = get_multi_signals_plot(plot_data_signals=cov_data['P01'], annotation='P01',
                                               signal_colors=SAMPLE_COLORS, x_axis_data_label='relative position / bp',
-                                              y_axis_data_label='average relative coverage / 1',
+                                              y_axis_data_label='relative coverage / 1',
                                               signal_dash={'corrected': 'solid', 'original': 'dot'},
                                               figure_width=1000, figure_height=380)
     if p01_hkpau_traces == 1:
@@ -558,23 +560,23 @@ def main() -> int:
             fig.data[dat_idx].showlegend = False
     # update overall figure formatting
     fig.update_layout(height=3400, width=1200, template='simple_white', showlegend=True,
-                      font={'family': 'Ubuntu', 'size': 22, 'color': 'rgb(20, 20, 20)'},
+                      font={'family': 'Ubuntu', 'size': 26, 'color': 'rgb(20, 20, 20)'},
                       title={'text': 'TSS GC Bias',
-                             'font': {'family': 'Ubuntu', 'size': 30, 'color': 'rgb(20, 20, 20)'},
+                             'font': {'family': 'Ubuntu', 'size': 42, 'color': 'rgb(20, 20, 20)'},
                              'xanchor': 'center', 'yanchor': 'middle', 'x': 0.48},
                       legend=dict(orientation='h', xanchor='center', yanchor='top', x=0.5, y=-0.025,
-                                  traceorder='reversed'))
-    fig.update_annotations(font={'family': 'Ubuntu', 'size': 26, 'color': 'rgb(20, 20, 20)'})  # format subplot titles
+                                  traceorder='reversed', font=dict(size=18)))
+    fig.update_annotations(font={'family': 'Ubuntu', 'size': 32, 'color': 'rgb(20, 20, 20)'})  # format subplot titles
     fig.update_yaxes(showgrid=True, gridwidth=2, row=1, col=1)
     for row in range(1, 8):  # turn on y-grid
         fig.update_xaxes(showgrid=True, dtick=250, gridwidth=2, row=row, col=1)
         if row == 1:
-            fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1)
+            fig.update_yaxes(title_text='reference GC content / %', row=row, col=1)
         else:
             if row == 7:
                 fig.update_xaxes(title_text='relative position to TSS / bp', row=row, col=1)
-            fig.update_yaxes(title_text='normalized average DoC / ratio', row=row, col=1)
-            fig.update_yaxes(title_text='average reference GC content / %', row=row, col=1, secondary_y=True)
+            fig.update_yaxes(title_text='normalized DoC / ratio', row=row, col=1)
+            fig.update_yaxes(title_text='reference GC content / %', row=row, col=1, secondary_y=True)
     # set same y-range for PAU and for HK gene DoC plots (separately)
     ref_limits = (ref_limits[0] - 1, ref_limits[1] + 1)
     hk_limits_range = hk_limits[1] - hk_limits[0]
@@ -587,7 +589,8 @@ def main() -> int:
         fig.update_yaxes(range=pau_limits, row=subplot_idx, col=1, secondary_y=False)
     for subplot_idx in range(2, 8):  # y-lims for reference GC content
         fig.update_yaxes(range=ref_limits, row=subplot_idx, col=1, secondary_y=True)
-    fig.show()
+    if show_figure:
+        fig.show()
     output_file_path.parent.mkdir(parents=True, exist_ok=True)
     fig.write_image(output_file_path)
     return 0

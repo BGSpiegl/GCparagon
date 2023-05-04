@@ -458,6 +458,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
                                   'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
                                   'not set.')
+    output_args.add_argument('-sp', '--show-plots', action='store_true', dest='show_plots',
+                             help='Optional flag to display plots in an interactive browser window in addition to '
+                                  'saving them to a file.')
     return commandline_parser.parse_args()
 
 
@@ -882,10 +885,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                         simulated_attributes_raw_matrix_sums: List[np.array], n_ogc_summed: int, n_sims: int,
                         n_sgc_summed: int, bam_file: str, tmp_dir: Optional[str], min_frag_len: int, max_frag_len: int,
                         min_frag_occurs: int, ignored_fragments: int, sample_id: str,
-                        focus_nondefault_values: Optional[int], precision=6, plot_result=False, output_all=False) \
-        -> Tuple[Tuple[Path, np.array],
-                 Tuple[Path, np.array],
-                 Tuple[range, range]]:
+                        focus_nondefault_values: Optional[int], precision=6, plot_result=False, output_all=False,
+                        show_plots=False) -> Tuple[Tuple[Path, np.array], Tuple[Path, np.array], Tuple[range, range]]:
     """
 
     :param focus_nondefault_values: plots will focus on these values using the integer value of the parameter as border
@@ -986,7 +987,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     if plot_result:
         # plot fragment length distribution
         plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],
-                                   out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True,
+                                   out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True, show_figure=False,
                                    strip_xaxis_end_zeros=True, parent_logger=LOGGER, sample_id=sample_id)
         if focus_nondefault_values is not None:  # create focused plots
             complete_mask_focused, (deleted_rows, deleted_columns) = reduce_matrix(
@@ -1036,7 +1037,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
         for data_category in frq_data.keys():
             plot_statistic_matrices(frq_data=frq_data, data_id_to_show=data_category,
                                     y_tick_label_offset=deleted_rows.start + min_frag_len,
-                                    x_tick_label_offset=deleted_columns.start,
+                                    x_tick_label_offset=deleted_columns.start, show_figure=show_plots,
                                     in_file=bam_file, output_dir=tmp_dir, sample_id=sample_id, fig_width=1800,
                                     fig_height=2000, fig_fontsize=32, parent_logger=LOGGER)
     try:  # give feedback about estimated percentage of corrected fragments:
@@ -1178,7 +1179,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                              visualize_matrices=False, output_all=False, write_updated_bad_chunks_library=True,
                              use_multithreading=True, detect_outliers=True, focus_custom_values=True,
                              outlier_detection_method='IQR', outlier_detection_stringency=2, smooth_weights=True,
-                             smoothing_kernel='gauss', smoothing_intensity=2,
+                             smoothing_kernel='gauss', smoothing_intensity=2, show_plots=False,
                              min_unclipped_aln_fracton=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, random_seed=RANDOM_SEED) \
         -> Tuple[np.array, np.array]:
     """
@@ -1376,7 +1377,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                                     data_id_to_show=postprocessing_data_id, in_file=in_bam, output_dir=tmp_dir_sample,
                                     y_tick_label_offset=min_flen + trimmed_dimensions[0].start, sample_id=sample_name,
                                     x_tick_label_offset=trimmed_dimensions[1].start, fig_width=1800, fig_height=2000,
-                                    fig_fontsize=32, parent_logger=LOGGER)
+                                    fig_fontsize=32, parent_logger=LOGGER, show_figure=show_plots)
     # create smoothed version of the matrix:
     if smooth_weights:
         postprocessing_data_id = f'{postprocessing_data_id}_smoothed'
@@ -1398,7 +1399,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                                     data_id_to_show=postprocessing_data_id, in_file=in_bam, output_dir=tmp_dir_sample,
                                     y_tick_label_offset=min_flen + trimmed_dimensions[0].start, sample_id=sample_name,
                                     x_tick_label_offset=trimmed_dimensions[1].start, fig_width=1800, fig_height=2000,
-                                    fig_fontsize=32, parent_logger=LOGGER)
+                                    fig_fontsize=32, parent_logger=LOGGER, show_figure=show_plots)
     # move all output from temporary sample dir into output dir after checking that the latter does not exist
     target_path = Path(out_dir_sample)
     target_path.mkdir(parents=True, exist_ok=True)  # ensure parent path exists to be able to move sample dir
@@ -2257,6 +2258,7 @@ def main() -> int:
     gc_tag_name = cmd_args.gc_tag_name
     write_updated_bad_chunks_library = cmd_args.write_updated_bad_chunks_library
     focus_plots = not cmd_args.dont_focus_plots
+    show_plots = cmd_args.show_plots
     output_unaligned_reads = cmd_args.output_unaligned_reads
     # processing settings
     if correction_weights_matrix_path is not None:
@@ -2470,7 +2472,7 @@ def main() -> int:
             bad_chunks_library_file=exclude_chunks_bed_file, strict_n_base_exclusion=strict_n_base_exclusion,
             detect_outliers=detect_outliers, outlier_detection_method=outliers_method,
             outlier_detection_stringency=outlier_stringency, smooth_weights=smooth_weights,
-            smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity,
+            smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity, show_plots=show_plots,
             plot_focus_border=10 if focus_plots else None, min_unclipped_aln_fracton=min_unclipped_aln_fracton)
         # compute end time and give feedback
         log(message=f"Correction weights matrix averaged from {n_simulations:,} simulations written to file: "

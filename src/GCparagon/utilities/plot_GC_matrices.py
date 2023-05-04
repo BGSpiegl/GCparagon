@@ -15,7 +15,7 @@ USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainb
 
 def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, parent_logger: logging.Logger,
                             output_dir=None, percentile_plot=None, sample_id=None, y_tick_label_offset=0,
-                            x_tick_label_offset=0, fig_width=1800, fig_height=2000, fig_fontsize=32):
+                            x_tick_label_offset=0, fig_width=1800, fig_height=2000, fig_fontsize=32, show_figure=False):
     try:
         matrix_type = list(filter(lambda a: a is not None,
                                   [mat_type if mat_type in data_id_to_show else None
@@ -74,7 +74,8 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
     for idx in range(len(fig.data)):
         fig.data[idx].y = fig.data[idx].y + y_tick_label_offset
         fig.data[idx].x = fig.data[idx].x + x_tick_label_offset
-    fig.show()
+    if show_figure:
+        fig.show()
     in_file_path = pathlib.Path(in_file)
     if output_dir is None:
         output_dir = in_file_path.parent
@@ -100,7 +101,8 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
                           font_size=fig_fontsize,
                           legend=dict(title=f"{data_id_to_show} below {percentile_plot}th percentile)",
                                       orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"))
-        fig.show()
+        if show_figure:
+            fig.show()
         out_file = pathlib.Path(output_dir) / \
             (f"{'.'.join(in_file_path.name.split('.')[:-1])}" if sample_id is None else sample_id) + \
             f".{data_id_to_show}.{percentile_plot}ltPerc.heatmap.png"

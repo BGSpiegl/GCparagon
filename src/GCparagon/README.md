@@ -113,7 +113,7 @@ OR
 
 Activate the new environment:
 
-`conda activate GCparagon_py3.10`
+`conda activate GCparagon`
 
 Run the `setup.py` in combination with `pip` to make GCparagon directly executable from the 
 console afterwards:
@@ -638,7 +638,7 @@ samples from [EGAS00001006963].
 |      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |               ~15 min |
  |      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
 
-*depends on actual DoC of BAM file
+*depends on DoC of BAM file
 
 
 ## Genomic Region Preselection

@@ -458,7 +458,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
                                   'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
                                   'not set.')
-    output_args.add_argument('-sp', '--show-plots', action='store_true', dest='show_plots',
+    output_args.add_argument('-sf', '--show-figures', action='store_true', dest='show_plots',
                              help='Optional flag to display plots in an interactive browser window in addition to '
                                   'saving them to a file.')
     return commandline_parser.parse_args()

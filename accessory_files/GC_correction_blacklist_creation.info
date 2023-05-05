@@ -25,9 +25,13 @@ regions added to ENCODE blacklist to be excluded during GC-bias computation:
 
 blacklist creation commands:
 (short arms added 14-11-2022)
- 
-	cat hg38-ENCODE_blacklist.v2.bed hg38_N_gaps.stdchroms.bed hg38_10kbp_telomeres.bed hg38_gaps_between_scaffolds.bed hg38_gaps_between_contigs.bed GRCh38_centromeres.bed hg38_hetchrom.bed hg38_non_standard_contigs.bed hg38_trfMask.4cols.bed GRCh38_nonunique_l100_m2_e1.4cols.bed hg38_PAR_chrY.bed hg38_short_arm_gaps.bed hg38_false_duplications.bed | sort -k1,1 -k2,2n > hg38_GCcorrection_blacklist.sorted.bed && bedtools merge -o distinct -c 4 -i hg38_GCcorrection_blacklist.sorted.bed | sort -k1,1 -k2,2n > hg38_GCcorrection_blacklist.merged.sorted.bed && rm hg38_GCcorrection_blacklist.sorted.bed
-	
-RESULT:	429,045,481 total bases = 14.7% of hg38 
-GRCh38 minus hg38_GCcorrection_blacklist.merged.sorted.bed has --effectiveGenomeSize 2483976917
-(compared to the ENCODE blacklist v2 alone, this is a + of 201,883,081 bases, which is +88.87%)
+
+	cat hg38-ENCODE_blacklist.v2.bed hg38_N_gaps.stdchroms.bed hg38_10kbp_telomeres.bed hg38_gaps_between_scaffolds.bed \
+	hg38_gaps_between_contigs.bed GRCh38_centromeres.bed hg38_hetchrom.bed hg38_non_standard_contigs.bed \
+	hg38_trfMask.4cols.bed GRCh38_nonunique_l100_m2_e1.4cols.bed hg38_PAR_chrY.bed hg38_short_arm_gaps.bed \
+	hg38_false_duplications.bed | sort -k1,1 -k2,2n > hg38_GCcorrection_blacklist.sorted.bed && bedtools merge -o \
+	distinct -c 4 -i hg38_GCcorrection_blacklist.sorted.bed | sort -k1,1 -k2,2n > \
+	hg38_GCcorrection_blacklist.merged.sorted.bed && rm hg38_GCcorrection_blacklist.sorted.bed
+
+RESULT:	361,715,043 total bases = 11.9% of hg38 (no chrY, chrM, only standard chromosome bases counted)
+GRCh38 minus hg38_GCcorrection_blacklist.merged.sorted.bed has --effectiveGenomeSize 2,669,327,374

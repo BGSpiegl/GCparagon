@@ -210,32 +210,31 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     processing_args.add_argument('-up', '--use-parameter-preset', type=int, dest='parameter_preset_number',
                                  choices=range(0, 4, 1), default=DEFAULT_PRESET, metavar='Integer',
                                  help='Optional parameter preset to use for GC bias computation. Must be an integer '
-                                      'int the range of 0-3 (inclusive). A preset value of 0 leaves parameters at '
+                                      'int the rangeof 0-3 (inclusive). A preset value of 0 leaves parameters at '
                                       'default if not defined differently by the user (unchanged parameters will match '
                                       'preset 1). Other integer values from 1 to 3 define presets with increasing '
-                                      'input data usage and required processing time (expected computation times '
-                                      'preset 1-3: 2:40, 15:15, and 50:40 (mm:ss)). Computation time of preset 3 '
-                                      'depends on the average DoC of the sample. Average across 4 samples and 3 '
-                                      'iterations each computed using 12 cores and the benchmark_mprof.py script. '
-                                      'Memory consumption preset 1-3: 340 MiB, 290 MiB, and 300 MiB respectively.'
-                                      'If preset is not zero, any customized parameters conflicting with the preset '
-                                      'will be ignored. A non-zero preset will set the following parameters: number of '
-                                      'simulations, the target number of processed fragments, minimum number of '
-                                      'fragment attribute combination occurrences, and the options for outlier '
-                                      'detection and smoothing. Noise within the resulting correction weights is '
-                                      'reduced when selecting a higher preset value. Preset 3 will attempt to process '
-                                      'all genomic chunks (target number of fragments set to 100B) within the limits '
-                                      'of the maximum allowed blacklisted regions overlap (per default default ~1.7 Gb '
-                                      'of reference are processed).\nNOTE: the percentage of total GC bias corrected '
-                                      'fragments in the dataset for presets 1 vs. 3 increases only from 99.837%% to '
-                                      '99.938%% (average across 4 samples). Other fragment weights default to 1.0). '
-                                      'The primary advantage of processing more fragments is the reduction of noise in '
-                                      'computed weights. It is recommended to use a higher preset for a '
-                                      "'preprocess-once, analyze often' scenario and/or when a high bias is "
-                                      'expected/observed (e.g. FastQC average GC percentage). Correction by preset 1, '
-                                      '2, and 3 was found to yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment '
-                                      'count respectively (average percentage across 4 samples). '
-                                      f'[ DEFAULT: {DEFAULT_PRESET} ]')
+                                      'input data usage and required processing time (durations preset 1-3: 02:20, '
+                                      '11:25, and 54:10 (mm:ss)). Computation time of preset 3 depends on the average '
+                                      'DoC of the sample. Maximum across 4 samples and 2 iterations each computed '
+                                      'using 12 cores and the profile_command.py script. Maximum memory consumption '
+                                      'preset 1-3: 2550 MiB, 2440 MiB, and 2630 MiB respectively. If preset is not '
+                                      'zero, any customized parameters conflicting with the preset will be ignored. A '
+                                      'non-zero preset will set the following parameters: number of simulations, the '
+                                      'target number of processed fragments, minimum number of fragment attribute '
+                                      'combination occurrences, and the options for outlier detection and smoothing. '
+                                      'Noise within the resulting correction weights isreduced when selecting a higher '
+                                      'preset value. Preset 3 will attempt to process all genomic chunks (target '
+                                      'number of fragments set to 100B) within the limits of the maximum allowed'
+                                      'blacklisted regions overlap (per default default ~1.7 Gb of reference are '
+                                      'processed). NOTE: the percentage of total GC bias corrected fragments in the '
+                                      'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
+                                      'across 4 samples). Other fragment weights default to 1.0). The primary '
+                                      'advantage of processing more fragments is the reduction of noise in computed '
+                                      "weights. It is recommended to use a higher preset for a 'preprocess-once,"
+                                      "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
+                                      'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
+                                      'yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment count respectively '
+                                      f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',
                                  help='Optional flag which makes the software switch to tag-only mode. A correction '
@@ -458,7 +457,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
                                   'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
                                   'not set.')
-    output_args.add_argument('-sp', '--show-plots', action='store_true', dest='show_plots',
+    output_args.add_argument('-sf', '--show-figures', action='store_true', dest='show_plots',
                              help='Optional flag to display plots in an interactive browser window in addition to '
                                   'saving them to a file.')
     return commandline_parser.parse_args()

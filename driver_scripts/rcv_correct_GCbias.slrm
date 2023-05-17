@@ -16,7 +16,7 @@ echo "ENTERED PRESET COMPUTATION SCRIPT"
 #                  (and the env must be from that conda)
 eval "$(conda shell.bash hook)"
 # Still old conda will be used. Mamba install does not seem to work
-conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
+conda activate GCparagon  # NAME OF CONDA ENV GOES HERE
 
 echo "conda environment activated"
 

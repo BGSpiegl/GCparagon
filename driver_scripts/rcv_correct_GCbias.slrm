@@ -1,0 +1,74 @@
+#!/bin/bash
+#SBATCH --job-name=GCparagon                         # Job name
+#SBATCH --nodes=1                                    # Run computation on a single NODE (i.e. 'server')
+#SBATCH --mem=20G                                    # memory to use
+#SBATCH --ntasks=1                                   # Run a single task (define tasks and allocate resources below)
+#SBATCH --cpus-per-task=12                           # Number of CPUs to use for multithread/processing job
+#SBATCH --output=GCparagon-%j.log                    # Standard output log
+#SBATCH --error=GCparagon-%j.err                     # Error log
+# ------------------------------ COMMAND SECTION -------------------------------------------
+# EXECUTION: either run this script with sbatch on a slurm cluster OR just run in a bash shell
+# exit code 1: script exits with 1 if a path definition was incorrect
+
+echo "ENTERED PRESET COMPUTATION SCRIPT"
+
+# CONDA WARNING - the conda that you use must be the one that is referenced in your .bashrc file!
+#                  (and the env must be from that conda)
+eval "$(conda shell.bash hook)"
+# Still old conda will be used. Mamba install does not seem to work
+conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
+
+echo "conda environment activated"
+
+# process input arguments
+echo "processing ${#} argument(s):"
+args=("${@}")
+echo "  received argument 0: ${args[0]}"  # BAM file
+echo "  received argument 1: ${args[1]}"  # output directory
+echo "  received argument 2: ${args[2]}"  # preset
+
+bam_file="${args[0]}"
+if [ ! "${bam_file}" ]; then
+  echo "ERROR: test BAM not found at: ${bam_file}"
+  exit 1
+fi
+# create output directory if it does not exist
+output_dir="${args[1]}"
+if [ ! -d "${output_dir}" ]; then
+  mkdir -p "${output_dir}"
+fi
+preset="${args[2]}"
+
+# analysis definitions
+n_processes=12
+python3_path="$(which python3)"
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
+content_root="$(dirname "${script_dir}")"
+GCparagon_script="${content_root}/src/GCparagon/correct_GC_bias.py"
+if [ ! "${GCparagon_script}" ]; then
+  echo "ERROR: correct_GC_bias.py script not found at: ${GCparagon_script}"
+  exit 1
+fi
+TWOBIT_REF_GENOME="${content_root}/src/GCparagon/2bit_reference/hg38.analysisSet.2bit"  # CHANGE REFERENCE GENOME PATH..
+# ..HERE --------------------------^ IF REQUIRED!
+if [ ! "${TWOBIT_REF_GENOME}" ]; then
+  echo "ERROR: 2bit version of hg38 reference genome not found at: ${TWOBIT_REF_GENOME}." \
+"Please download using the EXECUTE_reference_download.sh script there to obtain it!"
+  exit 1
+fi
+
+# create a temporary directory
+tmp_out_dir="$(mktemp -d)"  # should create dir in user-specific temp dir
+echo "  WARNING: all output will be written temporarily to ${tmp_out_dir}. Please be sure enough storage space is
+available there or terminate this script!"
+
+sample_id="$(basename -- "${bam_file}" | cut -d '.' -f 1)"
+echo "  i: processing sample: ${sample_id} using preset ${preset} ..."
+"${python3_path}" "${GCparagon_script}" --use-parameter-preset "${preset}" --bam "${bam_file}" \
+--two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${output_dir}" --temporary-directory "${tmp_out_dir}" \
+--write-chunk-exclusion --threads "${n_processes}" --output-bam
+echo "  i: done processing '${sample_id}', preset ${preset})."
+# try to delete temp dir if still exists after all analyses; leave no traces!
+if [ -d "${tmp_out_dir}" ]; then
+  rm -r "${tmp_out_dir}"
+fi

@@ -3,18 +3,18 @@ import multiprocessing
 import time
 import datetime
 import os
-import pathlib
 import sys
 import math
 import shutil
 import tempfile
 import random
 import gc
-import contextlib
 import logging
+import contextlib
 import numpy as np
 import pandas as pd
 import subprocess as sp
+from pathlib import Path
 import multiprocessing as mp
 import multiprocessing.connection as mp_connection
 from pysam import AlignmentFile  # coordinates in pysam are always 0-based (following python convention)
@@ -27,7 +27,7 @@ from natsort import humansorted
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 5
-PATCH_NUMBER = 3
+PATCH_NUMBER = 4
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -61,20 +61,21 @@ DEFAULT_MAX_FRAGMENT_LENGTH = 550
 DEFAULT_TAG_NAME = 'GC'
 DEFAULT_MIN_OCCURRENCES = 3
 ABSOLUTE_MIN_OCCURRENCES = 2
-TAGGING_CHUNK_SIZE = 50*10**6
+TAGGING_CHUNK_SIZE = 50 * 10 ** 6
 # estimated HW capacities
 max_logical_cores = multiprocessing.cpu_count()
 max_physical_cores = max_logical_cores // 2 if max_logical_cores > 1 else 1
 # PARAMETERS DEFINING RUNTIME OF GC-BIAS COMPUTATION:
 # ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_NUMBER_PROCESSES = min(12, max_logical_cores)  # limit default value to meaningful amount
-DEFAULT_TARGET_NUMBER_FRAGMENTS_PROCESSED = 5*10**6  # 5 million
+DEFAULT_TARGET_NUMBER_FRAGMENTS_PROCESSED = 5 * 10 ** 6  # 5 million
 DEFAULT_PRESET = 1  # showed best results in GC curve comparison against randomly drawn 150 bp sequences from reference
 DEFAULT_SIMULATION_REPETITIONS = 6
 # ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_FLOAT_PRECISION = 6
 DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3
-DEFAULT_MAX_CHUNK_PERCENTAGE_BLACKLIST_OVERLAP = 1/3*100.  # of blacklisted regions for default 1 Mbp chunks processing
+DEFAULT_MAX_CHUNK_PERCENTAGE_BLACKLIST_OVERLAP = 1 / 3 * 100.  # of blacklisted regions for default 1 Mbp chunks processing
+DEFAULT_MIN_UNCLIPPED_ALN_FRACTION = 0.75
 # POSTPROCESSING DEFAULTS:
 DEFAULT_SMOOTHING_INTENSITY = 5
 DEFAULT_SMOOTHING_KERNEL = 'gauss'
@@ -83,7 +84,7 @@ DEFAULT_OUTLIER_DETECTION_METHOD = 'IQR'
 # random numbers:
 RANDOM_SEED = random.randint(1, 999)
 # PATH DEFINITIONS:
-SOURCE_CODE_ROOT_PATH = pathlib.Path(__file__).parent
+SOURCE_CODE_ROOT_PATH = Path(__file__).parent
 sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
@@ -91,7 +92,7 @@ DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
 PREDEFINED_1MBP_CHUNKS_TO_PROCESS = SOURCE_CODE_ROOT_PATH.parent.parent / \
                                     'accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed'
 TIMESTAMP_FORMAT = '%Y-%m-%d_%H-%M-%S'
-BAD_CHUNKS_FILE_PATTERN_AS_PATH = pathlib.Path(f'bad_chunks_{TIMESTAMP_FORMAT}.bed')
+BAD_CHUNKS_FILE_PATTERN_AS_PATH = Path(f'bad_chunks_{TIMESTAMP_FORMAT}.bed')
 
 # define custom types
 BadChunksDict = Dict[Tuple[str, int, int], List[int]]
@@ -122,37 +123,37 @@ def get_cmdline_args():
         description="""
 _____________________________________________________________________________
 v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
-                                                                             
+
  _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._
 `.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-   
 .  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
 .  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
-                                                                             
+
  ██████╗  ██████╗██████╗  █████╗ ██████╗  █████╗  ██████╗  ██████╗ ███╗   ██╗
 ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗████╗  ██║
 ██║  ███╗██║     ██████╔╝███████║██████╔╝███████║██║  ███╗██║   ██║██╔██╗ ██║
 ██║   ██║██║     ██╔═══╝ ██╔══██║██╔══██╗██╔══██║██║   ██║██║   ██║██║╚██╗██║
 ╚██████╔╝╚██████╗██║     ██║  ██║██║  ██║██║  ██║╚██████╔╝╚██████╔╝██║ ╚████║
  ╚═════╝  ╚═════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝
-                                                                             
+
  _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._
 `.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-   
 .  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
 .  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
-                                                                             
+
 -----------------------------------------------------------------------------
-                                                                             
+
 """
-        f'             GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
-        f'                 Copyright (c) 2023 Benjamin Spiegl\n'
-        f'            GitHub: {github_url}\n\n'
-        '^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^'
-        'v^v^v^v^v^v^\n____________________________________________________'
-        '_________________________',
+                    f'             GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
+                    f'                 Copyright (c) 2023 Benjamin Spiegl\n'
+                    f'            GitHub: {github_url}\n\n'
+                    '^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^'
+                    'v^v^v^v^v^v^\n____________________________________________________'
+                    '_________________________',
         formatter_class=RawDescriptionHelpFormatter,
         epilog='GCparagon developed at the D&R Center of Molecular Biomedicine '
                '(https://www.medunigraz.at/en/research-centers-and-institutes/'
@@ -209,32 +210,31 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     processing_args.add_argument('-up', '--use-parameter-preset', type=int, dest='parameter_preset_number',
                                  choices=range(0, 4, 1), default=DEFAULT_PRESET, metavar='Integer',
                                  help='Optional parameter preset to use for GC bias computation. Must be an integer '
-                                      'int the range of 0-3 (inclusive). A preset value of 0 leaves parameters at '
+                                      'int the rangeof 0-3 (inclusive). A preset value of 0 leaves parameters at '
                                       'default if not defined differently by the user (unchanged parameters will match '
                                       'preset 1). Other integer values from 1 to 3 define presets with increasing '
-                                      'input data usage and required processing time (expected computation times '
-                                      'preset 1-3: 2:40, 15:15, and 50:40 (mm:ss)). Computation time of preset 3 '
-                                      'depends on the average DoC of the sample. Average across 4 samples and 3 '
-                                      'iterations each computed using 12 cores and the benchmark_mprof.py script. '
-                                      'Memory consumption preset 1-3: 340 MiB, 290 MiB, and 300 MiB respectively.'
-                                      'If preset is not zero, any customized parameters conflicting with the preset '
-                                      'will be ignored. A non-zero preset will set the following parameters: number of '
-                                      'simulations, the target number of processed fragments, minimum number of '
-                                      'fragment attribute combination occurrences, and the options for outlier '
-                                      'detection and smoothing. Noise within the resulting correction weights is '
-                                      'reduced when selecting a higher preset value. Preset 3 will attempt to process '
-                                      'all genomic chunks (target number of fragments set to 100B) within the limits '
-                                      'of the maximum allowed blacklisted regions overlap (per default default ~1.7 Gb '
-                                      'of reference are processed).\nNOTE: the percentage of total GC bias corrected '
-                                      'fragments in the dataset for presets 1 vs. 3 increases only from 99.837%% to '
-                                      '99.938%% (average across 4 samples). Other fragment weights default to 1.0). '
-                                      'The primary advantage of processing more fragments is the reduction of noise in '
-                                      'computed weights. It is recommended to use a higher preset for a '
-                                      "'preprocess-once, analyze often' scenario and/or when a high bias is "
-                                      'expected/observed (e.g. FastQC average GC percentage). Correction by preset 1, '
-                                      '2, and 3 was found to yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment '
-                                      'count respectively (average percentage across 4 samples). '
-                                      f'[ DEFAULT: {DEFAULT_PRESET} ]')
+                                      'input data usage and required processing time (durations preset 1-3: 02:20, '
+                                      '11:25, and 54:10 (mm:ss)). Computation time of preset 3 depends on the average '
+                                      'DoC of the sample. Maximum across 4 samples and 2 iterations each computed '
+                                      'using 12 cores and the profile_command.py script. Maximum memory consumption '
+                                      'preset 1-3: 2550 MiB, 2440 MiB, and 2630 MiB respectively. If preset is not '
+                                      'zero, any customized parameters conflicting with the preset will be ignored. A '
+                                      'non-zero preset will set the following parameters: number of simulations, the '
+                                      'target number of processed fragments, minimum number of fragment attribute '
+                                      'combination occurrences, and the options for outlier detection and smoothing. '
+                                      'Noise within the resulting correction weights isreduced when selecting a higher '
+                                      'preset value. Preset 3 will attempt to process all genomic chunks (target '
+                                      'number of fragments set to 100B) within the limits of the maximum allowed'
+                                      'blacklisted regions overlap (per default default ~1.7 Gb of reference are '
+                                      'processed). NOTE: the percentage of total GC bias corrected fragments in the '
+                                      'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
+                                      'across 4 samples). Other fragment weights default to 1.0). The primary '
+                                      'advantage of processing more fragments is the reduction of noise in computed '
+                                      "weights. It is recommended to use a higher preset for a 'preprocess-once,"
+                                      "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
+                                      'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
+                                      'yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment count respectively '
+                                      f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',
                                  help='Optional flag which makes the software switch to tag-only mode. A correction '
@@ -333,6 +333,12 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'parameter --threads corresponds to half the number of parallel processes that '
                                       'will be spawned for BAM processing. Was not found to have a tremendous impact '
                                       'on I/O performance.')
+    processing_args.add_argument('-ucmaf', '--unclipped-min-aln-fraction', dest='min_unclipped_aln_fracton',
+                                 default=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, type=float, metavar='Float',
+                                 help='This parameter defines the minimum unclipped fraction of an alignment to be '
+                                      'counted in the observed fragment attributes matrix O_gc. This might affect how '
+                                      'many small fragments are observed and efectively corrected. [ DEFAULT: '
+                                      f'{DEFAULT_MIN_UNCLIPPED_ALN_FRACTION} ]')
     # post-processing options
     postprocessing_args.add_argument('-do', '--detect-outliers', action='store_true', dest='detect_outliers',
                                      help='(PRESET precedence if specified) If this flag is set, extreme outliers will '
@@ -354,7 +360,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                      help='(PRESET precedence if specified) If the --detect-outliers flag is set, this '
                                           'parameter defines how stringent the outlier detection threshold is set. '
                                           'Must be an integer in the range of 1-7 (inclusive). [ DEFAULT: '
-                                          f'{DEFAULT_OUTLIER_DETECTION_STRINGENCY} ]',  metavar='Integer')
+                                          f'{DEFAULT_OUTLIER_DETECTION_STRINGENCY} ]', metavar='Integer')
     postprocessing_args.add_argument('-sw', '--smooth', action='store_true', dest='smooth_weights',
                                      help='(PRESET precedence if specified) If this flag is set, computed weights will '
                                           'also be smoothed. An additional matrix is output containing these '
@@ -414,6 +420,11 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'computed from the input BAM file or a correction weights matrix specified via '
                                   "--correction-weights. WARNING: currently, the output BAM won't contain "
                                   'unaligned reads!')
+    output_args.add_argument('-our', '--output-unaligned-reads', dest='output_unaligned_reads', action='store_true',
+                             help='Optional flag to activate writing of unaligned reads to a separate BAM file. '
+                                  'Unaligned reads are not included in the tagged BAM output file.  This only has an '
+                                  'effect if either the --output-bam flag was also set or the --tag-only mode was '
+                                  'started.')
     output_args.add_argument('-fp', '--float-precision', dest='floating_point_precision',
                              default=DEFAULT_FLOAT_PRECISION, type=int, metavar='Integer',
                              help='Optional parameter for GC-bias computation number of digits after the comma for '
@@ -446,6 +457,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
                                   'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
                                   'not set.')
+    output_args.add_argument('-sf', '--show-figures', action='store_true', dest='show_plots',
+                             help='Optional flag to display plots in an interactive browser window in addition to '
+                                  'saving them to a file.')
     return commandline_parser.parse_args()
 
 
@@ -492,13 +506,13 @@ def read_bad_chunks_bed_file(bed_path: str) -> BadChunksDict:
     chunk_lengths = set()
     try:
         for chrm, strt, stp, rst in read_bed_file(bed_path=bed_path):
-            chunk_lengths.update({stp-strt})
+            chunk_lengths.update({stp - strt})
             # values: sample yield(s) as comma-deimited list of integers;
             if bad_chunks.get((chrm, strt, stp)) is None:
                 bad_chunks.update({(chrm, strt, stp): list(map(lambda v: int(v), rst[0].split(',')))})
             else:  # chunk locus exists already (= multiple entries! Not expected)
                 bad_chunks[(chrm, strt, stp)].extend(list(map(lambda v: int(v), rst[0].split(','))))
-    except ValueError:   # not enough values to unpack (expected 4, got X)
+    except ValueError:  # not enough values to unpack (expected 4, got X)
         log(message=f"Could not load bad regions from BED file '{bed_path}' (requires column 4 and column 5 to contain "
                     "values that can be cast to int!). Returning no bad regions instead.",
             log_level=logging.WARNING, i_log_with=LOGGER)
@@ -520,10 +534,10 @@ def read_scored_regions_bed_file(bed_path: str):
         sys.exit(1)
 
 
-def save_matrix_to_txt(matrix: Union[np.array, np.matrix], filename: Union[str, pathlib.Path], output_dir: str,
+def save_matrix_to_txt(matrix: Union[np.array, np.matrix], filename: Union[str, Path], output_dir: str,
                        gzipped=True, float_data_precision=6, min_frag_length=DEFAULT_MIN_FRAGMENT_LENGTH,
                        max_frag_length=DEFAULT_MAX_FRAGMENT_LENGTH, verbose=False, report_saved_path=False) \
-        -> Optional[pathlib.Path]:
+        -> Optional[Path]:
     """
 
     :param report_saved_path:
@@ -539,7 +553,7 @@ def save_matrix_to_txt(matrix: Union[np.array, np.matrix], filename: Union[str, 
     """
     if gzipped and filename.lower()[-3:] != '.gz':
         filename += '.gz'
-    output_path = pathlib.Path(output_dir) / filename
+    output_path = Path(output_dir) / filename
     # check for data type and select formatter accordingly
     if matrix.dtype in (np.float64, np.float32, np.float16, float):
         formatter_str = f'%1.{float_data_precision}f'
@@ -591,7 +605,8 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
                                        multithread_access=True, float_precision=6,
                                        frag_n_cont_thresh=DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD,
                                        min_frag_len=DEFAULT_MIN_FRAGMENT_LENGTH,
-                                       max_frag_len=DEFAULT_MAX_FRAGMENT_LENGTH) \
+                                       max_frag_len=DEFAULT_MAX_FRAGMENT_LENGTH,
+                                       min_unclipped_aln_fracton=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION) \
         -> Tuple[Union[np.array, np.matrix], int, int]:
     """
 
@@ -610,6 +625,7 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
     :param float_precision:
     :param min_frag_len:
     :param max_frag_len:
+    :param min_unclipped_aln_fracton:
     :return:
     """
     with silently_open_alignment_file(bam_file, mode='rb', threads=2 if multithread_access else 1) as f_aln:
@@ -620,13 +636,15 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
         try:  # assert: template has between 1 and 2 segments (single-end or paired-end data; SAM format supports more)
             if paired_end_data:
                 # The leftmost segment has a plus sign and the rightmost has a minus sign. It is set as 0 for
-                # single-segment template or when the information is unavailable
-                filtered_alignments = filter(lambda p: p.template_length > 0 and p.is_proper_pair and
-                                             not p.is_supplementary and not p.is_secondary,
+                # single-segment template or when the information is unavailable; template length must be positive and
+                # within defined range
+                filtered_alignments = filter(lambda p: (min_frag_len <= p.template_length <= max_frag_len) and
+                                                       p.is_proper_pair and not p.is_supplementary and not p.is_secondary,
                                              (read for read in f_aln.fetch(chromosome, start_coord, stop_coord,
                                                                            multiple_iterators=True)))
-            else:
-                filtered_alignments = filter(lambda p: not p.is_supplementary and not p.is_secondary,
+            else:  # NOT SUPPORTED!
+                filtered_alignments = filter(lambda p: (min_frag_len <= p.template_length <= max_frag_len) and
+                                                       not p.is_supplementary and not p.is_secondary,
                                              (read for read in f_aln.fetch(chromosome, start_coord, stop_coord,
                                                                            multiple_iterators=True)))
         except OSError as e:  # maybe truncated file
@@ -637,38 +655,33 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
         n_fragments_processed = 0
         ignored_fragments = 0
         # file must still be open, otherwise we will get an OSError; implicitly increment via enumeration
-        if strict_n_ref_bases_handling:  # all fragments containing N-bases are rejected
+        if strict_n_ref_bases_handling:  # all fragments containing N-bases are rejected; extensive looping here!
             for n_fragments_processed, aln_segment in enumerate(filtered_alignments, start=1):
                 frag_start = min(aln_segment.pos, aln_segment.pnext)
                 frag_length = aln_segment.template_length  # pysam: "the observed query template length"
-                # -> filtered for positive
-                try:  # below yields str
-                    if aln_segment.template_length <= aln_segment.query_alignment_length:
-                        # inferred template length is smaller or equal than aligned read portion
-                        # This might cause problems with strict fragment rejection policy and N-rich reads!
-                        fragment_sequence = aln_segment.query_alignment_sequence  # approx. frag. sequence by read seq.
-                    else:  # otherwise do detour through reference genome slicing to get the entire fragment sequence
-                        fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
-                    gc_count = gc_count_rejecting_n_containing(f_seq=fragment_sequence)
-                    observed_attributes_matrix[frag_length-min_frag_len, gc_count] += 1
+                # -> filtered for inside flength range if PE reads; SE reads not supported at the moment
+                try:  # below yields str, takes fragment length, computed GC bases and increments counts matrix
+                    if frag_length < int(aln_segment.query_length * min_unclipped_aln_fracton):
+                        raise IndexError  # min. 3/4 must be identical to ref seq per default or fragment is discarded
+                    fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
+                    gc_count = gc_count_rejecting_n_containing(f_seq=fragment_sequence)  # might return high number
+                    observed_attributes_matrix[frag_length - min_frag_len, gc_count] += 1
                 except IndexError:  # out of bounds for extreme fragment lengths OR N-containing fragments above thrsh.
                     ignored_fragments += 1
                     continue
-        else:  # allow N bases until a certain threshold
+        else:  # allow N bases until a certain threshold; extensive looping here!
             for n_fragments_processed, aln_segment in enumerate(filtered_alignments, start=1):
                 frag_start = min(aln_segment.pos, aln_segment.pnext)
                 frag_length = aln_segment.template_length  # pysam: "the observed query template length"
                 # -> filtered for positive
-                try:  # below yields str
-                    if aln_segment.template_length <= aln_segment.query_alignment_length:
-                        # inferred template length is smaller or equal than aligned read portion
-                        fragment_sequence = aln_segment.query_alignment_sequence  # approx. frag. sequence by read seq.
-                    else:  # otherwise do detour through reference genome slicing to get the entire fragment sequence
-                        fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
+                try:  # below yields str, takes fragment length, computed GC bases and increments counts matrix
+                    if frag_length < int(aln_segment.query_length * min_unclipped_aln_fracton):
+                        raise IndexError  # min. 3/4 must be identical to ref seq per default or fragment is discarded
+                    fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
                     gc_count = safe_gc_base_count_inference_thresh(f_seq=fragment_sequence, f_len=frag_length,
                                                                    threshold=frag_n_cont_thresh)
-                    observed_attributes_matrix[frag_length-min_frag_len, gc_count] += 1
-                except IndexError:  # out of bounds for extreme fragment lengths OR N-containing fragments above thrsh.
+                    observed_attributes_matrix[frag_length - min_frag_len, gc_count] += 1
+                except IndexError:  # N-containing fragments above upper threshold
                     ignored_fragments += 1
                     continue
     # give feedback and store the observed attributes matrix
@@ -678,7 +691,7 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
                     f"the selected fragment length interval of [{min_frag_len}, {max_frag_len}] bp.",
             log_level=logging.DEBUG, i_log_with=LOGGER)
     if save_individual_matrices:
-        target_path = pathlib.Path(tmp_dir)
+        target_path = Path(tmp_dir)
         target_path.mkdir(parents=True, exist_ok=True)
         chunk_str = f"{chromosome}_{start_coord}-{stop_coord}"
         save_matrix_to_txt(matrix=observed_attributes_matrix, output_dir=str(target_path), max_frag_length=max_frag_len,
@@ -755,7 +768,7 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
     ref_seq_chunk_slice = chromosome_handle[start_coord:stop_coord].upper()
     if isinstance(statistic_matrix, np.ndarray) or isinstance(statistic_matrix, np.matrix):
         observed_attributes_matrix = statistic_matrix
-    elif isinstance(statistic_matrix, str) and pathlib.Path(statistic_matrix).is_file():
+    elif isinstance(statistic_matrix, str) and Path(statistic_matrix).is_file():
         observed_attributes_matrix, frag_length_range = load_txt_to_matrix_with_meta(statistic_matrix,
                                                                                      loading_logger=LOGGER)
         if frag_length_range.start != min_frag_len:
@@ -781,7 +794,7 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
         raw_simulated_matrices.append(np.zeros((n_fragment_length_rows, s_gc_content_columns), dtype=np.uint64))
     random_number_generator = np.random.default_rng(seed=random_seed)  # use random seed for reproducibility here!
     if save_individual_matrices:  # check and create before iterating
-        pathlib.Path(tmp_dir).mkdir(parents=True, exist_ok=True)
+        Path(tmp_dir).mkdir(parents=True, exist_ok=True)
     chunk_str = f"{chromosome}_{start_coord}-{stop_coord}"
     for sim_iter_idx in range(simulation_repetitions):
         for length_index, amount_fragments in enumerate(fragments):  # simulate each fragment length separately
@@ -793,7 +806,7 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
                                                          high=stop_coord - start_coord - actual_fragment_length + 1,
                                                          size=amount_fragments)
             rand_ints.sort()  # for sweeping-like file pointer placement (if that even matters for twobitreader)
-            sampling_failure_threshold = max(int(amount_fragments/3), 55 if strict_n_ref_bases_handling else 33)
+            sampling_failure_threshold = max(int(amount_fragments / 3), 55 if strict_n_ref_bases_handling else 33)
             # drawing fragment must fail at least 33 times (55 if strict handling) or one third of all required draws
             # whichever is higher
             unsorted_randoms_index = 0  # index of new fall-back random positions for each fragment length
@@ -871,10 +884,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                         simulated_attributes_raw_matrix_sums: List[np.array], n_ogc_summed: int, n_sims: int,
                         n_sgc_summed: int, bam_file: str, tmp_dir: Optional[str], min_frag_len: int, max_frag_len: int,
                         min_frag_occurs: int, ignored_fragments: int, sample_id: str,
-                        focus_nondefault_values: Optional[int], precision=6, plot_result=False, output_all=False) \
-        -> Tuple[Tuple[pathlib.Path, np.array],
-                 Tuple[pathlib.Path, np.array],
-                 Tuple[range, range]]:
+                        focus_nondefault_values: Optional[int], precision=6, plot_result=False, output_all=False,
+                        show_plots=False) -> Tuple[Tuple[Path, np.array], Tuple[Path, np.array], Tuple[range, range]]:
     """
 
     :param focus_nondefault_values: plots will focus on these values using the integer value of the parameter as border
@@ -949,7 +960,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     correction_weights_matrix_average = sum(correction_weights_matrices) / n_sims
     # mask nonsense positions in W_gc matrix with 0:
     for f_len in range(min_frag_len, max_frag_len, 1):
-        correction_weights_matrix_average[f_len - min_frag_len, f_len+1:] = 0.
+        correction_weights_matrix_average[f_len - min_frag_len, f_len + 1:] = 0.
     # ALWAYS SAVE PRIMARY RESULT!
     correction_weights_matrix_path = save_matrix_to_txt(matrix=correction_weights_matrix_average, output_dir=tmp_dir,
                                                         float_data_precision=precision, max_frag_length=max_frag_len,
@@ -975,7 +986,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     if plot_result:
         # plot fragment length distribution
         plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],
-                                   out_dir_path=pathlib.Path(tmp_dir), normalize_to_dataset_size=True,
+                                   out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True, show_figure=False,
                                    strip_xaxis_end_zeros=True, parent_logger=LOGGER, sample_id=sample_id)
         if focus_nondefault_values is not None:  # create focused plots
             complete_mask_focused, (deleted_rows, deleted_columns) = reduce_matrix(
@@ -1021,12 +1032,12 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                     frq_data.update({f'Mask_simulation_{s_idx}': pd.DataFrame(masks_for_sims[s_idx])})
                     # plot also absolute error between observed and expected
                     frq_data.update(
-                        {f'D_gc_simulation_{s_idx}': pd.DataFrame(sim_mat-observed_attributes_matrices_sum)})
+                        {f'D_gc_simulation_{s_idx}': pd.DataFrame(sim_mat - observed_attributes_matrices_sum)})
         for data_category in frq_data.keys():
             plot_statistic_matrices(frq_data=frq_data, data_id_to_show=data_category,
                                     y_tick_label_offset=deleted_rows.start + min_frag_len,
-                                    x_tick_label_offset=deleted_columns.start,
-                                    in_file=bam_file, output_dir=tmp_dir, sample_id=sample_id, fig_width=2000,
+                                    x_tick_label_offset=deleted_columns.start, show_figure=show_plots,
+                                    in_file=bam_file, output_dir=tmp_dir, sample_id=sample_id, fig_width=1800,
                                     fig_height=2000, fig_fontsize=32, parent_logger=LOGGER)
     try:  # give feedback about estimated percentage of corrected fragments:
         included_fragments = int(observed_attributes_matrices_sum.sum())  # without ignored fragments!
@@ -1038,8 +1049,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     except ZeroDivisionError:  # this should never happen
         log(message=f"Unable to estimate weighted dataset fraction!",
             log_level=logging.WARNING, i_log_with=LOGGER)
-    return (correction_weights_matrix_path, correction_weights_matrix_average),\
-           (complete_mask_path, complete_mask),\
+    return (correction_weights_matrix_path, correction_weights_matrix_average), \
+           (complete_mask_path, complete_mask), \
            (deleted_rows, deleted_columns)
 
 
@@ -1050,7 +1061,7 @@ def sort_chunks_by_blacklist_overlap(all_chunks: ChunksList, expected_dataset_fr
     # sort ascending overlapping bases % (normalized to chunk length to account for possible chunk size differences)
     chunks_passing_filters = sorted(all_chunks, key=lambda c: c[3] / (c[2] - c[1]), reverse=False)
     chunks_passing_filters = list(map(lambda t: t[:3],  # discard the blacklist overlap for further processing
-                                      filter(lambda c: max_overlap_percentage >= c[3] / (c[2]-c[1]) * 100.,
+                                      filter(lambda c: max_overlap_percentage >= c[3] / (c[2] - c[1]) * 100.,
                                              chunks_passing_filters)))
     log(message=f"{len(all_chunks) - len(chunks_passing_filters):,} chunks were excluded from further "
                 f"analysis based on the {max_overlap_percentage:.1f}% chunk overlap with blacklisted regions "
@@ -1075,7 +1086,8 @@ def sort_chunks_by_blacklist_overlap(all_chunks: ChunksList, expected_dataset_fr
 def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, sender: mp_connection.Connection,
                    min_frag_len: int, max_frag_len: int, two_bit_genome_file: str, chromosome_sizes: Dict[str, int],
                    target_fragment_count: int, mproc_lock: mp.Lock, shared_counter: mp.Value, input_bam: str,
-                   sample_id: str, expected_yield: int, precision=6, random_seed=RANDOM_SEED, tmp_dir=None,
+                   sample_id: str, expected_yield: int, precision=6,
+                   min_unclipped_aln_fracton=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, random_seed=RANDOM_SEED, tmp_dir=None,
                    keep_chunk_data=False, strict_n_base_exclusion=True, use_multithreading=True):
     """
 
@@ -1098,6 +1110,7 @@ def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, s
     :param precision:
     :param random_seed:
     :param keep_chunk_data:
+    :param min_unclipped_aln_fracton:
     :return:
     """
     discarded_chunks = 0
@@ -1113,7 +1126,7 @@ def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, s
                                                                     dtype=np.uint64))
     fragments_processed = 0
     fragments_ignored = 0
-    individual_matrices_tmp_dir = str(pathlib.Path(tmp_dir) / 'data_per_chunk') if keep_chunk_data else None
+    individual_matrices_tmp_dir = str(Path(tmp_dir) / 'data_per_chunk') if keep_chunk_data else None
     bad_chunks_list = []
     # process chunks either until global number of processed fragments suffices or we processed all chunks received here
     for chunk_chrom, chunk_start, chunk_end in chunks_to_process:
@@ -1124,7 +1137,7 @@ def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, s
             start_coord=chunk_start, stop_coord=chunk_end, save_individual_matrices=keep_chunk_data,
             sample_id=sample_id, float_precision=precision, min_frag_len=min_frag_len, chromosome=chunk_chrom,
             max_frag_len=max_frag_len, strict_n_ref_bases_handling=strict_n_base_exclusion,
-            multithread_access=use_multithreading)
+            multithread_access=use_multithreading, min_unclipped_aln_fracton=min_unclipped_aln_fracton)
         # in-place manipulate the expected matrix
         simulated_attributes_matrix, raw_simulated_matrices = simulate_fragment_attributes(
             two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, min_frag_len=min_frag_len,
@@ -1165,7 +1178,8 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                              visualize_matrices=False, output_all=False, write_updated_bad_chunks_library=True,
                              use_multithreading=True, detect_outliers=True, focus_custom_values=True,
                              outlier_detection_method='IQR', outlier_detection_stringency=2, smooth_weights=True,
-                             smoothing_kernel='gauss', smoothing_intensity=2, random_seed=RANDOM_SEED) \
+                             smoothing_kernel='gauss', smoothing_intensity=2, show_plots=False,
+                             min_unclipped_aln_fracton=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, random_seed=RANDOM_SEED) \
         -> Tuple[np.array, np.array]:
     """
     :param focus_custom_values:
@@ -1199,6 +1213,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     :param keep_chunk_data:
     :param random_seed:
     :param visualize_matrices:
+    :param min_unclipped_aln_fracton: minimum fraction of unclipped alignment length for fragment to be counted in O_gc
     :return:
     """
     n_processes = int(threads // 1.5 if use_multithreading else threads)  # observed mostly 1 thread active per process
@@ -1215,7 +1230,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
         receivers.append(communication_lines[p_idx][0])
         senders.append(communication_lines[p_idx][1])
     # check sample tmp dir
-    tmp_sample_output_path = pathlib.Path(tmp_dir_sample)
+    tmp_sample_output_path = Path(tmp_dir_sample)
     if tmp_sample_output_path.exists():
         log(message=f"Temporary output directory for sample '{sample_name}' exists and will be deleted: Deleting "
                     f"'{tmp_dir_sample}' ..", log_level=logging.WARNING, i_log_with=LOGGER)
@@ -1231,7 +1246,8 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                           'chromosome_sizes': chrom_sizes, 'target_fragment_count': target_fragments_processed,
                           'mproc_lock': multiproc_lock, 'shared_counter': shared_fragment_counter, 'input_bam': in_bam,
                           'tmp_dir': tmp_dir_sample, 'expected_yield': expected_yield, 'sample_id': sample_name,
-                          'strict_n_base_exclusion': strict_n_base_exclusion, 'use_multithreading': use_multithreading}
+                          'strict_n_base_exclusion': strict_n_base_exclusion, 'use_multithreading': use_multithreading,
+                          'min_unclipped_aln_fracton': min_unclipped_aln_fracton}
                          # write to TMP first, then move files which should be kept (is much faster on cluster!)
                          for w_idx in range(n_processes)]
     gc_bias_workers = [mp.Process(target=gc_bias_worker, kwargs=worker_kwargs)
@@ -1252,7 +1268,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
     for o_gc_sum_mat, s_gc_sum_mat, s_gc_sum_raw_mats, n_observed, n_expected, _fragments_processed, \
-            ignored_fragments, discarded_chunks, list_of_bad_chunks in received_data:
+        ignored_fragments, discarded_chunks, list_of_bad_chunks in received_data:
         observed_attributes_matrices_sum += o_gc_sum_mat  # inplace np.array manipulation
         simulated_attributes_matrices_sum += s_gc_sum_mat  # inplace np.array manipulation
         for mat_idx, s_gc_sum_raw_mat in enumerate(s_gc_sum_raw_mats):
@@ -1320,16 +1336,16 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                               enumerate(humansorted(all_bad_chunks.items(),
                                                     key=lambda t: (t[0][0], t[0][1]),
                                                     reverse=False))]
-            new_lib_path = pathlib.Path(out_dir_sample) / \
-                f'bad_chunks_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
+            new_lib_path = Path(out_dir_sample) / \
+                           f'bad_chunks_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
             with AtomicOpen(new_lib_path, 'wt') as f_new_bclib:
                 f_new_bclib.writelines(new_lib_buffer)
             log(message=f"Updated bad chunks library BED file written to: '{new_lib_path}'",
                 log_level=logging.INFO, i_log_with=LOGGER)
     # combine results
     (use_correction_matrix_path, correction_matrix), \
-        (weights_mask_path, weights_mask), \
-        trimmed_dimensions = consolidate_results(
+    (weights_mask_path, weights_mask), \
+    trimmed_dimensions = consolidate_results(
         observed_attributes_matrices_sum=observed_attributes_matrices_sum, min_frag_len=min_flen, bam_file=in_bam,
         simulated_attributes_matrices_sum=simulated_attributes_matrices_sum, max_frag_len=max_flen,
         simulated_attributes_raw_matrix_sums=simulated_attributes_raw_matrix_sums, plot_result=visualize_matrices,
@@ -1342,13 +1358,13 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     if detect_outliers:
         postprocessing_data_id = f'{postprocessing_data_id}_outliers_removed'
         use_correction_matrix = limit_extreme_outliers(outliers_matrix=use_correction_matrix,
-                                                       outliers_factor=10-outlier_detection_stringency,
+                                                       outliers_factor=10 - outlier_detection_stringency,
                                                        detection_method=outlier_detection_method, parent_logger=LOGGER)
         use_correction_matrix_path = save_matrix_to_txt(  # always save non-focused matrices
             matrix=use_correction_matrix, output_dir=tmp_dir_sample,
-            filename=str(pathlib.Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
-                                               [f'{outlier_detection_stringency}{outlier_detection_method.upper()}'
-                                                f'outliersRemoved', 'txt', 'gz']))),
+            filename=str(Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
+                                       [f'{outlier_detection_stringency}{outlier_detection_method.upper()}'
+                                        f'outliersRemoved', 'txt', 'gz']))),
             gzipped=True, float_data_precision=float_precision, report_saved_path=True, max_frag_length=max_flen,
             min_frag_length=min_flen)
         if visualize_matrices:
@@ -1359,8 +1375,8 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
             plot_statistic_matrices(frq_data={postprocessing_data_id: pd.DataFrame(visualize_correction_matrix)},
                                     data_id_to_show=postprocessing_data_id, in_file=in_bam, output_dir=tmp_dir_sample,
                                     y_tick_label_offset=min_flen + trimmed_dimensions[0].start, sample_id=sample_name,
-                                    x_tick_label_offset=trimmed_dimensions[1].start, fig_width=2000, fig_height=2000,
-                                    fig_fontsize=32, parent_logger=LOGGER)
+                                    x_tick_label_offset=trimmed_dimensions[1].start, fig_width=1800, fig_height=2000,
+                                    fig_fontsize=32, parent_logger=LOGGER, show_figure=show_plots)
     # create smoothed version of the matrix:
     if smooth_weights:
         postprocessing_data_id = f'{postprocessing_data_id}_smoothed'
@@ -1369,8 +1385,8 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                                                      smoothing_kernel=smoothing_kernel, min_flen=min_flen)
         use_correction_matrix_path = save_matrix_to_txt(
             matrix=use_correction_matrix, output_dir=tmp_dir_sample,
-            filename=str(pathlib.Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
-                                               [f'{smoothing_intensity}I{smoothing_kernel}Smoothed', 'txt', 'gz']))),
+            filename=str(Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
+                                       [f'{smoothing_intensity}I{smoothing_kernel}Smoothed', 'txt', 'gz']))),
             gzipped=True, float_data_precision=float_precision, report_saved_path=True, max_frag_length=max_flen,
             min_frag_length=min_flen)
         if visualize_matrices:
@@ -1381,14 +1397,14 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
             plot_statistic_matrices(frq_data={postprocessing_data_id: pd.DataFrame(visualize_correction_matrix)},
                                     data_id_to_show=postprocessing_data_id, in_file=in_bam, output_dir=tmp_dir_sample,
                                     y_tick_label_offset=min_flen + trimmed_dimensions[0].start, sample_id=sample_name,
-                                    x_tick_label_offset=trimmed_dimensions[1].start, fig_width=2000, fig_height=2000,
-                                    fig_fontsize=32, parent_logger=LOGGER)
+                                    x_tick_label_offset=trimmed_dimensions[1].start, fig_width=1800, fig_height=2000,
+                                    fig_fontsize=32, parent_logger=LOGGER, show_figure=show_plots)
     # move all output from temporary sample dir into output dir after checking that the latter does not exist
-    target_path = pathlib.Path(out_dir_sample)
+    target_path = Path(out_dir_sample)
     target_path.mkdir(parents=True, exist_ok=True)  # ensure parent path exists to be able to move sample dir
     log(message=f"Copying GC-bias computation output from '{tmp_dir_sample}' to '{out_dir_sample}' ..",
         log_level=logging.INFO, i_log_with=LOGGER)
-    source_path = pathlib.Path(tmp_dir_sample)
+    source_path = Path(tmp_dir_sample)
     for f in source_path.iterdir():  # handle all files/dirs separately
         # -> don't just batch delete existing target dir! Will exist probably due to GC-bias computation step
         if f.is_dir():  # subdir -> can be completely moved & target completely deleted
@@ -1446,7 +1462,7 @@ def load_until_leftmost_not_poly_n(loaded_sequences: List[Optional[str]], loaded
             unloaded_neighbors = [0] * len(loaded_chunks)
             inverted_loaded_chunks = [not entr for entr in loaded_chunks]
             for pos in range(len(loaded_chunks)):
-                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos+1:]) + sum(inverted_loaded_chunks[:pos])
+                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos + 1:]) + sum(inverted_loaded_chunks[:pos])
             idx_chunk_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
             loaded_sequences[idx_chunk_to_remove] = None
             loaded_chunks[idx_chunk_to_remove] = False
@@ -1535,7 +1551,7 @@ def load_specific_chunk(target_index: int, scaffold_length: int, scaffold_name: 
         log(message=f"Cannot load chunk {target_index} for scaffold {scaffold_name}. Terminating..",
             log_level=logging.CRITICAL, flush=True, close_handlers=True, i_log_with=parent_logger)
         raise AttributeError
-    if chunk_loading_size*(target_index + 1) > scaffold_length:
+    if chunk_loading_size * (target_index + 1) > scaffold_length:
         loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:scaffold_length].upper()
     else:
         loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:
@@ -1562,7 +1578,7 @@ def load_specific_chunk(target_index: int, scaffold_length: int, scaffold_name: 
     return loaded_sequences, loaded_chunks
 
 
-def unaligned_bam_worker(bam_path: Union[str, pathlib.Path], output_path: Union[str, pathlib.Path], tag_name: str):
+def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Path], tag_name: str):
     with AlignmentFile(bam_path, mode='rb') as f_in:
         with AlignmentFile(output_path, header=f_in.header, mode='wb') as f_unaligned_tagged:
             for aln in f_in.fetch(until_eof=True, multiple_iterators=True):
@@ -1606,9 +1622,9 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
         for c_idx, (chromosome, start_coord, stop_coord, _ch_len) in enumerate(tagging_chunks_list):
             scaffold_length = reference_lengths[chromosome]
             chromosome_handle = reference_handle[chromosome]  # is large; just slice for chunk sequence retrieval
-            tagged_bam_file = str(pathlib.Path(temp_dir) /
-                                  '.'.join(pathlib.Path(bam_path).name.split('.')[:-2] +
-                                           [f"{pathlib.Path(bam_path).name.split('.')[-2]}"  # anno str will be None
+            tagged_bam_file = str(Path(temp_dir) /
+                                  '.'.join(Path(bam_path).name.split('.')[:-2] +
+                                           [f"{Path(bam_path).name.split('.')[-2]}"  # anno str will be None
                                             f"+{chromosome}-{start_coord}-{stop_coord}.GCcorr"] +
                                            ([annotation_str, 'bam'] if annotation_str else ['bam'])))
             with silently_open_alignment_file(tagged_bam_file, mode='wb', template=input_bam_file,
@@ -1650,7 +1666,7 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                                         value_type="f", replace=True)  # should not occur when fetching chunks
                         aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
                         continue
-                    except IndexError:  # fragment length not in reduced weights matrix -> use default value
+                    except IndexError:  # fragment length not in reduced weight matrix -> use default value
                         aln_seg.set_tag(tag_name, value=1.,  # give unaligned reads a GC weight of 0.
                                         value_type="f", replace=True)
                         aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
@@ -1686,7 +1702,7 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                                 return -1
                         frag_start_chunk = frag_start_scaffold % ref_chunk_loading_size
                         frag_seq = ref_chunk_sequences[target_chunk_index][
-                                          frag_start_chunk:frag_start_chunk + frag_size]
+                                   frag_start_chunk:frag_start_chunk + frag_size]
                     try:  # to retrieve correction weight
                         corr_factor = correction_weights_row[frag_seq.count('G') + frag_seq.count('C') +
                                                              gc_bases_offset]
@@ -1711,7 +1727,7 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
 def try_clear_temp_dir_and_exit(tmp_dir: str, exit_code: int, message=None):
     if message is not None:
         log(message=message, log_level=logging.ERROR, i_log_with=LOGGER)
-    if pathlib.Path(tmp_dir).is_dir():
+    if Path(tmp_dir).is_dir():
         shutil.rmtree(tmp_dir, ignore_errors=True)  # remove full directory with content -> use shutil rm_tree
     if LOGGER:
         for hdlr in LOGGER.handlers:
@@ -1742,7 +1758,7 @@ def reduce_matrix(matrix_to_trim: np.array, trim_dimensions_exclusively_containi
                   border_elements: Optional[int]) -> Tuple[np.array, Tuple[range, range]]:
     """
     Remove non-informative weights so that numpy matrix is smaller (faster access?)
-    :param border_elements: 
+    :param border_elements:
     :param matrix_to_trim:
     :param trim_dimensions_exclusively_containing:
     :return:
@@ -1801,42 +1817,30 @@ def reduce_matrix(matrix_to_trim: np.array, trim_dimensions_exclusively_containi
                             range(delete_initial_columns, delete_tailing_columns))
 
 
-def get_unaligned_reads(bam_path: Union[str, pathlib.Path], output_dir: Union[str, pathlib.Path], tag_name: str) \
-        -> Tuple[Optional[pathlib.Path], mp.Process, bool]:
-    sample_id = pathlib.Path(bam_path).stem
-    output_bam_unaligned = pathlib.Path(output_dir) / f'{sample_id}.unaligned.GCcorr.bam'
+def get_unaligned_reads(bam_path: Union[str, Path], output_dir: Union[str, Path], tag_name: str) \
+        -> Tuple[Optional[Path], mp.Process]:
+    sample_id = Path(bam_path).stem
+    output_bam_unaligned = Path(output_dir) / f'{sample_id}.unaligned.bam'
     output_dir.mkdir(parents=True, exist_ok=True)  # ensure output directory exists
     unaligned_process_handle = mp.Process(target=unaligned_bam_worker,
                                           kwargs={'bam_path': bam_path, 'output_path': output_bam_unaligned,
                                                   'tag_name': tag_name})
     unaligned_process_handle.start()
-    unaligned_at_start = False
-    with silently_open_alignment_file(bam_path, mode='rb') as f_unaligned:
-        target_number = 2000
-        accessed_alns = 0
-        for aln in f_unaligned:
-            accessed_alns += 1
-            if not aln.is_mapped:  # we found an unaligned read in the first 200 alignment entries
-                unaligned_at_start = True
-                break
-            if accessed_alns == target_number:
-                break  # exit if none found in top portion of BAM file
-    return output_bam_unaligned if output_bam_unaligned.is_file() else None, \
-        unaligned_process_handle, unaligned_at_start
+    return output_bam_unaligned, unaligned_process_handle
 
 
-def samtools_cat_bams(list_of_bams: List[str], samtools_path: Union[str, pathlib.Path],
-                      tmp_dir: Union[str, pathlib.Path], output_bam: pathlib.Path, keep_input=False):
+def samtools_cat_bams(list_of_bams: List[str], samtools_path: Union[str, Path],
+                      tmp_dir: Union[str, Path], output_bam: Path, keep_input=False):
     concatenation_command = [str(samtools_path), 'cat', '-o', output_bam, '--no-PG', '--threads', '4'] + list_of_bams
     sp.call(concatenation_command)
-    if not pathlib.Path(output_bam).is_file():
+    if not Path(output_bam).is_file():
         exit_message = f"Concatenated BAM file '{output_bam}' not found. Terminating main.."
         try_clear_temp_dir_and_exit(tmp_dir=tmp_dir, exit_code=1, message=exit_message)
-    sh_command_index = [str(samtools_path), 'index', '-b', output_bam]
-    sp.call(sh_command_index)
+    # index final BAM file
+    create_bam_index(bam_path=output_bam, samtools_path=samtools_path, check_success=True)
     # remove temp dir
     if not keep_input:
-        temp_bam_parent = pathlib.Path(list_of_bams[0]).parent
+        temp_bam_parent = Path(list_of_bams[0]).parent
         for d_bm in list_of_bams:
             if os.path.isfile(d_bm):
                 os.remove(d_bm)
@@ -1851,19 +1855,19 @@ def samtools_cat_bams(list_of_bams: List[str], samtools_path: Union[str, pathlib
 
 
 def bring_bams_in_order(bam_list: List[str]) -> List[str]:
-    # extract ref order form header:
+    # extract ref scaffold order form header:
     with AlignmentFile(bam_list[0], mode='rb') as f_scaff_order:
         scaffold_order = f_scaff_order.references
     # if the provided value is not in the header
     bam_paths_with_locus = []
     for bam_nm in bam_list:
-        chrm, strt, stp = pathlib.Path(bam_nm).name.split('.GCcorr')[0].split('+')[-1].split('-')  # chrom-start-stop
-        bam_paths_with_locus.append(((chrm, int(strt)), bam_nm))
+        chrm, strt, stp = Path(bam_nm).name.split('.GCcorr')[0].split('+')[-1].split('-')  # chrom-start-stop
+        bam_paths_with_locus.append(((chrm, int(strt)), str(bam_nm)))
     return [bam_path for _, bam_path in
             sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))]
 
 
-def get_genomic_chunks_for_tagging(bam_for_tagging: Union[str, pathlib.Path], chunk_size=TAGGING_CHUNK_SIZE, offset=0) \
+def get_genomic_chunks_for_tagging(bam_for_tagging: Union[str, Path], chunk_size=TAGGING_CHUNK_SIZE, offset=0) \
         -> list:
     ref_lengths = get_reference_tuples(bam=bam_for_tagging)
     whole_genome_regions = [(chrm, offset, r_len) for chrm, r_len in ref_lengths]
@@ -1881,15 +1885,15 @@ def get_genomic_chunks_for_tagging(bam_for_tagging: Union[str, pathlib.Path], ch
             last_chrom, last_start, last_end, _chk_size = genomic_chunks[-1]
             genomic_chunks[-1] = (last_chrom, last_start, stop, chunk_size + resudual_bases)
         else:  # just add as separate chunk otherwise
-            genomic_chunks.append((chrom, cum_size, stop, stop-cum_size))
+            genomic_chunks.append((chrom, cum_size, stop, stop - cum_size))
     return genomic_chunks
 
 
 def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_genome_file: str, threads: int,
                                              correction_matrix: np.array, frag_len_range: range, bam_path: str,
                                              ref_lengths: Dict[str, int], temporary_directory_sample: str,
-                                             gc_base_limits: range, multithread_access=True, tag_name=DEFAULT_TAG_NAME,
-                                             samtools_path=DEFAULT_SAMTOOLS_PATH):
+                                             gc_base_limits: range, multithread_access=True, output_unaligned=False,
+                                             tag_name=DEFAULT_TAG_NAME, samtools_path=DEFAULT_SAMTOOLS_PATH):
     """
     Size increase of BAM file: 6.8 Gb to 6.9 Gb ~= 1.5%
     Test on the 22/11/2022: duration of BAM file tagging was 0:11:30 (h:mm:ss)
@@ -1905,6 +1909,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
     :param temporary_directory_sample:
     :param tag_name:
     :param samtools_path:
+    :param output_unaligned:
     :return:
     """
     gc_start = gc_base_limits.start  # this is the offset for the weights matrix column required for weights retrieval
@@ -1947,12 +1952,14 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                            f"This corresponds to {sum(chunk_lengths_per_proc[cid]):,} bp (bp compared to target of "
                            f"{target_base_sum_per_process:,}bp = "
                            f"{sum(chunk_lengths_per_proc[cid]) / target_base_sum_per_process:.1%})"
-                          for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, i_log_with=LOGGER)
+                           for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, i_log_with=LOGGER)
     # start unaligned reads extraction
-    worker_output_path = pathlib.Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
+    worker_output_path = Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
     worker_output_path.mkdir(parents=True, exist_ok=True)
-    unaligned_bam, unaligned_extraction_handle, unaligned_at_top = get_unaligned_reads(
-        bam_path=bam_path, output_dir=worker_output_path, tag_name=tag_name)  # uses 1 process
+    unaligned_bam = None
+    if output_unaligned:
+        unaligned_bam, unaligned_extraction_handle = get_unaligned_reads(
+            bam_path=bam_path, output_dir=worker_output_path, tag_name=tag_name)  # uses 1 process
     # create worker kwargs
     worker_output_dir = str(worker_output_path)
     for w_idx in range(n_processes):
@@ -1987,27 +1994,40 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
             log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
         sys.exit(3)
     # define final output path
-    tagged_bam_file_path = pathlib.Path(temporary_directory_sample) / \
-        '.'.join(pathlib.Path(bam_path).name.split('.')[:-2] +
-                 [f"{pathlib.Path(bam_path).name.split('.')[-2]}", "GCtagged", "bam"])
+    tagged_bam_file_path = Path(temporary_directory_sample) / \
+                           '.'.join(Path(bam_path).name.split('.')[:-2] +
+                                    [f"{Path(bam_path).name.split('.')[-2]}", "GCtagged", "bam"])
     tagged_bam_file = tagged_bam_file_path
     # concatenate BAM files and index
     tagged_scaffold_bam_files_in_order = bring_bams_in_order(bam_list=tagged_scaffold_bam_files)
-    unaligned_extraction_handle.join(timeout=3600)  # max. wait for an hour
-    unaligned_extraction_handle.close()
-    if unaligned_bam is not None and unaligned_bam.is_file():
-        if unaligned_at_top:
-            tagged_scaffold_bam_files_in_order = [str(unaligned_bam)] + tagged_scaffold_bam_files_in_order
-        else:
-            tagged_scaffold_bam_files_in_order.append(str(unaligned_bam))
-    samtools_cat_bams(list_of_bams=tagged_scaffold_bam_files_in_order, samtools_path=samtools_path,
-                      keep_input=False, tmp_dir=temporary_directory_sample, output_bam=tagged_bam_file)
+    if output_unaligned:
+        unaligned_extraction_handle.join(timeout=600)  # wait for max. 10 minutes
+        unaligned_extraction_handle.close()
     # move from temporary sample dir into output dir after checking that the latter does not exist
-    target_path = pathlib.Path(sample_output_dir)  # this is the sample output dir
+    target_path = Path(sample_output_dir)  # this is the sample output dir
     target_path.mkdir(parents=True, exist_ok=True)  # ensure parent path exists to be able to move sample dir
     log(message=f"Moving GC-bias computation output from '{temporary_directory_sample}' to '{sample_output_dir}' ..",
         log_level=logging.INFO, i_log_with=LOGGER)
-    for f in pathlib.Path(temporary_directory_sample).iterdir():  # handle all files/dirs separately
+    if unaligned_bam is not None and unaligned_bam.is_file():
+        create_bam_index(bam_path=unaligned_bam, samtools_path=samtools_path, check_success=True)
+        # check number of total reads in unaligned BAM file
+        with silently_open_alignment_file(unaligned_bam, mode='rb') as f_ubam:
+            index_statistics = f_ubam.get_index_statistics()
+        if sum([total for _cont, _mp, _ump, total in index_statistics]) == 0:
+            log(message=f"There were no unaligned reads detected in the input file. Nothing will be output.",
+                log_level=logging.INFO, i_log_with=LOGGER)
+            unaligned_bam.unlink()  # delete empty uBAM
+            Path(f'{unaligned_bam}.bai').unlink()  # delete empty index
+        else:  # there were unaligned reads - add unaligned reads at the end of the BAM file!
+            if output_unaligned:
+                _ = shutil.move(unaligned_bam, target_path)  # copy uBAM to target dir
+                _ = shutil.move(f'{unaligned_bam}.bai', target_path)  # move index for index-free samtools cat
+            else:
+                unaligned_bam.unlink()  # delete empty uBAM
+                Path(f'{unaligned_bam}.bai').unlink()  # delete empty index
+    samtools_cat_bams(list_of_bams=tagged_scaffold_bam_files_in_order, samtools_path=samtools_path,
+                      keep_input=False, tmp_dir=temporary_directory_sample, output_bam=tagged_bam_file)  # also indexes
+    for f in Path(temporary_directory_sample).iterdir():  # handle all files/dirs separately
         # -> don't just batch delete existing target dir! Will exist probably due to GC-bias computation step
         if f.is_dir():  # subdir -> can be completely moved & target completely deleted
             # (will only concern the bam parts if kept)
@@ -2022,7 +2042,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
             if target_file_path.exists():
                 os.remove(target_file_path)
             _ = shutil.move(f, target_path)  # just move inside target dir
-    source_path = pathlib.Path(temporary_directory_sample)
+    source_path = Path(temporary_directory_sample)
     if source_path.exists() and target_path.exists() and \
             (len([None for _2 in target_path.iterdir()]) == len([None for _1 in source_path.iterdir()]) or
              len([None for _1 in source_path.iterdir()]) == 0):  # same content OR source is empty
@@ -2030,12 +2050,12 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
         # (should be gone after successfully moving entire dir)
 
 
-def reduce_weights_for_tagging(weights_path: pathlib.Path, mask_path: Optional[pathlib.Path], sample_id: str,
+def reduce_weights_for_tagging(weights_path: Path, mask_path: Optional[Path], sample_id: str,
                                mask_matrix: Optional[np.array], correction_matrix: Optional[np.array],
                                weights_flen_range=None, mask_flen_range=None) -> Tuple[np.array, range, range]:
     """
     :param weights_path:
-    :param mask_path: str or pathlib.Path to mask matrix file created during tagging procedure. If available, the
+    :param mask_path: str or Path to mask matrix file created during tagging procedure. If available, the
     matrix will be used to reduce the weights matrix to non-default values. If not provided, the weights matrix parent
     directory will be searched for such a matrix file (assertion: naming of files not changed). The weights matrix
     will be reduced in size based on it's non-default values instead, if no mask matrix was provided/found made
@@ -2059,11 +2079,11 @@ def reduce_weights_for_tagging(weights_path: pathlib.Path, mask_path: Optional[p
     if mask_matrix is None:  # try to load from mask file if no mask matrix is given
         if mask_path is None or not mask_path.is_file():
             try:  # to find mask based on correction_matrix name
-                candidate_matrix = sorted(list(pathlib.Path(weights_path.parent).glob(
+                candidate_matrix = sorted(list(Path(weights_path.parent).glob(
                     f"{sample_id}*_gc_bias_computation_mask.txt*")), key=lambda c: len(c.name), reverse=True)[0]
                 mask_matrix, mask_flen_range = load_txt_to_matrix_with_meta(filename=candidate_matrix, to_dtype=bool,
                                                                             loading_logger=LOGGER)
-            except (IndexError, AttributeError):   # IndexError out of range; 'NoneType' object no attribute 'parent'
+            except (IndexError, AttributeError):  # IndexError out of range; 'NoneType' object no attribute 'parent'
                 pass  # there is no weights file -> only matrix; behaviour not optimal!
                 # Will potentially use correction weights that are non-default just because of blurring
     if mask_flen_range is not None and \
@@ -2083,13 +2103,13 @@ def reduce_weights_for_tagging(weights_path: pathlib.Path, mask_path: Optional[p
     return reduced_weights, resulting_flen_range, resulting_gc_bases_range
 
 
-def get_reference_tuples(bam: Union[str, pathlib.Path]) -> Tuple[Tuple[Any, Any]]:
+def get_reference_tuples(bam: Union[str, Path]) -> Tuple[Tuple[Any, Any]]:
     with silently_open_alignment_file(bam, mode='rb', threads=1) as input_bam_file:
         # allow for any error output resulting from BAM access to be printed here
         return tuple(zip(input_bam_file.references, input_bam_file.lengths))
 
 
-def get_reference_contig_lengths(bam: Union[str, pathlib.Path]):
+def get_reference_contig_lengths(bam: Union[str, Path]):
     reference_tuples = get_reference_tuples(bam=bam)
     # create chromosome/scaffold length dictionary
     reference_lengths = {}.fromkeys([r_n for r_n, _r_l in reference_tuples])
@@ -2124,34 +2144,41 @@ def sufficient_aligned_reads_available(bam_path: str, target_fragments_processed
     return expected_number_fragments_in_chunks >= target_fragments_processed, expected_number_fragments_in_chunks
 
 
-def fix_bam_index(bam_path: str, samtools_path: str):
+def create_bam_index(bam_path: Union[Path, str], samtools_path: Union[Path, str], check_success=True):
+    bam_path = Path(bam_path)
+    indexing_command = [str(samtools_path), 'index', str(bam_path)]
+    ran_indexing_subp = sp.run(indexing_command)
+    try:
+        ran_indexing_subp.check_returncode()
+    except sp.CalledProcessError:
+        log(message=f"BAM indexing process for file '{Path(bam_path).name}' returned with error. Cannot proceed."
+                    f"Terminating ..",
+            log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
+        sys.exit(2)
+    if check_success:
+        # check for existence of putative BAM index:
+        if not any([Path(potential_index).is_file()
+                    for potential_index in (f'{bam_path}.bai',
+                                            Path(bam_path.parent) / f'{bam_path.stem}.bai')]):
+            log(message=f"No BAM index found for file '{bam_path}'. Cannot proceed. Terminating ..",
+                log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
+            sys.exit(2)
+
+
+def fix_bam_index(bam_path: Union[Path, str], samtools_path: str, silent=True):
     with AlignmentFile(bam_path, 'rb') as f_aln:
         try:
             f_aln.get_index_statistics()  # check_index(self) could also be used
         except ValueError:  # ValueError: mapping information not recorded in index or index not available
             # create missing index
-            log(message=f"GCparagon requires index statistics to be present in BAM index file. Creating missing index "
-                        f"file for bam '{bam_path}' ..", log_level=logging.INFO, i_log_with=LOGGER)
-            indexing_command = [samtools_path, 'index', bam_path]
-            ran_indexing_subp = sp.run(indexing_command)
-            try:
-                ran_indexing_subp.check_returncode()
-            except sp.CalledProcessError:
-                log(message=f"BAM indexing process returned with error. Cannot proceed. Terminating ..",
-                    log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
-                sys.exit(2)
+            if not silent:
+                log(message=f"GCparagon requires index statistics to be present in BAM index file. Creating missing "
+                            f"index file for bam '{bam_path}' ..", log_level=logging.INFO, i_log_with=LOGGER)
+            create_bam_index(bam_path=bam_path, samtools_path=samtools_path)
         except AttributeError:  # if htsfile is SAM formatted and thus has no index
             log(message=f"input BAM file is actually a SAM file. Code requires a BAM file. Terminating ..",
                 log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
             sys.exit(2)
-    # check for existence of putative BAM index:
-    bam_ptlp = pathlib.Path(bam_path)
-    if not any([pathlib.Path(potential_index).is_file()
-                for potential_index in (f'{bam_path}.bai',
-                                        f'{str(bam_ptlp).rstrip(bam_ptlp.suffix)}.bai')]):
-        log(message=f"No BAM index found for file '{bam_ptlp}'. Cannot proceed. Terminating ..",
-            log_level=logging.ERROR, close_handlers=True, i_log_with=LOGGER)
-        sys.exit(2)
 
 
 def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
@@ -2159,11 +2186,11 @@ def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
                                List[int]]],
                  Optional[str]]:
     if bad_chunks_bed is not None:  # figure out most recent one!
-        candidate_bad_library_files = pathlib.Path(bad_chunks_bed).parent.glob(
-            pathlib.Path(bad_chunks_bed).name)  # yields generator object -> no iteration if empty/nothing found
+        candidate_bad_library_files = Path(bad_chunks_bed).parent.glob(
+            Path(bad_chunks_bed).name)  # yields generator object -> no iteration if empty/nothing found
         lib_dates = []
         for bc_library in candidate_bad_library_files:  # may contain timestamp
-            cur_lib = pathlib.Path(bc_library)
+            cur_lib = Path(bc_library)
             try:
                 lib_dates.append(time.strptime('_'.join(cur_lib.stem.split('_')[-2:]), TIMESTAMP_FORMAT))
             except ValueError:  # is raised if the expected timestamp is not present
@@ -2171,8 +2198,8 @@ def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
         # find most recent time stamp, assuming default output naming -> just use input as-is otherwise
         try:
             most_recent_lib_date = max(lib_dates)
-            new_bad_chunks_bed_path = pathlib.Path(
-                time.strftime(str(pathlib.Path(bad_chunks_bed).parent / BAD_CHUNKS_FILE_PATTERN_AS_PATH),
+            new_bad_chunks_bed_path = Path(
+                time.strftime(str(Path(bad_chunks_bed).parent / BAD_CHUNKS_FILE_PATTERN_AS_PATH),
                               most_recent_lib_date))
             if new_bad_chunks_bed_path.is_file():
                 log(message=f"Using bad chunks library file '{new_bad_chunks_bed_path}'",
@@ -2180,7 +2207,7 @@ def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
                 bad_chunks_bed = new_bad_chunks_bed_path
         except ValueError:  # max() arg is an empty sequence
             pass  # leave bad_chunks_bed as was input
-    if bad_chunks_bed is None or not pathlib.Path(bad_chunks_bed).exists():  # if none was found/path is not valid
+    if bad_chunks_bed is None or not Path(bad_chunks_bed).exists():  # if none was found/path is not valid
         return None, None
     bad_chunks = read_bad_chunks_bed_file(bed_path=bad_chunks_bed)  # requires score in col 4 and integer field in col 5
     return bad_chunks, bad_chunks_bed
@@ -2210,6 +2237,7 @@ def main() -> int:
     only_tag_bam = cmd_args.only_tag_bam  # deactivates bias computation; a weights matrix must be supplied!
     strict_n_base_exclusion = not cmd_args.allow_n_base_fragments
     use_multithreading = cmd_args.multithread_bam_access
+    min_unclipped_aln_fracton = cmd_args.min_unclipped_aln_fracton
     # post-processing options
     detect_outliers = cmd_args.detect_outliers
     outliers_method = cmd_args.outlier_method
@@ -2229,11 +2257,13 @@ def main() -> int:
     gc_tag_name = cmd_args.gc_tag_name
     write_updated_bad_chunks_library = cmd_args.write_updated_bad_chunks_library
     focus_plots = not cmd_args.dont_focus_plots
+    show_plots = cmd_args.show_plots
+    output_unaligned_reads = cmd_args.output_unaligned_reads
     # processing settings
     if correction_weights_matrix_path is not None:
-        correction_weights_matrix_path = pathlib.Path(correction_weights_matrix_path)
+        correction_weights_matrix_path = Path(correction_weights_matrix_path)
     if mask_path is not None:
-        mask_path = pathlib.Path(mask_path)
+        mask_path = Path(mask_path)
     np.seterr(all='raise')
     # CHECK INPUT:
     # check unfixable parameters:
@@ -2241,7 +2271,7 @@ def main() -> int:
         raise AttributeError(f"input BAM file '{input_bam}' does not exist!")
     if not os.path.isfile(two_bit_reference_file):
         raise AttributeError(f"2bit reference genome file '{two_bit_reference_file}' does not exist!")
-    if not samtools_path or not pathlib.Path(samtools_path).exists() or not pathlib.Path(samtools_path).is_file():
+    if not samtools_path or not Path(samtools_path).exists() or not Path(samtools_path).is_file():
         raise AttributeError("path to samtools executable either not found or not accessible. Please provide a valid "
                              "and accessible path using '-sp' or '--samtools-path'.")
     # check and fix correctable parameters
@@ -2260,12 +2290,17 @@ def main() -> int:
                               f"at least 1 higher than lower limit of {lower_limit_fragment_length}. Setting to "
                               f"default value of {DEFAULT_MAX_FRAGMENT_LENGTH} instead ..")
         upper_limit_fragment_length = DEFAULT_MAX_FRAGMENT_LENGTH
+    if not (0. <= min_unclipped_aln_fracton <= 1.):
+        print_warnings.append(f"Minimum unclipped alignment fraction was set to {min_unclipped_aln_fracton} but must "
+                              "be a floating point value between 0 and 1. Setting to default value of "
+                              f"{DEFAULT_MIN_UNCLIPPED_ALN_FRACTION} instead ..")
+        min_unclipped_aln_fracton = DEFAULT_MIN_UNCLIPPED_ALN_FRACTION
     # set preset parameters if defined
     if preset_number:  # 1, 2, or 3
         match preset_number:
             case 1:
                 min_frag_occurs = 2
-                process_n_fragments = 5*10**6
+                process_n_fragments = 5 * 10 ** 6
                 n_simulations = 6
                 smooth_weights = True
                 smoothing_kernel = 'gauss'
@@ -2275,7 +2310,7 @@ def main() -> int:
                 outlier_stringency = 2
             case 2:
                 min_frag_occurs = 10
-                process_n_fragments = 50*10**6
+                process_n_fragments = 50 * 10 ** 6
                 n_simulations = 4
                 smooth_weights = True
                 smoothing_kernel = 'gauss'
@@ -2319,18 +2354,18 @@ def main() -> int:
     # manage imago parameters
     sample_id = os.path.basename(input_bam).split('.')[0]
     compute_bias = not only_tag_bam
-    if only_tag_bam and not pathlib.Path(correction_weights_matrix_path).is_file():
+    if only_tag_bam and not Path(correction_weights_matrix_path).is_file():
         print_warnings.append('input argument --correction-weights missing. Tag-only-mode not possible. Exiting..')
         exit_after_warnings = 1
-    if not output_directory or output_directory == str(pathlib.Path(input_bam).parent):
+    if not output_directory or output_directory == str(Path(input_bam).parent):
         print_warnings.append('Output directory is either input BAM parent directory or was None. Setting '
                               "it to subdirectory of input BAM parent directory: 'GC_correction_output'")
-        output_directory = str(pathlib.Path(input_bam).parent / 'GC_correction_output')
+        output_directory = str(Path(input_bam).parent / 'GC_correction_output')
     # choose most recent bad chunks library version if multiple are present in parent directory
     bad_chunks, exclude_chunks_bed_file = manage_bad_chunks(bad_chunks_bed=exclude_chunks_bed_file)
     # set up target output directory and logfile
     start_time = time.localtime()
-    sample_out_dir_path = pathlib.Path(output_directory) / sample_id
+    sample_out_dir_path = Path(output_directory) / sample_id
     if sample_out_dir_path.exists() and compute_bias:
         print_warnings.append(f"Output path for GC bias computation exists. Deleting completely: "
                               f"'{sample_out_dir_path}'")
@@ -2352,18 +2387,18 @@ def main() -> int:
     if exit_after_warnings:
         return exit_after_warnings
     if temporary_directory:
-        if temporary_directory == pathlib.Path(input_bam).parent:
+        if temporary_directory == Path(input_bam).parent:
             log(message="Temporary directory is identical to input BAM parent directory. Setting it to "
                         "subdirectory of input BAM parent directory: 'GC_correction_tmp'",
                 log_level=logging.WARNING, i_log_with=LOGGER)
-            sample_temp_dir_path = pathlib.Path(input_bam).parent / 'GC_correction_tmp'
+            sample_temp_dir_path = Path(input_bam).parent / 'GC_correction_tmp'
         else:
-            sample_temp_dir_path = pathlib.Path(temporary_directory) / sample_id
+            sample_temp_dir_path = Path(temporary_directory) / sample_id
     else:  # define a temporary directory
-        sample_temp_dir_path = pathlib.Path(sample_out_dir) / 'GC_correction_tmp'  # required for BAM merging (samtools)
+        sample_temp_dir_path = Path(sample_out_dir) / 'GC_correction_tmp'  # required for BAM merging (samtools)
     sample_temp_dir = str(sample_temp_dir_path)
     # check if index is there. if not, create it!
-    fix_bam_index(bam_path=input_bam, samtools_path=samtools_path)
+    fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
     # get reference contigs and lengths
     reference_contig_lengths = get_reference_contig_lengths(bam=input_bam)  # stderr enabled for AlignmentFile
     # TASK 1: compute the GC bias present in the BAM file of the current sample
@@ -2423,7 +2458,7 @@ def main() -> int:
                     "fragments or having exhausted list of genomic chunks, whichever occurs first.",
             log_level=logging.INFO, i_log_with=LOGGER)
         (correction_weights_matrix_path, correction_weights_matrix), \
-            (mask_path, weights_mask) = compute_gc_bias_parallel(
+        (mask_path, weights_mask) = compute_gc_bias_parallel(
             visualize_matrices=plot_result, output_all=output_simulation_results, in_bam=input_bam,
             out_dir_sample=sample_out_dir, use_multithreading=use_multithreading,
             max_flen=upper_limit_fragment_length, chunks_to_process=target_chunks, min_flen=lower_limit_fragment_length,
@@ -2436,8 +2471,8 @@ def main() -> int:
             bad_chunks_library_file=exclude_chunks_bed_file, strict_n_base_exclusion=strict_n_base_exclusion,
             detect_outliers=detect_outliers, outlier_detection_method=outliers_method,
             outlier_detection_stringency=outlier_stringency, smooth_weights=smooth_weights,
-            smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity,
-            plot_focus_border=10 if focus_plots else None)
+            smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity, show_plots=show_plots,
+            plot_focus_border=10 if focus_plots else None, min_unclipped_aln_fracton=min_unclipped_aln_fracton)
         # compute end time and give feedback
         log(message=f"Correction weights matrix averaged from {n_simulations:,} simulations written to file: "
                     f"'{correction_weights_matrix_path}'", log_level=logging.INFO, i_log_with=LOGGER)
@@ -2460,9 +2495,9 @@ def main() -> int:
             mask_flen_range=default_flen_range)
         tag_bam_with_correction_weights_parallel(
             bam_path=input_bam, tag_name=gc_tag_name, multithread_access=use_multithreading,
-            correction_matrix=weights_matrix_for_tagging, gc_base_limits=gc_bas_range,
-            two_bit_genome_file=two_bit_reference_file, temporary_directory_sample=sample_temp_dir,
-            threads=total_number_threads, sample_output_dir=sample_out_dir, samtools_path=samtools_path,
+            correction_matrix=weights_matrix_for_tagging, gc_base_limits=gc_bas_range, samtools_path=samtools_path,
+            output_unaligned=output_unaligned_reads, two_bit_genome_file=two_bit_reference_file,
+            temporary_directory_sample=sample_temp_dir, threads=total_number_threads, sample_output_dir=sample_out_dir,
             ref_lengths=reference_contig_lengths, frag_len_range=flen_range)
         # compute duration of execution and message user
         computation_end_time = time.localtime()

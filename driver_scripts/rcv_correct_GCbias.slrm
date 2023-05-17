@@ -16,7 +16,7 @@ echo "ENTERED PRESET COMPUTATION SCRIPT"
 #                  (and the env must be from that conda)
 eval "$(conda shell.bash hook)"
 # Still old conda will be used. Mamba install does not seem to work
-conda activate GCparagon_py3.10  # NAME OF CONDA ENV GOES HERE
+conda activate GCparagon  # NAME OF CONDA ENV GOES HERE
 
 echo "conda environment activated"
 
@@ -66,7 +66,7 @@ sample_id="$(basename -- "${bam_file}" | cut -d '.' -f 1)"
 echo "  i: processing sample: ${sample_id} using preset ${preset} ..."
 "${python3_path}" "${GCparagon_script}" --use-parameter-preset "${preset}" --bam "${bam_file}" \
 --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${output_dir}" --temporary-directory "${tmp_out_dir}" \
---write-chunk-exclusion --threads "${n_processes}" --output-bam
+--write-chunk-exclusion --threads "${n_processes}" --output-bam --output-unaligned-reads
 echo "  i: done processing '${sample_id}', preset ${preset})."
 # try to delete temp dir if still exists after all analyses; leave no traces!
 if [ -d "${tmp_out_dir}" ]; then

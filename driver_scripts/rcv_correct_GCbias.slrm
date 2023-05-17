@@ -26,6 +26,7 @@ args=("${@}")
 echo "  received argument 0: ${args[0]}"  # BAM file
 echo "  received argument 1: ${args[1]}"  # output directory
 echo "  received argument 2: ${args[2]}"  # preset
+echo "  received argument 3: ${args[3]}"  # GCparagon script path
 
 bam_file="${args[0]}"
 if [ ! "${bam_file}" ]; then
@@ -42,9 +43,8 @@ preset="${args[2]}"
 # analysis definitions
 n_processes=12
 python3_path="$(which python3)"
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
-content_root="$(dirname "${script_dir}")"
-GCparagon_script="${content_root}/src/GCparagon/correct_GC_bias.py"
+GCparagon_script="${args[3]}"
+content_root="$(dirname -- $(dirname -- $(dirname -- ${GCparagon_script})))"
 if [ ! "${GCparagon_script}" ]; then
   echo "ERROR: correct_GC_bias.py script not found at: ${GCparagon_script}"
   exit 1

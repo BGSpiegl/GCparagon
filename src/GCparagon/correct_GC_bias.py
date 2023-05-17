@@ -54,6 +54,7 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 #   - matplotlib=3.6
 #   - memory_profiler
 #   - pybedtools
+#   - polars
 
 # default definitions for analysis
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!

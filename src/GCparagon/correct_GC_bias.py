@@ -62,20 +62,20 @@ DEFAULT_MAX_FRAGMENT_LENGTH = 550
 DEFAULT_TAG_NAME = 'GC'
 DEFAULT_MIN_OCCURRENCES = 3
 ABSOLUTE_MIN_OCCURRENCES = 2
-TAGGING_CHUNK_SIZE = 50*10**6
+TAGGING_CHUNK_SIZE = 50 * 10 ** 6
 # estimated HW capacities
 max_logical_cores = multiprocessing.cpu_count()
 max_physical_cores = max_logical_cores // 2 if max_logical_cores > 1 else 1
 # PARAMETERS DEFINING RUNTIME OF GC-BIAS COMPUTATION:
 # ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_NUMBER_PROCESSES = min(12, max_logical_cores)  # limit default value to meaningful amount
-DEFAULT_TARGET_NUMBER_FRAGMENTS_PROCESSED = 5*10**6  # 5 million
+DEFAULT_TARGET_NUMBER_FRAGMENTS_PROCESSED = 5 * 10 ** 6  # 5 million
 DEFAULT_PRESET = 1  # showed best results in GC curve comparison against randomly drawn 150 bp sequences from reference
 DEFAULT_SIMULATION_REPETITIONS = 6
 # ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_FLOAT_PRECISION = 6
 DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3
-DEFAULT_MAX_CHUNK_PERCENTAGE_BLACKLIST_OVERLAP = 1/3*100.  # of blacklisted regions for default 1 Mbp chunks processing
+DEFAULT_MAX_CHUNK_PERCENTAGE_BLACKLIST_OVERLAP = 1 / 3 * 100.  # of blacklisted regions for default 1 Mbp chunks processing
 DEFAULT_MIN_UNCLIPPED_ALN_FRACTION = 0.75
 # POSTPROCESSING DEFAULTS:
 DEFAULT_SMOOTHING_INTENSITY = 5
@@ -361,7 +361,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                      help='(PRESET precedence if specified) If the --detect-outliers flag is set, this '
                                           'parameter defines how stringent the outlier detection threshold is set. '
                                           'Must be an integer in the range of 1-7 (inclusive). [ DEFAULT: '
-                                          f'{DEFAULT_OUTLIER_DETECTION_STRINGENCY} ]',  metavar='Integer')
+                                          f'{DEFAULT_OUTLIER_DETECTION_STRINGENCY} ]', metavar='Integer')
     postprocessing_args.add_argument('-sw', '--smooth', action='store_true', dest='smooth_weights',
                                      help='(PRESET precedence if specified) If this flag is set, computed weights will '
                                           'also be smoothed. An additional matrix is output containing these '
@@ -507,13 +507,13 @@ def read_bad_chunks_bed_file(bed_path: str) -> BadChunksDict:
     chunk_lengths = set()
     try:
         for chrm, strt, stp, rst in read_bed_file(bed_path=bed_path):
-            chunk_lengths.update({stp-strt})
+            chunk_lengths.update({stp - strt})
             # values: sample yield(s) as comma-deimited list of integers;
             if bad_chunks.get((chrm, strt, stp)) is None:
                 bad_chunks.update({(chrm, strt, stp): list(map(lambda v: int(v), rst[0].split(',')))})
             else:  # chunk locus exists already (= multiple entries! Not expected)
                 bad_chunks[(chrm, strt, stp)].extend(list(map(lambda v: int(v), rst[0].split(','))))
-    except ValueError:   # not enough values to unpack (expected 4, got X)
+    except ValueError:  # not enough values to unpack (expected 4, got X)
         log(message=f"Could not load bad regions from BED file '{bed_path}' (requires column 4 and column 5 to contain "
                     "values that can be cast to int!). Returning no bad regions instead.",
             log_level=logging.WARNING, i_log_with=LOGGER)
@@ -666,7 +666,7 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
                         raise IndexError  # min. 3/4 must be identical to ref seq per default or fragment is discarded
                     fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
                     gc_count = gc_count_rejecting_n_containing(f_seq=fragment_sequence)  # might return high number
-                    observed_attributes_matrix[frag_length-min_frag_len, gc_count] += 1
+                    observed_attributes_matrix[frag_length - min_frag_len, gc_count] += 1
                 except IndexError:  # out of bounds for extreme fragment lengths OR N-containing fragments above thrsh.
                     ignored_fragments += 1
                     continue
@@ -681,7 +681,7 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
                     fragment_sequence = chromosome_handle[frag_start:frag_start + frag_length].upper()
                     gc_count = safe_gc_base_count_inference_thresh(f_seq=fragment_sequence, f_len=frag_length,
                                                                    threshold=frag_n_cont_thresh)
-                    observed_attributes_matrix[frag_length-min_frag_len, gc_count] += 1
+                    observed_attributes_matrix[frag_length - min_frag_len, gc_count] += 1
                 except IndexError:  # N-containing fragments above upper threshold
                     ignored_fragments += 1
                     continue
@@ -807,7 +807,7 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
                                                          high=stop_coord - start_coord - actual_fragment_length + 1,
                                                          size=amount_fragments)
             rand_ints.sort()  # for sweeping-like file pointer placement (if that even matters for twobitreader)
-            sampling_failure_threshold = max(int(amount_fragments/3), 55 if strict_n_ref_bases_handling else 33)
+            sampling_failure_threshold = max(int(amount_fragments / 3), 55 if strict_n_ref_bases_handling else 33)
             # drawing fragment must fail at least 33 times (55 if strict handling) or one third of all required draws
             # whichever is higher
             unsorted_randoms_index = 0  # index of new fall-back random positions for each fragment length
@@ -961,7 +961,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     correction_weights_matrix_average = sum(correction_weights_matrices) / n_sims
     # mask nonsense positions in W_gc matrix with 0:
     for f_len in range(min_frag_len, max_frag_len, 1):
-        correction_weights_matrix_average[f_len - min_frag_len, f_len+1:] = 0.
+        correction_weights_matrix_average[f_len - min_frag_len, f_len + 1:] = 0.
     # ALWAYS SAVE PRIMARY RESULT!
     correction_weights_matrix_path = save_matrix_to_txt(matrix=correction_weights_matrix_average, output_dir=tmp_dir,
                                                         float_data_precision=precision, max_frag_length=max_frag_len,
@@ -1033,7 +1033,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                     frq_data.update({f'Mask_simulation_{s_idx}': pd.DataFrame(masks_for_sims[s_idx])})
                     # plot also absolute error between observed and expected
                     frq_data.update(
-                        {f'D_gc_simulation_{s_idx}': pd.DataFrame(sim_mat-observed_attributes_matrices_sum)})
+                        {f'D_gc_simulation_{s_idx}': pd.DataFrame(sim_mat - observed_attributes_matrices_sum)})
         for data_category in frq_data.keys():
             plot_statistic_matrices(frq_data=frq_data, data_id_to_show=data_category,
                                     y_tick_label_offset=deleted_rows.start + min_frag_len,
@@ -1050,8 +1050,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     except ZeroDivisionError:  # this should never happen
         log(message=f"Unable to estimate weighted dataset fraction!",
             log_level=logging.WARNING, i_log_with=LOGGER)
-    return (correction_weights_matrix_path, correction_weights_matrix_average),\
-           (complete_mask_path, complete_mask),\
+    return (correction_weights_matrix_path, correction_weights_matrix_average), \
+           (complete_mask_path, complete_mask), \
            (deleted_rows, deleted_columns)
 
 
@@ -1062,7 +1062,7 @@ def sort_chunks_by_blacklist_overlap(all_chunks: ChunksList, expected_dataset_fr
     # sort ascending overlapping bases % (normalized to chunk length to account for possible chunk size differences)
     chunks_passing_filters = sorted(all_chunks, key=lambda c: c[3] / (c[2] - c[1]), reverse=False)
     chunks_passing_filters = list(map(lambda t: t[:3],  # discard the blacklist overlap for further processing
-                                      filter(lambda c: max_overlap_percentage >= c[3] / (c[2]-c[1]) * 100.,
+                                      filter(lambda c: max_overlap_percentage >= c[3] / (c[2] - c[1]) * 100.,
                                              chunks_passing_filters)))
     log(message=f"{len(all_chunks) - len(chunks_passing_filters):,} chunks were excluded from further "
                 f"analysis based on the {max_overlap_percentage:.1f}% chunk overlap with blacklisted regions "
@@ -1359,13 +1359,13 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     if detect_outliers:
         postprocessing_data_id = f'{postprocessing_data_id}_outliers_removed'
         use_correction_matrix = limit_extreme_outliers(outliers_matrix=use_correction_matrix,
-                                                       outliers_factor=10-outlier_detection_stringency,
+                                                       outliers_factor=10 - outlier_detection_stringency,
                                                        detection_method=outlier_detection_method, parent_logger=LOGGER)
         use_correction_matrix_path = save_matrix_to_txt(  # always save non-focused matrices
             matrix=use_correction_matrix, output_dir=tmp_dir_sample,
             filename=str(Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
-                                               [f'{outlier_detection_stringency}{outlier_detection_method.upper()}'
-                                                f'outliersRemoved', 'txt', 'gz']))),
+                                       [f'{outlier_detection_stringency}{outlier_detection_method.upper()}'
+                                        f'outliersRemoved', 'txt', 'gz']))),
             gzipped=True, float_data_precision=float_precision, report_saved_path=True, max_frag_length=max_flen,
             min_frag_length=min_flen)
         if visualize_matrices:
@@ -1387,7 +1387,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
         use_correction_matrix_path = save_matrix_to_txt(
             matrix=use_correction_matrix, output_dir=tmp_dir_sample,
             filename=str(Path('.'.join(use_correction_matrix_path.name.split('.')[:-2] +
-                                               [f'{smoothing_intensity}I{smoothing_kernel}Smoothed', 'txt', 'gz']))),
+                                       [f'{smoothing_intensity}I{smoothing_kernel}Smoothed', 'txt', 'gz']))),
             gzipped=True, float_data_precision=float_precision, report_saved_path=True, max_frag_length=max_flen,
             min_frag_length=min_flen)
         if visualize_matrices:
@@ -1463,7 +1463,7 @@ def load_until_leftmost_not_poly_n(loaded_sequences: List[Optional[str]], loaded
             unloaded_neighbors = [0] * len(loaded_chunks)
             inverted_loaded_chunks = [not entr for entr in loaded_chunks]
             for pos in range(len(loaded_chunks)):
-                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos+1:]) + sum(inverted_loaded_chunks[:pos])
+                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos + 1:]) + sum(inverted_loaded_chunks[:pos])
             idx_chunk_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
             loaded_sequences[idx_chunk_to_remove] = None
             loaded_chunks[idx_chunk_to_remove] = False
@@ -1552,7 +1552,7 @@ def load_specific_chunk(target_index: int, scaffold_length: int, scaffold_name: 
         log(message=f"Cannot load chunk {target_index} for scaffold {scaffold_name}. Terminating..",
             log_level=logging.CRITICAL, flush=True, close_handlers=True, i_log_with=parent_logger)
         raise AttributeError
-    if chunk_loading_size*(target_index + 1) > scaffold_length:
+    if chunk_loading_size * (target_index + 1) > scaffold_length:
         loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:scaffold_length].upper()
     else:
         loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:
@@ -1703,7 +1703,7 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                                 return -1
                         frag_start_chunk = frag_start_scaffold % ref_chunk_loading_size
                         frag_seq = ref_chunk_sequences[target_chunk_index][
-                                          frag_start_chunk:frag_start_chunk + frag_size]
+                                   frag_start_chunk:frag_start_chunk + frag_size]
                     try:  # to retrieve correction weight
                         corr_factor = correction_weights_row[frag_seq.count('G') + frag_seq.count('C') +
                                                              gc_bases_offset]
@@ -1759,7 +1759,7 @@ def reduce_matrix(matrix_to_trim: np.array, trim_dimensions_exclusively_containi
                   border_elements: Optional[int]) -> Tuple[np.array, Tuple[range, range]]:
     """
     Remove non-informative weights so that numpy matrix is smaller (faster access?)
-    :param border_elements: 
+    :param border_elements:
     :param matrix_to_trim:
     :param trim_dimensions_exclusively_containing:
     :return:
@@ -1886,7 +1886,7 @@ def get_genomic_chunks_for_tagging(bam_for_tagging: Union[str, Path], chunk_size
             last_chrom, last_start, last_end, _chk_size = genomic_chunks[-1]
             genomic_chunks[-1] = (last_chrom, last_start, stop, chunk_size + resudual_bases)
         else:  # just add as separate chunk otherwise
-            genomic_chunks.append((chrom, cum_size, stop, stop-cum_size))
+            genomic_chunks.append((chrom, cum_size, stop, stop - cum_size))
     return genomic_chunks
 
 
@@ -2084,7 +2084,7 @@ def reduce_weights_for_tagging(weights_path: Path, mask_path: Optional[Path], sa
                     f"{sample_id}*_gc_bias_computation_mask.txt*")), key=lambda c: len(c.name), reverse=True)[0]
                 mask_matrix, mask_flen_range = load_txt_to_matrix_with_meta(filename=candidate_matrix, to_dtype=bool,
                                                                             loading_logger=LOGGER)
-            except (IndexError, AttributeError):   # IndexError out of range; 'NoneType' object no attribute 'parent'
+            except (IndexError, AttributeError):  # IndexError out of range; 'NoneType' object no attribute 'parent'
                 pass  # there is no weights file -> only matrix; behaviour not optimal!
                 # Will potentially use correction weights that are non-default just because of blurring
     if mask_flen_range is not None and \
@@ -2301,7 +2301,7 @@ def main() -> int:
         match preset_number:
             case 1:
                 min_frag_occurs = 2
-                process_n_fragments = 5*10**6
+                process_n_fragments = 5 * 10 ** 6
                 n_simulations = 6
                 smooth_weights = True
                 smoothing_kernel = 'gauss'
@@ -2311,7 +2311,7 @@ def main() -> int:
                 outlier_stringency = 2
             case 2:
                 min_frag_occurs = 10
-                process_n_fragments = 50*10**6
+                process_n_fragments = 50 * 10 ** 6
                 n_simulations = 4
                 smooth_weights = True
                 smoothing_kernel = 'gauss'

@@ -1585,7 +1585,7 @@ def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Pat
             for aln in f_in.fetch(until_eof=True, multiple_iterators=True):
                 if not aln.is_mapped:
                     aln.set_tag(tag=tag_name, value=0.)  # unaligned reads get a GC correction weight of 0 because the
-                    # fragment sequence cannot be safely inferred from the read have
+                    # fragment sequence cannot be safely inferred from the read halve
                     f_unaligned_tagged.write(aln)
 
 
@@ -2353,15 +2353,17 @@ def main() -> int:
                               f'{max_efficiently_usable_threads}.')
         total_number_threads = max_efficiently_usable_threads
     # manage imago parameters
-    sample_id = os.path.basename(input_bam).split('.')[0]
+    input_bam_path = Path(input_bam)
+    input_bam_parent_path = input_bam_path.parent
+    sample_id = input_bam_path.stem
     compute_bias = not only_tag_bam
     if only_tag_bam and not Path(correction_weights_matrix_path).is_file():
         print_warnings.append('input argument --correction-weights missing. Tag-only-mode not possible. Exiting..')
         exit_after_warnings = 1
-    if not output_directory or output_directory == str(Path(input_bam).parent):
+    if not output_directory or output_directory == str(input_bam_parent_path):
         print_warnings.append('Output directory is either input BAM parent directory or was None. Setting '
                               "it to subdirectory of input BAM parent directory: 'GC_correction_output'")
-        output_directory = str(Path(input_bam).parent / 'GC_correction_output')
+        output_directory = str(input_bam_parent_path / 'GC_correction_output')
     # choose most recent bad chunks library version if multiple are present in parent directory
     bad_chunks, exclude_chunks_bed_file = manage_bad_chunks(bad_chunks_bed=exclude_chunks_bed_file)
     # set up target output directory and logfile
@@ -2388,11 +2390,11 @@ def main() -> int:
     if exit_after_warnings:
         return exit_after_warnings
     if temporary_directory:
-        if temporary_directory == Path(input_bam).parent:
+        if temporary_directory == input_bam_parent_path:
             log(message="Temporary directory is identical to input BAM parent directory. Setting it to "
                         "subdirectory of input BAM parent directory: 'GC_correction_tmp'",
                 log_level=logging.WARNING, i_log_with=LOGGER)
-            sample_temp_dir_path = Path(input_bam).parent / 'GC_correction_tmp'
+            sample_temp_dir_path = input_bam_parent_path / 'GC_correction_tmp'
         else:
             sample_temp_dir_path = Path(temporary_directory) / sample_id
     else:  # define a temporary directory

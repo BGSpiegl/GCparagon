@@ -25,7 +25,7 @@ echo "  i: conda environment activated"
 # analysis definitions
 n_processes=12
 python3_path="$(which python3)"
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts
+script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )  # assertion: script in driver_scripts IF THIS FAILS; REPLACE IT WITH THE ABSOLUTE PATH
 content_root="$(dirname "${script_dir}")"
 profiling_script="${content_root}/src/GCparagon/profile_command.py"
 if [ ! "${profiling_script}" ]; then

@@ -54,6 +54,7 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 #   - matplotlib=3.6
 #   - memory_profiler
 #   - pybedtools
+#   - polars
 
 # default definitions for analysis
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!
@@ -123,37 +124,37 @@ def get_cmdline_args():
         description="""
 _____________________________________________________________________________
 v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
-
+                                                                             
  _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._
 `.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-   
 .  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
 .  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
-
+                                                                             
  ██████╗  ██████╗██████╗  █████╗ ██████╗  █████╗  ██████╗  ██████╗ ███╗   ██╗
 ██╔════╝ ██╔════╝██╔══██╗██╔══██╗██╔══██╗██╔══██╗██╔════╝ ██╔═══██╗████╗  ██║
 ██║  ███╗██║     ██████╔╝███████║██████╔╝███████║██║  ███╗██║   ██║██╔██╗ ██║
 ██║   ██║██║     ██╔═══╝ ██╔══██║██╔══██╗██╔══██║██║   ██║██║   ██║██║╚██╗██║
 ╚██████╔╝╚██████╗██║     ██║  ██║██║  ██║██║  ██║╚██████╔╝╚██████╔╝██║ ╚████║
  ╚═════╝  ╚═════╝╚═╝     ╚═╝  ╚═╝╚═╝  ╚═╝╚═╝  ╚═╝ ╚═════╝  ╚═════╝ ╚═╝  ╚═══╝
-
+                                                                             
  _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._    _.--'"`'--._
 `.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-.  '-:`.'|`|"':-   
 .  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.  '.  | |  | |'.
  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  '.  '.| |  | |  
 .  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.' '.  `.:_ | :_.
   `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'       `-..,..-'  
-
+                                                                             
 -----------------------------------------------------------------------------
-
+                                                                             
 """
-                    f'             GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
-                    f'                 Copyright (c) 2023 Benjamin Spiegl\n'
-                    f'            GitHub: {github_url}\n\n'
-                    '^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^'
-                    'v^v^v^v^v^v^\n____________________________________________________'
-                    '_________________________',
+        f'             GCparagon ({VERSION_STRING}) maintained by @BGSpiegl\n'
+        f'                 Copyright (c) 2023 Benjamin Spiegl\n'
+        f'            GitHub: {github_url}\n\n'
+        '^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^'
+        'v^v^v^v^v^v^\n____________________________________________________'
+        '_________________________',
         formatter_class=RawDescriptionHelpFormatter,
         epilog='GCparagon developed at the D&R Center of Molecular Biomedicine '
                '(https://www.medunigraz.at/en/research-centers-and-institutes/'
@@ -639,12 +640,12 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
                 # single-segment template or when the information is unavailable; template length must be positive and
                 # within defined range
                 filtered_alignments = filter(lambda p: (min_frag_len <= p.template_length <= max_frag_len) and
-                                                       p.is_proper_pair and not p.is_supplementary and not p.is_secondary,
+                                             p.is_proper_pair and not p.is_supplementary and not p.is_secondary,
                                              (read for read in f_aln.fetch(chromosome, start_coord, stop_coord,
                                                                            multiple_iterators=True)))
             else:  # NOT SUPPORTED!
                 filtered_alignments = filter(lambda p: (min_frag_len <= p.template_length <= max_frag_len) and
-                                                       not p.is_supplementary and not p.is_secondary,
+                                             not p.is_supplementary and not p.is_secondary,
                                              (read for read in f_aln.fetch(chromosome, start_coord, stop_coord,
                                                                            multiple_iterators=True)))
         except OSError as e:  # maybe truncated file
@@ -1268,7 +1269,7 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
     for o_gc_sum_mat, s_gc_sum_mat, s_gc_sum_raw_mats, n_observed, n_expected, _fragments_processed, \
-        ignored_fragments, discarded_chunks, list_of_bad_chunks in received_data:
+            ignored_fragments, discarded_chunks, list_of_bad_chunks in received_data:
         observed_attributes_matrices_sum += o_gc_sum_mat  # inplace np.array manipulation
         simulated_attributes_matrices_sum += s_gc_sum_mat  # inplace np.array manipulation
         for mat_idx, s_gc_sum_raw_mat in enumerate(s_gc_sum_raw_mats):
@@ -1337,15 +1338,15 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                                                     key=lambda t: (t[0][0], t[0][1]),
                                                     reverse=False))]
             new_lib_path = Path(out_dir_sample) / \
-                           f'bad_chunks_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
+                f'bad_chunks_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
             with AtomicOpen(new_lib_path, 'wt') as f_new_bclib:
                 f_new_bclib.writelines(new_lib_buffer)
             log(message=f"Updated bad chunks library BED file written to: '{new_lib_path}'",
                 log_level=logging.INFO, i_log_with=LOGGER)
     # combine results
     (use_correction_matrix_path, correction_matrix), \
-    (weights_mask_path, weights_mask), \
-    trimmed_dimensions = consolidate_results(
+        (weights_mask_path, weights_mask), \
+        trimmed_dimensions = consolidate_results(
         observed_attributes_matrices_sum=observed_attributes_matrices_sum, min_frag_len=min_flen, bam_file=in_bam,
         simulated_attributes_matrices_sum=simulated_attributes_matrices_sum, max_frag_len=max_flen,
         simulated_attributes_raw_matrix_sums=simulated_attributes_raw_matrix_sums, plot_result=visualize_matrices,
@@ -1584,7 +1585,7 @@ def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Pat
             for aln in f_in.fetch(until_eof=True, multiple_iterators=True):
                 if not aln.is_mapped:
                     aln.set_tag(tag=tag_name, value=0.)  # unaligned reads get a GC correction weight of 0 because the
-                    # fragment sequence cannot be safely inferred from the read have
+                    # fragment sequence cannot be safely inferred from the read halve
                     f_unaligned_tagged.write(aln)
 
 
@@ -1952,7 +1953,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                            f"This corresponds to {sum(chunk_lengths_per_proc[cid]):,} bp (bp compared to target of "
                            f"{target_base_sum_per_process:,}bp = "
                            f"{sum(chunk_lengths_per_proc[cid]) / target_base_sum_per_process:.1%})"
-                           for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, i_log_with=LOGGER)
+                          for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, i_log_with=LOGGER)
     # start unaligned reads extraction
     worker_output_path = Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
     worker_output_path.mkdir(parents=True, exist_ok=True)
@@ -1995,8 +1996,8 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
         sys.exit(3)
     # define final output path
     tagged_bam_file_path = Path(temporary_directory_sample) / \
-                           '.'.join(Path(bam_path).name.split('.')[:-2] +
-                                    [f"{Path(bam_path).name.split('.')[-2]}", "GCtagged", "bam"])
+        '.'.join(Path(bam_path).name.split('.')[:-2] +
+                 [f"{Path(bam_path).name.split('.')[-2]}", "GCtagged", "bam"])
     tagged_bam_file = tagged_bam_file_path
     # concatenate BAM files and index
     tagged_scaffold_bam_files_in_order = bring_bams_in_order(bam_list=tagged_scaffold_bam_files)
@@ -2352,15 +2353,17 @@ def main() -> int:
                               f'{max_efficiently_usable_threads}.')
         total_number_threads = max_efficiently_usable_threads
     # manage imago parameters
-    sample_id = os.path.basename(input_bam).split('.')[0]
+    input_bam_path = Path(input_bam)
+    input_bam_parent_path = input_bam_path.parent
+    sample_id = input_bam_path.stem
     compute_bias = not only_tag_bam
     if only_tag_bam and not Path(correction_weights_matrix_path).is_file():
         print_warnings.append('input argument --correction-weights missing. Tag-only-mode not possible. Exiting..')
         exit_after_warnings = 1
-    if not output_directory or output_directory == str(Path(input_bam).parent):
+    if not output_directory or output_directory == str(input_bam_parent_path):
         print_warnings.append('Output directory is either input BAM parent directory or was None. Setting '
                               "it to subdirectory of input BAM parent directory: 'GC_correction_output'")
-        output_directory = str(Path(input_bam).parent / 'GC_correction_output')
+        output_directory = str(input_bam_parent_path / 'GC_correction_output')
     # choose most recent bad chunks library version if multiple are present in parent directory
     bad_chunks, exclude_chunks_bed_file = manage_bad_chunks(bad_chunks_bed=exclude_chunks_bed_file)
     # set up target output directory and logfile
@@ -2387,11 +2390,11 @@ def main() -> int:
     if exit_after_warnings:
         return exit_after_warnings
     if temporary_directory:
-        if temporary_directory == Path(input_bam).parent:
+        if temporary_directory == input_bam_parent_path:
             log(message="Temporary directory is identical to input BAM parent directory. Setting it to "
                         "subdirectory of input BAM parent directory: 'GC_correction_tmp'",
                 log_level=logging.WARNING, i_log_with=LOGGER)
-            sample_temp_dir_path = Path(input_bam).parent / 'GC_correction_tmp'
+            sample_temp_dir_path = input_bam_parent_path / 'GC_correction_tmp'
         else:
             sample_temp_dir_path = Path(temporary_directory) / sample_id
     else:  # define a temporary directory
@@ -2458,7 +2461,7 @@ def main() -> int:
                     "fragments or having exhausted list of genomic chunks, whichever occurs first.",
             log_level=logging.INFO, i_log_with=LOGGER)
         (correction_weights_matrix_path, correction_weights_matrix), \
-        (mask_path, weights_mask) = compute_gc_bias_parallel(
+            (mask_path, weights_mask) = compute_gc_bias_parallel(
             visualize_matrices=plot_result, output_all=output_simulation_results, in_bam=input_bam,
             out_dir_sample=sample_out_dir, use_multithreading=use_multithreading,
             max_flen=upper_limit_fragment_length, chunks_to_process=target_chunks, min_flen=lower_limit_fragment_length,

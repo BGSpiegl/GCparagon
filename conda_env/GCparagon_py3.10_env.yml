@@ -23,7 +23,6 @@ dependencies:
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
-  - matplotlib=3.6
   - memory_profiler
   - pybedtools
   - polars

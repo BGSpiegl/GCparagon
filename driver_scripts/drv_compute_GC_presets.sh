@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=GCparagon                         # Job name
 #SBATCH --nodes=1                                    # Run computation on a single NODE (i.e. 'server')
-#SBATCH --mem=20G                                    # memory to use
+#SBATCH --mem=10G                                    # memory to use
 #SBATCH --ntasks=1                                   # Run a single task (you can define tasks and allocate specific resources to them below in the command section)
 #SBATCH --cpus-per-task=12                           # Number of CPUs to use for multithread/processing job
 #SBATCH --output=GCparagon_dev-%j.log                # Standard output log
@@ -89,9 +89,9 @@ do
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"
     fi
-    "${python3_path}" "${profiling_script}" --track-spawns --iter 2 --sampling-frequency 10 \
+    "${python3_path}" "${profiling_script}" --track-spawns --iter 3 --sampling-frequency 20 \
     --output-path "${test_output_dir}" --script "${GCparagon_script}" --use-parameter-preset "${preset}" \
     --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
-    --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --track-spawns
+    --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --output-bam
   done
 done

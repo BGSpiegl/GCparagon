@@ -2,18 +2,18 @@
 import sys
 import gzip
 import logging
-import pathlib
 import argparse
 import re
 import numpy as np
 import pandas as pd
 import plotly.express as px
+from pathlib import Path
 from collections import defaultdict
 from typing import List, Tuple, Optional, Union, Dict
 from plotly import graph_objs as go
 
 
-code_root = pathlib.Path(__file__).parent.parent
+code_root = Path(__file__).parent.parent
 if code_root not in sys.path:
     sys.path.append(str(code_root))
 
@@ -49,7 +49,7 @@ def get_cmdline_args():
 def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
     fragment_occurrences_per_sample = None
     for matrix_file in file_list:
-        sample_id = '_'.join(pathlib.Path(matrix_file).stem.split('_')[:2])
+        sample_id = '_'.join(Path(matrix_file).stem.split('_')[:2])
         try:
             if sample_id in fragment_occurrences_per_sample.columns:
                 print(f"WARNING: sample '{sample_id}' already present in data frame! Existing sample will be skipped..")
@@ -57,7 +57,7 @@ def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
         except AttributeError:  # first sample -> fragment_occurrences_per_sample = None
             pass
         pd_matrix, frag_len_range = load_txt_to_matrix_with_meta(filename=matrix_file, loading_logger=None)
-        len_max = frag_len_range.stop - 1
+        len_max = frag_len_range.stop  # 550 bp default
         try:
             total_max = max(len_max, fragment_occurrences_per_sample.index.stop)
         except AttributeError:  # first sample
@@ -65,8 +65,8 @@ def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
         # check if first sample
         if fragment_occurrences_per_sample is None:
             fragment_occurrences_per_sample = pd.DataFrame(np.zeros(len_max), columns=[sample_id])
-            fragment_occurrences_per_sample[sample_id] = pd.Series(pd_matrix.sum(axis=1),
-                                                                   index=range(frag_len_range.start-1, len_max))
+            fragment_occurrences_per_sample[sample_id] = pd.Series(
+                list(pd_matrix.sum(axis=1)), index=range(frag_len_range.start, len_max + 1))  # include max. f-length!
             fragment_occurrences_per_sample = fragment_occurrences_per_sample.fillna(0)
             continue
         # check if new sample has more fragment length entries than current DataFrame and append values if necessary
@@ -77,13 +77,14 @@ def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
             fragment_occurrences_per_sample.append(pd.DataFrame(additional_flengths), ignore_index=True)  # + zero rows
         # add additional sample values (new column)
         new_sample_values = pd.DataFrame(np.zeros(total_max), columns=[sample_id])
-        new_sample_values[sample_id] = pd.Series(pd_matrix.sum(axis=1), index=range(frag_len_range.start-1, len_max))
+        new_sample_values[sample_id] = pd.Series(
+            list(pd_matrix.sum(axis=1)), index=range(frag_len_range.start, len_max + 1))  # include max. f-length!
         new_sample_values = new_sample_values.fillna(0)
         fragment_occurrences_per_sample[sample_id] = new_sample_values
     return fragment_occurrences_per_sample
 
 
-def load_txt_to_matrix(filename: Union[str, pathlib.Path], loading_logger: Optional[logging.Logger],
+def load_txt_to_matrix(filename: Union[str, Path], loading_logger: Optional[logging.Logger],
                        to_dtype=np.float64) -> np.array:
     """
     :param filename:
@@ -91,14 +92,14 @@ def load_txt_to_matrix(filename: Union[str, pathlib.Path], loading_logger: Optio
     :return:
     """
     if loading_logger is not None:
-        log(message=f"Loading statistic matrix from {filename}", log_level=logging.INFO, i_log_with=loading_logger)
+        log(message=f"Loading statistic matrix from {filename}", log_level=logging.INFO, logger_name=loading_logger)
     else:
         print(f"Loading statistic matrix from {filename}")
     statistic_matrix = np.loadtxt(filename, delimiter='|', skiprows=0, dtype=to_dtype)
     return statistic_matrix
 
 
-def load_txt_to_matrix_with_meta(filename: Union[str, pathlib.Path], loading_logger: Optional[logging.Logger],
+def load_txt_to_matrix_with_meta(filename: Union[str, Path], loading_logger: Optional[str] = None,
                                  to_dtype=np.float64) -> Tuple[np.array, range]:
     """
     :param loading_logger:
@@ -107,26 +108,28 @@ def load_txt_to_matrix_with_meta(filename: Union[str, pathlib.Path], loading_log
     :return:
     """
     if loading_logger is not None:
-        log(message=f"Loading statistic matrix from {filename}", log_level=logging.INFO, i_log_with=loading_logger)
+        log(message=f"Loading statistic matrix from {filename}", log_level=logging.INFO, logger_name=loading_logger)
     else:
         print(f"Loading statistic matrix from {filename}")
     statistic_matrix = np.loadtxt(filename, delimiter='|', skiprows=0, dtype=to_dtype)
     with gzip.open(str(filename), 'rt') as f_mat:
         hdr = f_mat.readline()
     elements = hdr.split('# rows representing fragment lengths (')[1].split()  # split on whitespace + trim empty fields
-    fragment_lengths = range(int(elements[0]), int(elements[3]) + 1)  # make it end-exclusive, i.e. Pythonic
+    fragment_lengths = range(int(elements[0]), int(elements[3]))  # 20 bp to 550 bp (non-Pythonic in header)
+    assert statistic_matrix.shape[0] == fragment_lengths.stop - fragment_lengths.start + 1  # check rows
+    assert statistic_matrix.shape[1] == fragment_lengths.stop + 1  # check columns
     return statistic_matrix, fragment_lengths
 
 
 def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample_id: Optional[str],
-                               matrix_file_list: Optional[List[Union[str, pathlib.Path]]], out_dir_path: pathlib.Path,
-                               parent_logger: logging.Logger, fig_width=1500, fig_height=1000, fig_fontsize=24,
+                               matrix_file_list: Optional[List[Union[str, Path]]], out_dir_path: Path, image_formats=('png',),
+                               parent_logger: Optional[str] = None, fig_width=1500, fig_height=1000, fig_fontsize=24,
                                expected_fragment_lengths=(167, 167+149), normalize_to_dataset_size=True,
                                strip_xaxis_end_zeros=True, show_figure=False):
     if matrix_data_frame is None:  # load from file list!
         if matrix_file_list is None:
             log(message="either a matrix in pd.DataFrame format or a list of matrix file paths must be "
-                        "supplied.", log_level=logging.ERROR, i_log_with=parent_logger, flush=True, close_handlers=True)
+                        "supplied.", log_level=logging.ERROR, logger_name=parent_logger, flush=True, close_handlers=True)
             raise AttributeError
         matrix_data_frame = load_txt_to_dataframe(file_list=matrix_file_list)
     samples = matrix_data_frame.columns
@@ -153,7 +156,7 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
                                               'value': y_label})
     length_distribution_fig.update_layout(showlegend=False, font_family="Ubuntu", font_size=fig_fontsize,
                                           title_font_size=fig_fontsize+2,
-                                          title={'text': 'Observed Fragment Lengths for sample' +
+                                          title={'text': 'Observed Fragment Lengths for Sample' +
                                                  (': ' if single_sample else 's: ') + ', '.join(samples) +
                                                  (f' ({int(tuple(sample_total_counts.values())[0][0]):,} fragments)'
                                                   if single_sample else ''),
@@ -196,16 +199,18 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
                                          [length_distribution_fig.data[0]])
     if show_figure:
         length_distribution_fig.show()
-    out_file = out_dir_path / f"{((samples[0] + '_') if single_sample else '') if sample_id is None else sample_id}" \
-                              f".fragment_length_distribution.png"
-    length_distribution_fig.write_image(out_file)
+    for image_format in image_formats:
+        out_file = (out_dir_path /
+                    f"{((samples[0] + '_') if single_sample else '') if sample_id is None else sample_id}"
+                    f".fragment_length_distribution.{image_format}")
+        length_distribution_fig.write_image(out_file)
 
 
 def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
-                  out_dir_path: pathlib.Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
+                  out_dir_path: Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
                   spline_interpolation=True, normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
                   reads='both', reference_dist=Union[Dict[str, float], defaultdict[float], None],
-                  reference_normalized=True, show_figure=False):
+                  reference_normalized=True, show_figure=False, image_formats=('png',)):
     reads = reads.lower()
     if reads not in ('r1', 'r2', 'both'):
         raise AttributeError(f"invalid use of reads: '{reads}'. Attribute reads must be one of 'r1', 'r2', or 'both'.")
@@ -300,13 +305,18 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
     if show_figure:
         length_distribution_fig.show()
     out_dir_path.mkdir(parents=True, exist_ok=True)
-    out_file = out_dir_path / f"GCparagon_GC_content_comparison_pre-post_correction_{re.sub(', ', '_', annotation)}.png"
-    length_distribution_fig.write_image(out_file)
+    for image_format in image_formats:
+        try:
+            out_file = out_dir_path / (f"GCparagon_GC_content_comparison_pre-post_correction_"
+                                       f"{re.sub(', ', '_', annotation)}.{image_format}")
+            length_distribution_fig.write_image(out_file)
+        except:
+            print(f"WARNING - could not save figure '{out_file.stem}' in '{image_format}' image format! Continuing ..")
 
 
 def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparencies: Dict[str, float],
                         figure_title: str, signal_colors: Dict[str, Tuple[int, int, int]],
-                        output_file_path: pathlib.Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
+                        output_file_path: Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
                         y_is_percentage=True, show_figure=False):
     color_map = {}
     data_frame_lines = []
@@ -352,9 +362,9 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
 
 
 def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
-                           out_dir_path: pathlib.Path,
+                           out_dir_path: Path,
                            reference_dists: defaultdict[str, Union[Dict[int, float], defaultdict[float], None]],
-                           markers=True, fig_width=1500, fig_height=1000, fig_fontsize=24, show_figure=False,
+                           markers=True, fig_width=1200, fig_height=800, fig_fontsize=30, show_figure=False,
                            normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
                            spline_interpolation=True, reference_normalized=True):
     # sample_R1\tDATA
@@ -495,15 +505,15 @@ def main() -> int:
     # read input and care for existence of output directory
     observation_matrix = load_txt_to_dataframe(file_list=observations_matrix_paths)
     if output_dir:
-        output_dir = pathlib.Path(output_dir)
+        output_dir = Path(output_dir)
     else:
-        output_dir = pathlib.Path(observations_matrix_paths[0]).parent
-        log(f"output will be written to path '{output_dir}'", log_level=logging.INFO, i_log_with=test_logger)
+        output_dir = Path(observations_matrix_paths[0]).parent
+        log(f"output will be written to path '{output_dir}'", log_level=logging.INFO, logger_name=test_logger)
     output_dir.mkdir(parents=True, exist_ok=True)
     # create line plot
     plot_fragment_length_dists(matrix_data_frame=observation_matrix, matrix_file_list=None, out_dir_path=output_dir,
                                normalize_to_dataset_size=normalize_datasets, sample_id=None, show_figure=False,
-                               strip_xaxis_end_zeros=strip_zero_counts, parent_logger=test_logger)
+                               strip_xaxis_end_zeros=strip_zero_counts, parent_logger=test_logger, fig_fontsize=32)
     return 0
 
 

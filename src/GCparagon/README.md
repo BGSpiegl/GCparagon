@@ -75,7 +75,7 @@ the [validation](validation/fragment_GCcontent_plots) directory.
 
 
 ### Installation
-Latest version provided here is v0.5.4.
+Latest version provided here is v0.5.5.
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
@@ -263,9 +263,11 @@ directory before running GCparagon with `--output-bam`!
 -------------------------------------------------------------------------------------------------------------------
 - 12 cores are default, more cores are better
 - min. 4 GB of RAM, \>8 recommended (max. observed memory usage was 2 GiB @ 24 cores, preset 1)
-- SSD scratch drive for `--temporary-directory`
+- SSD scratch drive for `--temporary-directory` with at least twice the input BAM file's size in free space for the 
+tagging procedure
 
 Computation time might increase significantly if hardware requirements are not met.
+Computation may terminate if drive space and/or RAM size requirements are not met!
 
 
 ## Software Dependencies
@@ -293,7 +295,6 @@ Per default, the following dependencies will be installed into the conda env nam
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
-  - matplotlib=3.6
   - memory_profiler
   - pybedtools
   - polars
@@ -340,12 +341,12 @@ If not set, the temporary directory will default to the output of Python's `temp
 All created files are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
-Rich customization options are available. The `--use-parameter-preset 1` setup is recommended though.
+Rich customization options are available. The `--preset 1` setup is recommended though.
 
 ```
 The following arguments are required: -b/--bam, -rtb/--two-bit-reference-genome
 
-Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-up Integer] [-to]
+Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-p Integer] [-to]
                           [-rep Integer] [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File]
                           [-nf Integer] [-mf Integer] [-anf] [-mtb] [-ucmaf Float] [-do]
                           [-odm OutlierDetectionBasis] [-ods Integer] [-sw] [-sk KernelType] [-si Integer] [-v]
@@ -458,7 +459,7 @@ Output options:
                         to a file.
 
 Processing options:
-  -up Integer, --use-parameter-preset Integer
+  -p Integer, --preset Integer
                         Optional parameter preset to use for GC bias computation. Must be an integer int the rangeof
                         0-3 (inclusive). A preset value of 0 leaves parameters at default if not defined differently
                         by the user (unchanged parameters will match preset 1). Other integer values from 1 to 3
@@ -593,7 +594,7 @@ Post-processing options:
 ```
 
 ### Parameter Presets
-Parameter presets are defined using `-up`/`--use-parameter-preset`.
+Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
 samples from [EGAS00001006963].
 (Preset 0 is the default which leaves all values at default and customizable.)

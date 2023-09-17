@@ -1,0 +1,17 @@
+Command called: <SOURCE>GCparagon_dev/src/GCparagon/correct_GC_bias.py --preset 2 --bam <SOURCE>GCparagon_dev/benchmark_preset_computation_v0.5.5/C01.bam --two-bit-reference-genome <SOURCE>GCparagon_dev/src/GCparagon/2bit_reference/hg38.analysisSet.2bit --out-dir <SOURCE>GCparagon_dev/benchmark_preset_computation_v0.5.5/preset2 --temporary-directory <SOURCE_DATA>WGS_temp/temp_dir/ --threads 12 --output-bam
+Date and time of execution: 15-09-2023, 16:27:45
+Repeat computation 2 times, sampling every 20 seconds
+
+iteration	max. memory usage (MiB)	duration (s)	timestamp (d-m-Y,H:M:S)
+1	3633.24	1021.934	15-09-2023,16:27:45
+2	3592.3	1021.827	15-09-2023,16:44:48
+
+
+Overall time statistic (in seconds):
+ Average execution time: 1021.8805
+ Min execution time: 1021.827
+ Max execution time: 1021.934
+
+Average memory consumption (in MiB): 3612.77
+ Min memory usage: 3592.3
+ Max memory usage: 3633.24

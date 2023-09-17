@@ -1,11 +1,15 @@
 #!/usr/bin/env python3
+
+import scipy
 import logging
-import pathlib
 import numpy as np
-from plotly import graph_objs as go
 import plotly.express as px
+from pathlib import Path
+from plotly import graph_objs as go
 from pandas import DataFrame as pd_DF
 from scipy.ndimage import gaussian_filter
+from typing import Optional
+# project imports
 from utilities.gc_logging import log
 
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
@@ -13,22 +17,23 @@ USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainb
 # (better for grayscale conversion) earlier default was 'viridis'; others: 'matter', 'greys'
 
 
-def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, parent_logger: logging.Logger,
+def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, parent_logger: Optional[str] = None,
                             output_dir=None, percentile_plot=None, sample_id=None, y_tick_label_offset=0,
-                            x_tick_label_offset=0, fig_width=1800, fig_height=2000, fig_fontsize=32, show_figure=False):
+                            x_tick_label_offset=0, fig_width=1800, fig_height=2000, fig_fontsize=50, show_figure=False,
+                            image_formats=('png',)):
     try:
         matrix_type = list(filter(lambda a: a is not None,
                                   [mat_type if mat_type in data_id_to_show else None
                                    for mat_type in ('W_gc', 'O_gc', 'S_gc', 'Mask', 'D_gc')]))[0]  # take first found
     except IndexError:  # list index out of range
         log(message=f"received value for 'data_id_to_show' (= '{data_id_to_show}') not allowed. Must contain a string "
-                    f"from 'W_gc', 'O_gc', 'S_gc', 'Mask', or 'D_gc'.", i_log_with=parent_logger,
+                    f"from 'W_gc', 'O_gc', 'S_gc', 'Mask', or 'D_gc'.", logger_name=parent_logger,
             log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     plot_data = frq_data[data_id_to_show]
     if plot_data.empty:  # AttributeError: 'numpy.ndarray' object has no attribute 'empty'
         log(message=f"no data available for category '{data_id_to_show}'. Returning without plotting ..",
-            i_log_with=parent_logger, log_level=logging.WARNING)
+            logger_name=parent_logger, log_level=logging.WARNING)
         return
     # distill annotations and data_type
     matrix_type_mapping = {'w_gc': 'correction weights',
@@ -76,13 +81,14 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
         fig.data[idx].x = fig.data[idx].x + x_tick_label_offset
     if show_figure:
         fig.show()
-    in_file_path = pathlib.Path(in_file)
+    in_file_path = Path(in_file)
     if output_dir is None:
         output_dir = in_file_path.parent
-    out_file = pathlib.Path(output_dir) / \
-        ((f"{'.'.join(in_file_path.name.split('.')[:-1])}" if sample_id is None else sample_id) +
-         f".{data_id_to_show}.heatmap.png")
-    fig.write_image(out_file)  # requires: requests
+    for image_format in image_formats:
+        out_file = Path(output_dir) / \
+            ((f"{'.'.join(in_file_path.name.split('.')[:-1])}" if sample_id is None else sample_id) +
+             f".{data_id_to_show}.heatmap.{image_format}")
+        fig.write_image(out_file)  # requires: requests
     # below percentile plot
     if percentile_plot is not None:
         if data_id_to_show == 'R_gc':
@@ -103,10 +109,11 @@ def plot_statistic_matrices(frq_data: dict, data_id_to_show: str, in_file: str, 
                                       orientation="h", y=1, yanchor="bottom", x=0.5, xanchor="center"))
         if show_figure:
             fig.show()
-        out_file = pathlib.Path(output_dir) / \
-            (f"{'.'.join(in_file_path.name.split('.')[:-1])}" if sample_id is None else sample_id) + \
-            f".{data_id_to_show}.{percentile_plot}ltPerc.heatmap.png"
-        fig.write_image(out_file)
+        for image_format in image_formats:
+            out_file = Path(output_dir) / \
+                (f"{'.'.join(in_file_path.name.split('.')[:-1])}" if sample_id is None else sample_id) + \
+                f".{data_id_to_show}.{percentile_plot}ltPerc.heatmap.{image_format}"
+            fig.write_image(out_file)
 
 
 # post-processing functions
@@ -117,7 +124,7 @@ def remove_above_percentile(data: pd_DF, percentile: int, replacement_value=1.) 
     return new_data
 
 
-def limit_extreme_outliers(outliers_matrix: np.array, parent_logger: logging.Logger, outliers_factor=8,
+def limit_extreme_outliers(outliers_matrix: np.array, outliers_factor=8, parent_logger: Optional[str] = None,
                            detection_method='IQR') -> np.array:
     relevant_masked_weights = outliers_matrix[(outliers_matrix != 0.) * (outliers_matrix != 1.)].flatten()
     outliers_replaced_matrix = outliers_matrix.copy()
@@ -136,8 +143,11 @@ def limit_extreme_outliers(outliers_matrix: np.array, parent_logger: logging.Log
         outliers_replaced_matrix[outliers_mask] = outliers_threshold
         number_of_outlier_weights = outliers_mask.sum()
     else:
-        log(message=f"unknown outliers detection method '{detection_method}'. Must be one of 'SD', 'IQR'.",
-            i_log_with=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
+        if parent_logger is None:
+            print(f"ERROR - unknown outliers detection method '{detection_method}'. Must be one of 'SD', 'IQR'.")
+        else:
+            log(message=f"unknown outliers detection method '{detection_method}'. Must be one of 'SD', 'IQR'.",
+                logger_name=logging.getLogger(parent_logger), log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     # give user feedback
     log(message=f" i :  {outliers_factor} x{detection_method.upper()} outlier threshold was {outliers_threshold:.3} " +
@@ -146,7 +156,7 @@ def limit_extreme_outliers(outliers_matrix: np.array, parent_logger: logging.Log
                  f"(Q3 of weights != {{0.0; 1.0}} + {outliers_factor} * IQR). ") +
                 f"Number of correction weights above {outliers_threshold:.3}: {number_of_outlier_weights:,} (= "
                 f"{number_of_outlier_weights / len(relevant_masked_weights):.4%} of all weights != {{0.0; 1.0}})",
-        i_log_with=parent_logger, log_level=logging.INFO)
+        logger_name=parent_logger, log_level=logging.INFO)
     return outliers_replaced_matrix
 
 
@@ -156,16 +166,16 @@ def smooth_2d_gc_weights(smooth_matrix: np.array, min_flen: int, parent_logger: 
     available_smoothing_kernels = ('constant', 'gauss')
     if smoothing_intensity < 1:
         log(message=f"intensity of smoothing must be positive (not zero) but was {smoothing_intensity}",
-            i_log_with=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
+            logger_name=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     if smoothing_kernel not in available_smoothing_kernels:
         log(message=f"""unknown smoothing method '{smoothing_kernel}'. Must be one of: """
-                    f"""'{"', '".join(available_smoothing_kernels)}'!""", i_log_with=parent_logger,
+                    f"""'{"', '".join(available_smoothing_kernels)}'!""", logger_name=parent_logger,
             log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     if smoothing_intensity < 1:
         log(message=f"intensity of smoothing must be a positive integer but was {smoothing_intensity}",
-            i_log_with=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
+            logger_name=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     # replace non-existent attribute combinations (zeros) with ones:
     smooth_matrix[smooth_matrix == 0.] = 1.  # WARNING: might replace low-precision data points which values approach
@@ -188,7 +198,7 @@ def smooth_2d_gc_weights(smooth_matrix: np.array, min_flen: int, parent_logger: 
                                           order=0, cval=1., truncate=4.)
     else:
         log(message=f"ended up in an impossible else clause due to passed unknown kernel attribute {smoothing_kernel}",
-            i_log_with=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
+            logger_name=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError  # should never occur; basically just for linter
     # set back non-existing values to zero
     for f_len in range(min_flen, smooth_matrix.shape[1]):

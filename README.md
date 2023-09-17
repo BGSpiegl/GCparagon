@@ -75,7 +75,7 @@ the [validation](validation/fragment_GCcontent_plots) directory.
 
 
 ### Installation
-Latest version provided here is v0.5.4.
+Latest version provided here is v0.5.5.
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
@@ -149,6 +149,7 @@ After the download has finished, you can run the [driver script](driver_scripts/
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.
 
+#### Validation v0.5.4
 To compute the validation results for the depth of coverage signals, one can either use the deposited [Zenodo DoC CSV data]
 and place it in the coverages folders ([TSSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages),
 and [TFBSs](accessory_files/TFBSs/coverages and accessory_files/TFBSs/coverages)) OR create these coverage CSV files 
@@ -159,6 +160,28 @@ The template script must be completed with the appropriate paths before being ca
 The plots used in figure 3 can be created using the DoC & reference GC content computation scripts for 
 [TFBSs](src/utilities/create_TFBS_subplot_figure.py) and [TSSs](src/utilities/create_TSS_subplot_figure.py).
 
+#### Validation v0.5.5
+To compute the validation results for the depth of coverage signals, one can either use the npz exported, normalized and
+averaged DoC values for each loci group (mean of 10th to 90th percentile of normalized cDoC values, per base position) 
+in the subdirectories of the [coverage signals validation directory](src/validation/loci_overlay_central_coverages)
+and run the two plotting code scripts for 
+[TSS loci groups](src/validation/loci_overlay_central_coverages/01_create_TSS_subplot_figure_from_extracted_cDoC.py) and 
+[TFBS loci groups](src/validation/loci_overlay_central_coverages/02_create_TFBS_subplot_figure_from_extracted_cDoC.py)
+OR create these coverage *.npz files themselves using their own custom code 
+(extract from 110bp-210 bp fragments the central 61 bp fragment DoC signal for each locus and compute central 80% mean 
+for each position in the window).
+To process Griffin output (bias matrices), one must run the scripts in the [validation directory](src/validation) in numerical 
+order. Some scripts will also incorporate results from GCparagon (like the
+[GCparagon vs. Griffin matrix comparison visualization script](src/validation/03_plot_differences_GCparagon-Griffin.py)
+). This requires the preset benchmark results to be available. To create the genome-wide correction fidelity plots, 
+the transformed Griffin bias matrices must be available (compute them with 
+[01_transform_Griffin_GC_bias_weights.py](src/validation/01_transform_Griffin_GC_bias_weights.py)). All results created
+by these scrips are provided along with the code, except the Griffin correctin weights-tagged BAM files. These can be 
+created with the 
+[Griffin biasmatrix transform script](
+src/validation/genomewide_GC_content_per_fragment_corrected/01_tag_BAMs_with_Griffin_results.py).
+Some of the validation template scripts must be completed with the appropriate directory and/or code paths before being 
+called (see comments inside scripts).
 
 ### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])
@@ -176,7 +199,7 @@ Intended for research use only.
 ## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using parameter preset 1 (~2:40 m:ss) of 4 human cfDNA samples (paired-end WGS, 
+GC bias correction results using parameter preset 1 (1-3 min) of 4 human cfDNA samples (paired-end WGS, 
 [EGAS00001006963]) are visualized below.
 For each sample, the original GC (dashed lines), the corrected GC (solid lines),
 and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black 
@@ -198,19 +221,19 @@ data, a GC bias manifests as changes in the average DoC across these 5' -> 3' or
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
 should show an almost flat DoC profile.
 
-Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01) on the average DoC for expressed and 
+Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
 unexpressed genes is shown below (fragments in silico reduced to their central 60 bp portion).
 The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
 GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
-![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TSSs.png?raw=true)
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TSSs.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
 the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
 as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
 (approx. every 3rd promoter).
 
-![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TFBSs.png?raw=true)
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TFBSs.png?raw=true)
 
 Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
 showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.
@@ -281,7 +304,7 @@ The user can expect a memory usage between 1 and 2 GiB for default settings (12 
 Memory consumption over time can be visualized using the [profile_command.py](src/GCparagon/profile_command.py) script 
 (figure: B01, preset 3):
 
-![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_correct_GC_bias.py_2023-05-02_17-46-48/plot_2.png?raw=true)
+![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_correct_GC_bias.py_2023-09-16_19-35-19/plot_1.png?raw=true)
 
 Writing of tagged BAM files also uses multiprocessing. This step usually takes longer than the bias 
 computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB BAM file took 25 minutes 
@@ -296,9 +319,11 @@ directory before running GCparagon with `--output-bam`!
 -------------------------------------------------------------------------------------------------------------------
 - 12 cores are default, more cores are better
 - min. 4 GB of RAM, \>8 recommended (max. observed memory usage was 2 GiB @ 24 cores, preset 1)
-- SSD scratch drive for `--temporary-directory`
+- SSD scratch drive for `--temporary-directory` with at least twice the input BAM file's size in free space for the 
+tagging procedure
 
 Computation time might increase significantly if hardware requirements are not met.
+Computation may terminate if drive space and/or RAM size requirements are not met!
 
 
 ## Software Dependencies
@@ -326,7 +351,6 @@ Per default, the following dependencies will be installed into the conda env nam
   - python-kaleido=0.2
   - psutil=5.9
   - requests=2.28
-  - matplotlib=3.6
   - memory_profiler
   - pybedtools
   - polars
@@ -373,12 +397,12 @@ If not set, the temporary directory will default to the output of Python's `temp
 All created files are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
-Rich customization options are available. The `--use-parameter-preset 1` setup is recommended though.
+Rich customization options are available. The `--preset 1` setup is recommended though.
 
 ```
 The following arguments are required: -b/--bam, -rtb/--two-bit-reference-genome
 
-Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-up Integer] [-to]
+Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-p Integer] [-to]
                           [-rep Integer] [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File]
                           [-nf Integer] [-mf Integer] [-anf] [-mtb] [-ucmaf Float] [-do]
                           [-odm OutlierDetectionBasis] [-ods Integer] [-sw] [-sk KernelType] [-si Integer] [-v]
@@ -491,7 +515,7 @@ Output options:
                         to a file.
 
 Processing options:
-  -up Integer, --use-parameter-preset Integer
+  -p Integer, --preset Integer
                         Optional parameter preset to use for GC bias computation. Must be an integer int the rangeof
                         0-3 (inclusive). A preset value of 0 leaves parameters at default if not defined differently
                         by the user (unchanged parameters will match preset 1). Other integer values from 1 to 3
@@ -512,7 +536,7 @@ Processing options:
                         advantage of processing more fragments is the reduction of noise in computed weights. It is
                         recommended to use a higher preset for a 'preprocess-once,analyze often' scenario and/or
                         when a high bias is expected/observed (e.g. FastQC average GC percentage). Correction by
-                        preset 1, 2, and 3 was found to yield 100.39%, 99.98%, and 99,94% of the raw fragment count
+                        preset 1, 2, and 3 was found to yield 100.59%, 99.96%, and 99,91% of the raw fragment count
                         respectively (average percentage across 4 samples). [ DEFAULT: 1 ]
   -to, --tag-only       Optional flag which makes the software switch to tag-only mode. A correction weights matrix
                         must be specified in this case via the '--correction-weights' flag. A valid samtools path
@@ -626,7 +650,7 @@ Post-processing options:
 ```
 
 ### Parameter Presets
-Parameter presets are defined using `-up`/`--use-parameter-preset`.
+Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
 samples from [EGAS00001006963].
 (Preset 0 is the default which leaves all values at default and customizable.)
@@ -635,7 +659,7 @@ samples from [EGAS00001006963].
 |:-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:----------------------:|----------------------:|
 | 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |               1-3 min |
 |      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |               1-3 min |
-|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |               ~15 min |
+|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |              5-10 min |
  |      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
 
 *depends on DoC of BAM file

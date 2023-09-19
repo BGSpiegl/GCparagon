@@ -692,3 +692,5 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963
 [genome browser]: https://genome.ucsc.edu/
 [encode_blacklisted_regions_url]: https://github.com/Boyle-Lab/Blacklist/
+[bwa_mem]: https://github.com/lh3/bwa
+[samtools_spec]: https://samtools.github.io/hts-specs/SAMv1.pdf

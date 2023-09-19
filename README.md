@@ -58,6 +58,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
 in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines.
 
+Important: the input BAM files must have been created using an alignment algorithm that conforms with the SAM format specification (e.g. [BWA MEM][bwa_mem]).
+GCparagon uses the observed template length (TLEN column in BAM) to estimate fragment length. (preferrably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
+
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
 or from one of the `*_gc_weights_*.txt.gz` output files.
@@ -742,6 +745,8 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [conda install]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 [hg38_std_analysis_set]: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/
 [hg38_decoy_analysis_set]: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/
+[bwa_mem]: https://github.com/lh3/bwa
+[samtools_spec]: https://samtools.github.io/hts-specs/SAMv1.pdf
 [EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963
 [Zenodo DoC CSV data]: https://doi.org/10.5281/zenodo.7886030
 [genome browser]: https://genome.ucsc.edu/

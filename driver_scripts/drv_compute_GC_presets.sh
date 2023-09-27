@@ -90,7 +90,7 @@ do
       mkdir -p "${preset_out_dir}"
     fi
     "${python3_path}" "${profiling_script}" --track-spawns --iter 3 --sampling-frequency 20 \
-    --output-path "${test_output_dir}" --script "${GCparagon_script}" --use-parameter-preset "${preset}" \
+    --output-path "${test_output_dir}" --script "${GCparagon_script}" --preset "${preset}" \
     --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
     --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --output-bam
   done

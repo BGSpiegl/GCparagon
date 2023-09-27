@@ -58,6 +58,10 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
 in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines.
 
+GCparagon takes an aligned BAM file as input and processes the alignments in predefined genomic intervals to estimate 
+GC bias. WARNING: the input BAM file must have been created by an SAM format specification conforming alignment 
+algorithm! Fragment size is estimated using the observed template length.
+
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
 or from one of the `*_gc_weights_*.txt.gz` output files.
@@ -249,34 +253,34 @@ Default outputs are:
 
 (P01 examples shown)
 
-![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.fragment_length_distribution.png)
+![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.fragment_length_distribution.png?raw=true)
 
 - observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
 
-![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.O_gc.heatmap.png)
+![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.O_gc.heatmap.png?raw=true)
 
 - simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
 `*_simulated_attributes_matrix.txt.gz`)
 
-![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.S_gc.heatmap.png)
+![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.S_gc.heatmap.png?raw=true)
 
 - weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
 
-![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.Mask.heatmap.png)
+![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.Mask.heatmap.png?raw=true)
 
 - correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
 
-![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc.heatmap.png)
+![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
 
-![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png)
+![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
 
-![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png)
+![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 
 ## Performance
@@ -361,7 +365,8 @@ You can create the environment using the following command: `mamba env create -f
 ## Required Files
 
 -------------------------------------------------------------------------------------------------------------------
-GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned input BAM file.
+GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
+specification conforming input BAM file.
 The reference genome used to create the 4 BAM files in plots can be downloaded using the 
 [EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
@@ -416,7 +421,9 @@ Input (required):
   -b File, --bam File   Path to sorted BAM file for which the fragment length-dependent GC-content-based over-
                         representation (= 'GC-bias') should be computed and/or corrected. WARNING: don't use
                         unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's index file is not
-                        found on runtime, GCparagon tries to create it. [ PARAMETER REQUIRED ]
+                        found on runtime, GCparagon tries to create it. The alignment algorithm used for creating the 
+                        input BAM file MUST follow the SAM format specifications! The TLEN column is used by GCparagon.
+                        [ PARAMETER REQUIRED ]
   -rtb File, --two-bit-reference-genome File
                         Path to 2bit version of the reference genome FastA file which was used for read alignment of
                         the input BAM file. If the 2bit version is missing, one can create the file using the

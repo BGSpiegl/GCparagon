@@ -194,8 +194,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                             help='Path to sorted BAM file for which the fragment length-dependent GC-content-based '
                                  "over-representation (= 'GC-bias') should be computed and/or corrected. WARNING: "
                                  "don't use unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's "
-                                 'index file is not found on runtime, GCparagon tries to create it. '
-                                 '[ PARAMETER REQUIRED ]')
+                                 "index file is not found on runtime, GCparagon tries to create it. The alignment "
+                                 "algorithm used for creating the input BAM file MUST follow the SAM format "
+                                 "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]')
     input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', required=True,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '

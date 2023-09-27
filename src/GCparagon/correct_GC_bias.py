@@ -196,7 +196,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "don't use unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's "
                                  "index file is not found on runtime, GCparagon tries to create it. The alignment "
                                  "algorithm used for creating the input BAM file MUST follow the SAM format "
-                                 "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]')
+                                 "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
     input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', required=True,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
@@ -256,7 +256,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       "weights. It is recommended to use a higher preset for a 'preprocess-once,"
                                       "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
                                       'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
-                                      'yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment count respectively '
+                                      'yield 100.59%%, 99.96%%, and 99,91%% of the raw fragment count respectively '
                                       f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',

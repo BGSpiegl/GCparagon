@@ -58,6 +58,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
 in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines.
 
+Important: the input BAM files must have been created using an alignment algorithm that conforms with the SAM format specification (e.g. [BWA MEM][bwa_mem]).
+GCparagon uses the observed template length (TLEN column in BAM) to estimate fragment length. (preferrably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
+
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
 or from one of the `*_gc_weights_*.txt.gz` output files.
@@ -143,7 +146,7 @@ Intended for research use only.
 ## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using parameter preset 1 (~2:40 m:ss) of 4 human cfDNA samples (paired-end WGS, 
+GC bias correction results using parameter preset 1 (1-3 min) of 4 human cfDNA samples (paired-end WGS, 
 [EGAS00001006963]) are visualized below.
 For each sample, the original GC (dashed lines), the corrected GC (solid lines),
 and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black 
@@ -165,19 +168,19 @@ data, a GC bias manifests as changes in the average DoC across these 5' -> 3' or
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
 should show an almost flat DoC profile.
 
-Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01) on the average DoC for expressed and 
+Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
 unexpressed genes is shown below (fragments in silico reduced to their central 60 bp portion).
 The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
 GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
-![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TSSs.png?raw=true)
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TSSs.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
 the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
 as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
 (approx. every 3rd promoter).
 
-![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/DoC_bias_correction_effect_TFBSs.png?raw=true)
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TFBSs.png?raw=true)
 
 Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
 showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.
@@ -193,34 +196,34 @@ Default outputs are:
 
 (P01 examples shown)
 
-![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.fragment_length_distribution.png?raw=true)
+![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.fragment_length_distribution.png?raw=true)
 
 - observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
 
-![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.O_gc.heatmap.png?raw=true)
+![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.O_gc.heatmap.png?raw=true)
 
 - simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
 `*_simulated_attributes_matrix.txt.gz`)
 
-![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.S_gc.heatmap.png?raw=true)
+![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.S_gc.heatmap.png?raw=true)
 
 - weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
 
-![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.Mask.heatmap.png?raw=true)
+![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.Mask.heatmap.png?raw=true)
 
 - correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
 
-![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc.heatmap.png?raw=true)
+![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
 
-![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
+![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
 
-![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
+![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 
 ## Performance
@@ -248,11 +251,11 @@ The user can expect a memory usage between 1 and 2 GiB for default settings (12 
 Memory consumption over time can be visualized using the [profile_command.py](src/GCparagon/profile_command.py) script 
 (figure: B01, preset 3):
 
-![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_correct_GC_bias.py_2023-05-02_17-46-48/plot_2.png?raw=true)
+![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/mprof_correct_GC_bias.py_2023-09-16_19-35-19/plot_1.png?raw=true)
 
 Writing of tagged BAM files also uses multiprocessing. This step usually takes longer than the bias 
-computation itself. A test run using 24 cores and parameter preset 1 for a 17 GB BAM file took 12 minutes 
-(computing GC weights + writing tagged BAM file + indexing).
+computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB BAM file took 25 minutes 
+(computing GC weights + writing tagged BAM file).
 
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
 directory before running GCparagon with `--output-bam`!
@@ -305,7 +308,8 @@ You can create the environment using the following command: `mamba env create -f
 ## Required Files
 
 -------------------------------------------------------------------------------------------------------------------
-GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned input BAM file.
+GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
+specification conforming input BAM file.
 The reference genome used to create the 4 BAM files in plots can be downloaded using the 
 [EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
@@ -360,7 +364,9 @@ Input (required):
   -b File, --bam File   Path to sorted BAM file for which the fragment length-dependent GC-content-based over-
                         representation (= 'GC-bias') should be computed and/or corrected. WARNING: don't use
                         unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's index file is not
-                        found on runtime, GCparagon tries to create it. [ PARAMETER REQUIRED ]
+                        found on runtime, GCparagon tries to create it. The alignment algorithm used for creating the 
+                        input BAM file MUST follow the SAM format specifications! The TLEN column is used by GCparagon.
+                        [ PARAMETER REQUIRED ]
   -rtb File, --two-bit-reference-genome File
                         Path to 2bit version of the reference genome FastA file which was used for read alignment of
                         the input BAM file. If the 2bit version is missing, one can create the file using the
@@ -480,7 +486,7 @@ Processing options:
                         advantage of processing more fragments is the reduction of noise in computed weights. It is
                         recommended to use a higher preset for a 'preprocess-once,analyze often' scenario and/or
                         when a high bias is expected/observed (e.g. FastQC average GC percentage). Correction by
-                        preset 1, 2, and 3 was found to yield 100.39%, 99.98%, and 99,94% of the raw fragment count
+                        preset 1, 2, and 3 was found to yield 100.59%, 99.96%, and 99,91% of the raw fragment count
                         respectively (average percentage across 4 samples). [ DEFAULT: 1 ]
   -to, --tag-only       Optional flag which makes the software switch to tag-only mode. A correction weights matrix
                         must be specified in this case via the '--correction-weights' flag. A valid samtools path
@@ -603,8 +609,8 @@ samples from [EGAS00001006963].
 |:-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:----------------------:|----------------------:|
 | 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |               1-3 min |
 |      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |               1-3 min |
-|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |               ~15 min |
- |      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
+|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |              5-10 min |
+|      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
 
 *depends on DoC of BAM file
 
@@ -686,6 +692,8 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [conda install]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 [hg38_std_analysis_set]: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/
 [hg38_decoy_analysis_set]: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/
+[bwa_mem]: https://github.com/lh3/bwa
+[samtools_spec]: https://samtools.github.io/hts-specs/SAMv1.pdf
 [EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963
 [genome browser]: https://genome.ucsc.edu/
 [encode_blacklisted_regions_url]: https://github.com/Boyle-Lab/Blacklist/

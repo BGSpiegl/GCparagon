@@ -31,7 +31,6 @@ from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 from twobitreader import TwoBitFile, TwoBitSequence
 
-
 # TODO: add hg19 compatibility and cmdline flag specifying hg19 instead of hg38;
 #                 increment MINOR_RELEASE number and reset patch number -> v0.6.0;
 #                 create new release and upload to zenodo
@@ -98,7 +97,7 @@ DEFAULT_FLOAT_PRECISION = 6
 DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3
 DEFAULT_MAX_INTERVAL_PERCENTAGE_BLACKLIST_OVERLAP = 1 / 3 * 100.  # of exclusion-listed regions for 1 Mbp intervals
 DEFAULT_MIN_UNCLIPPED_ALN_FRACTION = 0.75  # alignment-clipping limitation: regard alignment faulty
-                                           # if more than 25% are clipped and ignore mates of fragment
+# if more than 25% are clipped and ignore mates of fragment
 # POSTPROCESSING DEFAULTS:
 DEFAULT_SMOOTHING_INTENSITY = 5
 DEFAULT_SMOOTHING_KERNEL = 'gauss'
@@ -126,7 +125,6 @@ from utilities.plot_GC_matrices import plot_statistic_matrices, limit_extreme_ou
 from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta
 from utilities.secure_file_handling import AtomicOpen
 from utilities.gc_logging import set_up_logging, set_new_log_paths, log, gib_cmd_logger
-
 
 LOGGER = gib_cmd_logger()  # basically just to stop linter to assume it is None (was set to None in earlier version)
 
@@ -196,8 +194,9 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                             help='Path to sorted BAM file for which the fragment length-dependent GC-content-based '
                                  "over-representation (= 'GC-bias') should be computed and/or corrected. WARNING: "
                                  "don't use unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's "
-                                 'index file is not found on runtime, GCparagon tries to create it. '
-                                 '[ PARAMETER REQUIRED ]')
+                                 "index file is not found on runtime, GCparagon tries to create it. The alignment "
+                                 "algorithm used for creating the input BAM file MUST follow the SAM format "
+                                 "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
     input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', required=True,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
@@ -257,7 +256,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       "weights. It is recommended to use a higher preset for a 'preprocess-once,"
                                       "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
                                       'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
-                                      'yield 100.39%%, 99.98%%, and 99,94%% of the raw fragment count respectively '
+                                      'yield 100.59%%, 99.96%%, and 99,91%% of the raw fragment count respectively '
                                       f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',
@@ -1138,8 +1137,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
         log(message=f"Unable to estimate weighted dataset fraction!",
             log_level=logging.WARNING, logger_name=LOGGER)
     return (correction_weights_matrix_path, correction_weights_matrix_average), \
-           (complete_mask_path, complete_mask), \
-           (deleted_rows, deleted_columns)
+        (complete_mask_path, complete_mask), \
+        (deleted_rows, deleted_columns)
 
 
 def sort_chunks_by_blacklist_overlap(all_chunks: ChunksList, expected_dataset_fragments: int,
@@ -1687,7 +1686,7 @@ def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Pat
     # mate unmapped = 8               '0b1000'
     # = 12 (are handled in unaligned reads extraction)
     with AlignmentFile(bam_path, mode='rb') as f_in:
-        unaligned_pair_segments = filter(lambda a: bin(np.uint32(a.flag) & unaligned_flags)  in unaligned_options,
+        unaligned_pair_segments = filter(lambda a: bin(np.uint32(a.flag) & unaligned_flags) in unaligned_options,
                                          f_in.fetch(until_eof=True, multiple_iterators=True))
         with AlignmentFile(output_path, header=f_in.header, mode='wb') as f_unaligned_tagged:
             for aln in unaligned_pair_segments:
@@ -2097,7 +2096,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                            f"This corresponds to {sum(chunk_lengths_per_proc[cid]):,} bp (bp compared to target of "
                            f"{target_base_sum_per_process:,}bp = "
                            f"{sum(chunk_lengths_per_proc[cid]) / target_base_sum_per_process:.1%})"
-                          for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, logger_name=LOGGER)
+                           for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, logger_name=LOGGER)
     # start unaligned reads extraction
     worker_output_path = Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
     worker_output_path.mkdir(parents=True, exist_ok=True)
@@ -2263,7 +2262,7 @@ def reduce_weights_for_tagging(weights_path: Path, mask_path: Optional[Path], sa
             matrix_to_trim=correction_matrix, trim_dimensions_exclusively_containing=[default_weight, 0.],
             border_elements=0)
         resulting_flen_range = range(weights_flen_range.start + deleted_rows.start,
-                                     weights_flen_range.stop - deleted_rows.stop)  #  shift by removed rows
+                                     weights_flen_range.stop - deleted_rows.stop)  # shift by removed rows
     else:  # default behavior
         resulting_flen_range = range(mask_flen_range.start + deleted_rows.start,
                                      mask_flen_range.stop - deleted_rows.stop)  # shift by removed rows

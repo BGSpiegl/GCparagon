@@ -431,9 +431,8 @@ Input (required):
                         genome.ucsc.edu/goldenPath/help/twoBit.html for more details)[ PARAMETER REQUIRED ]
   -c File, --chunks-bed File
                         Path to BED file containing chunks to process. Should be selected based on minimal overlap
-                        with bad regions of reference genome build used in creation of --bam. [ DEFAULT: '/home/benj
-                        amin/GitHub_Local_Clones/GCparagon_dev/accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chu
-                        nks_33pcOverlapLimited.bed' ]
+                        with bad regions of reference genome build used in creation of --bam. [ DEFAULT: 
+                        './GCparagon/accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed' ]
   -ec File, --exclude-chunks File
                         Path to library file (BED-like) holding DoC-specific definition of bad chunks (chunks must
                         be exact genomic locus match for exclusion, DO NOT expect bedtools intersect-like
@@ -580,7 +579,7 @@ Processing options:
   -sp File, --samtools-path File
                         Optional input: path to specific samtools executable. A valid path is required for creating
                         the tagged BAM output. By default, this path will be used:
-                        '/home/benjamin/mambaforge/envs/GCparagon/bin/samtools' (empty or None if path is not
+                        'YOUR-SAMTOOLS-PATH' (empty or None if path is not
                         found). Code tested with samtools version 1.16.1 using htslib 1.16 [ PARAMETER REQUIRED IF
                         DEFAULT VALUE IS EMPTY/NONE ]
   -nf Integer, --target-fragment-number Integer

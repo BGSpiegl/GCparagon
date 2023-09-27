@@ -1,7 +1,7 @@
 #!/bin/bash
 #SBATCH --job-name=GCparagon                         # Job name
 #SBATCH --nodes=1                                    # Run computation on a single NODE (i.e. 'server')
-#SBATCH --mem=20G                                    # memory to use
+#SBATCH --mem=10G                                    # memory to use
 #SBATCH --ntasks=1                                   # Run a single task (you can define tasks and allocate specific resources to them below in the command section)
 #SBATCH --cpus-per-task=12                           # Number of CPUs to use for multithread/processing job
 #SBATCH --output=GCparagon_dev-%j.log                # Standard output log
@@ -49,6 +49,7 @@ if [ ! -d "${bam_dir}" ]; then
   echo "  ERROR: test BAM directory not found at: ${bam_dir}"
   exit 1
 fi
+output_dir=bam_dir  # TODO: change this if needed!
 # fetch BAM files & exit if none found
 test_bam_wildcard="${bam_dir}/*.bam"
 test_bam_files=$(eval ls $test_bam_wildcard)
@@ -84,13 +85,13 @@ do
   for preset in "${presets[@]}"
   do
     echo "  i: preset is: ${preset}"
-    preset_out_dir="${bam_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
+    preset_out_dir="${output_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
     echo "  i: output for sample ${sample_id} will be moved to path ${preset_out_dir}"
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"
     fi
     "${python3_path}" "${profiling_script}" --track-spawns --iter 2 --sampling-frequency 10 \
-    --output-path "${test_output_dir}" --script "${GCparagon_script}" --use-parameter-preset "${preset}" \
+    --output-path "${test_output_dir}" --script "${GCparagon_script}" --preset "${preset}" \
     --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
     --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --track-spawns
   done

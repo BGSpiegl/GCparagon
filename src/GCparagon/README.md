@@ -58,9 +58,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
 in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines.
 
-GCparagon takes an aligned BAM file as input and processes the alignments in predefined genomic intervals to estimate 
-GC bias. WARNING: the input BAM file must have been created by an SAM format specification conforming alignment 
-algorithm! Fragment size is estimated using the observed template length.
+Important: the input BAM files must have been created using an alignment algorithm that conforms with the SAM format specification (e.g. [BWA MEM][bwa_mem]).
+GCparagon uses the observed template length (TLEN column in BAM) to estimate fragment length. (preferrably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
 
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
@@ -753,3 +752,5 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [Zenodo DoC CSV data]: https://doi.org/10.5281/zenodo.7886030
 [genome browser]: https://genome.ucsc.edu/
 [encode_blacklisted_regions_url]: https://github.com/Boyle-Lab/Blacklist/
+[bwa_mem]: https://github.com/lh3/bwa
+[samtools_spec]: https://samtools.github.io/hts-specs/SAMv1.pdf

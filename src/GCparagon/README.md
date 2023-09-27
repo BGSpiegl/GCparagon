@@ -56,7 +56,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 -------------------------------------------------------------------------------------------------------------------
 
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
-in WGS cfDNA datasets for liquid biopsy applications. Code was developed for UNIX machines.
+in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines.
 
 GCparagon takes an aligned BAM file as input and processes the alignments in predefined genomic intervals to estimate 
 GC bias. WARNING: the input BAM file must have been created by an SAM format specification conforming alignment 

@@ -457,7 +457,7 @@ Input (required):
                         genome build used for read alignment earlier (i.e., creation of --bam). Since v0.5.6, the table also contains expected GC content counts which should be computed using the
                         fragment length distribution from 'accessory_files/reference_fragment_lenght_distribution.tsv'. The GC content distributions are used to create an optimized consolidated weight
                         matrix using a weighted mean. The weights for each region are selected such that the reference GC content distribution in [ DEFAULT:
-                        '/mnt/NVMeScratch/PycharmProjects/GCparagon_dev/accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed' ]
+                        '/accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed' ]
   -rgcd File, --reference-gc-content-distribution-table File
                         Path to TSV file containing two data columns with header: 'gc_percentage', and 'relative_frequency'. This table defines a GC content distribution (0% GC to 100% GC) as relative
                         frequencies of these percentage bins which (summing up to 1). If a custom reference genome is used, this file should be created anew from the simulated genome-wide ideal
@@ -557,7 +557,7 @@ Processing options:
                         [ DEFAULT: 786 (randomly drawn from 0-999) ]
   -sp File, --samtools-path File
                         Optional input: path to specific samtools executable. A valid path is required for creating the tagged BAM output. By default, this path will be used:
-                        '/home/benjamin/mambaforge-pypy3/envs/GCparagon/bin/samtools' (empty or None if path is not found). Code tested with samtools version 1.16.1 using htslib 1.16 [ PARAMETER
+                        '/bin/samtools' (empty or None if path is not found). Code tested with samtools version 1.16.1 using htslib 1.16 [ PARAMETER
                         REQUIRED IF DEFAULT VALUE IS EMPTY/NONE ]
   -nf Integer, --target-fragment-number Integer
                         (PRESET precedence if specified) GC-bias computation will stop after surpassing this threshold for processed fragments. Still running subprocesses will be finished and results

@@ -1,6 +1,0 @@
-Download zip file containing TSSs and TFBSs coverages files (CSV) from:
-https://zenodo.org/record/7886030/files/DoC_exports_TSSs_and_TFBSs.zip
-
-Place CSV files under 'accessory_files/[TSSs|TFBSs]/coverages/'
-
-These are required for the computations done in 'DoC_bias_correction_effect_TSSs.png' and 'DoC_bias_correction_effect_TFBSs.png'

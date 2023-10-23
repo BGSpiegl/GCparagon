@@ -1,16 +1,19 @@
 #!/usr/bin/env python3
+
+import re
 import sys
 import gzip
 import logging
 import argparse
-import re
 import numpy as np
 import pandas as pd
-import plotly.express as px
 from pathlib import Path
-from collections import defaultdict
-from typing import List, Tuple, Optional, Union, Dict
+import plotly.express as px
 from plotly import graph_objs as go
+from plotly.subplots import make_subplots
+from collections import defaultdict
+from scipy.stats import kurtosis, skew
+from typing import List, Tuple, Optional, Union as OneOf, Dict
 
 
 code_root = Path(__file__).parent.parent
@@ -18,7 +21,7 @@ if code_root not in sys.path:
     sys.path.append(str(code_root))
 
 
-from utilities.gc_logging import log, gib_cmd_logger
+from GCparagon.utilities.gc_logging import log, gib_cmd_logger
 
 
 def get_cmdline_args():
@@ -84,7 +87,7 @@ def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
     return fragment_occurrences_per_sample
 
 
-def load_txt_to_matrix(filename: Union[str, Path], loading_logger: Optional[logging.Logger],
+def load_txt_to_matrix(filename: OneOf[str, Path], loading_logger: Optional[str],
                        to_dtype=np.float64) -> np.array:
     """
     :param filename:
@@ -99,7 +102,7 @@ def load_txt_to_matrix(filename: Union[str, Path], loading_logger: Optional[logg
     return statistic_matrix
 
 
-def load_txt_to_matrix_with_meta(filename: Union[str, Path], loading_logger: Optional[str] = None,
+def load_txt_to_matrix_with_meta(filename: OneOf[str, Path], loading_logger: Optional[str] = None,
                                  to_dtype=np.float64) -> Tuple[np.array, range]:
     """
     :param loading_logger:
@@ -122,7 +125,7 @@ def load_txt_to_matrix_with_meta(filename: Union[str, Path], loading_logger: Opt
 
 
 def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample_id: Optional[str],
-                               matrix_file_list: Optional[List[Union[str, Path]]], out_dir_path: Path, image_formats=('png',),
+                               matrix_file_list: Optional[List[OneOf[str, Path]]], out_dir_path: Path, image_formats=('png',),
                                parent_logger: Optional[str] = None, fig_width=1500, fig_height=1000, fig_fontsize=24,
                                expected_fragment_lengths=(167, 167+149), normalize_to_dataset_size=True,
                                strip_xaxis_end_zeros=True, show_figure=False):
@@ -209,7 +212,7 @@ def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample
 def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
                   out_dir_path: Path, fig_width=1500, fig_height=1000, fig_fontsize=24,
                   spline_interpolation=True, normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
-                  reads='both', reference_dist=Union[Dict[str, float], defaultdict[float], None],
+                  reads='both', reference_dist=OneOf[Dict[str, float], defaultdict[float], None],
                   reference_normalized=True, show_figure=False, image_formats=('png',)):
     reads = reads.lower()
     if reads not in ('r1', 'r2', 'both'):
@@ -306,9 +309,9 @@ def plot_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict
         length_distribution_fig.show()
     out_dir_path.mkdir(parents=True, exist_ok=True)
     for image_format in image_formats:
+        out_file = out_dir_path / (f"GCparagon_GC_content_comparison_pre-post_correction_"
+                                   f"{re.sub(', ', '_', annotation)}.{image_format}")
         try:
-            out_file = out_dir_path / (f"GCparagon_GC_content_comparison_pre-post_correction_"
-                                       f"{re.sub(', ', '_', annotation)}.{image_format}")
             length_distribution_fig.write_image(out_file)
         except:
             print(f"WARNING - could not save figure '{out_file.stem}' in '{image_format}' image format! Continuing ..")
@@ -363,7 +366,7 @@ def plot_ref_gc_content(data_to_plot: Dict[str, Dict[str, np.array]], transparen
 
 def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_data: Dict[str, np.array],
                            out_dir_path: Path,
-                           reference_dists: defaultdict[str, Union[Dict[int, float], defaultdict[float], None]],
+                           reference_dists: defaultdict[str, OneOf[Dict[int, float], defaultdict[float], None]],
                            markers=True, fig_width=1200, fig_height=800, fig_fontsize=30, show_figure=False,
                            normalize_to_dataset_size=True, annotation=None, reduced_bins=True,
                            spline_interpolation=True, reference_normalized=True):
@@ -493,6 +496,215 @@ def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_d
          f"{'_MARKERS' if markers else ''}{('_' + re.sub(', ', '_', annotation)) if annotation else ''}"
          f"_cfDNAref.png")
     length_distribution_fig.write_image(out_file)
+
+
+def visualize_weights(region_weights: np.array, out_dir: OneOf[str, Path], sample_label: str,
+                      show_figure=False, image_formats=('png',), compute_skew=True, compute_curtosis=True,
+                      fig_width=1800, fig_height=1000, fig_fontsize=30):
+    plot_data = pd.DataFrame({'interval weights': region_weights})  # transform to plottable object
+    weights_fig = px.histogram(plot_data, x="interval weights",  # create histogram
+                               title='Weights of Genomic Interval to approximate Genomic GC Content',
+                               histnorm='percent',  #  If “percent” / “probability”, the span of each bar corresponds to
+                               # the percentage / fraction of occurrences with respect to the total number of sample
+                               # points (here, the sum of all bin HEIGHTS equals 100% / 1)
+                               width=fig_width, height=fig_height)
+    x_max_value = weights_fig.data[0].x.max()
+    n_weights = len(region_weights)
+    region_weights *= n_weights
+    if compute_skew:
+        dat_skew = skew(region_weights)
+        weights_fig.add_annotation(dict(font=dict(size=fig_fontsize - fig_fontsize / 8),
+                                        x=x_max_value * 0.5,
+                                        y=n_weights / 10 * 0.1, showarrow=False,
+                                        text=f"skew = {dat_skew:.2e}",
+                                        xanchor='center'))
+    if compute_curtosis:
+        dat_kurt = kurtosis(region_weights)
+        weights_fig.add_annotation(dict(font=dict(size=fig_fontsize - fig_fontsize/8),
+                                        x=x_max_value * 0.9,
+                                        y=n_weights / 10 * 0.1, showarrow=False,
+                                        text=f"kurtosis = {dat_kurt:.2e}",
+                                        xanchor='center'))
+    weights_fig.update_layout(font_family="Ubuntu", font_size=fig_fontsize, showlegend=False,
+                              xaxis_title='genomic interval weights for weighted mean of weight matrices / 1',
+                              yaxis_title='interval count / 1',
+                              title={'text': 'Weights of Genomic Interval to approximate Genomic GC Content',
+                                     'font': {'family': 'Ubuntu', 'size': fig_fontsize + 6,
+                                              'color': 'rgb(20, 20, 20)'},
+                                     'xanchor': 'center', 'yanchor': 'middle', 'x': 0.5}
+                              )
+    if show_figure:
+        weights_fig.show()
+    out_dir_path = Path(out_dir)
+    out_dir_path.mkdir(parents=True, exist_ok=True)  # ensure existence of output directory
+    for image_format in image_formats:
+        out_file = out_dir_path / f"{sample_label}.preselectedRegionWeights_refGCreconstruction.{image_format}"
+        try:
+            weights_fig.write_image(out_file)
+        except:
+            print(f"WARNING - could not save figure '{out_file.stem}' in '{image_format}' image format! Continuing ..")
+
+
+def visualize_reconstruction_result(out_dir: OneOf[str, Path], target_dist: np.array, reconstructed_dist: np.array,
+                                    original_dist: np.array, abs_err: float, sample_id: str, fig_width=1800,
+                                    fig_height=1100, fig_fontsize=30, image_formats=('png',), show: bool = False,
+                                    reduced_bins: bool = True, spline_interpolation: bool = True,
+                                    residual_dists: Optional[OneOf[List[np.array], np.array]] = None):
+    if not isinstance(residual_dists, list):
+        residual_dists = [residual_dists]
+    plot_data_list = []
+    columns = ['name', 'fragment GC content / %',
+               'relative frequency / %']
+    # create GC content range integers (either in steps of 1 or 2) according to reduced_bins setting!
+    gc_values = range(0, len(target_dist), 2) \
+        if reduced_bins else range(0, len(target_dist), 1)  # ASSERTS all bins present!
+    # add reference distribution
+    if target_dist is not None:
+        if reduced_bins:  # left included; right excluded
+            plot_data_list.extend(
+                [['expected reference GC', gc, target_dist[gc] + (target_dist[gc + 1] if gc != 100 else 0)]
+                 for gc in gc_values])
+        else:
+            plot_data_list.extend([['expected reference GC', gc, target_dist[gc]] for gc in gc_values])
+    # add intervals data
+    if reduced_bins:  # left included; right excluded
+        plot_data_list.extend([['original', gc,
+                                original_dist[gc] + (original_dist[gc + 1] if gc != 100 else 0)]
+                               for gc in gc_values])
+        plot_data_list.extend([['reconstructed', gc,
+                                reconstructed_dist[gc] + (reconstructed_dist[gc + 1] if gc != 100 else 0)]
+                               for gc in gc_values])
+    else:
+        plot_data_list.extend([['original', gc, original_dist[gc]]
+                               for gc in gc_values])
+        plot_data_list.extend([['reconstructed', gc, reconstructed_dist[gc]]
+                               for gc in gc_values])
+    # create plot
+    gc_dist_fig = make_subplots(rows=1, cols=1, vertical_spacing=0.03,
+                                shared_xaxes=False, shared_yaxes=False,
+                                subplot_titles=('',),
+                                start_cell='top-left',
+                                specs=[[{"secondary_y": True, 'colspan': 1, 'rowspan': 1}]])
+    # SECONDARY Y-AXIS TRACE FIRST:
+    # add zero line to secondary axis
+    gc_dist_fig.add_trace(go.Scatter(x=[0, 100], y=[0, 0], mode='lines', name=''), row=1, col=1, secondary_y=True)
+    # create residual distributions for secondary axis (actually, only 1 expected)
+    residual_fig = px.line(pd.DataFrame(([[f"residual error{' ' + str(res_idx) if len(residual_dists) > 1 else ''}",
+                                           gc, residual_dist[gc] + (residual_dist[gc + 1] if gc != 100 else 0)]
+                                          for res_idx, residual_dist in enumerate(residual_dists) for gc in gc_values]
+                                         if reduced_bins else
+                                         [[f"residual error{' ' + str(res_idx) if len(residual_dists) > 1 else ''}",
+                                           gc, residual_dist[gc]]
+                                          for res_idx, residual_dist in enumerate(residual_dists) for gc in gc_values]
+                                         ),
+                                        columns=['name', 'fragment GC content / %',
+                                                 'relative frequency difference / %']),
+                           x='fragment GC content / %', color='name', width=fig_width, height=fig_height,
+                           line_shape='spline' if spline_interpolation else 'linear',
+                           y='relative frequency difference / %', template="simple_white")
+    for residual_trace in residual_fig.data:  # add all residual traces
+        gc_dist_fig.add_trace(residual_trace, row=1, col=1, secondary_y=True)
+    # PRIMARY Y-AXIS TRACES:
+    for line_trace in px.line(pd.DataFrame(plot_data_list, columns=columns), x='fragment GC content / %',
+                              y='relative frequency / %', template="simple_white", width=fig_width, height=fig_height,
+                              line_shape='spline' if spline_interpolation else 'linear', color='name',
+                              title=f"Fragment GC Content - Reconstructed from Genomic Intervals vs. Genome").data:
+        gc_dist_fig.add_trace(line_trace, row=1, col=1, secondary_y=False)
+    # customize FGCD lines:
+    for dat_idx in range(len(gc_dist_fig.data)):
+        if target_dist is not None and \
+                gc_dist_fig.data[dat_idx].name == 'expected reference GC':  # expected distribution
+            gc_dist_fig.data[dat_idx].line.color = 'red'
+            gc_dist_fig.data[dat_idx].line.width = 5
+        elif gc_dist_fig.data[dat_idx].name == 'original':
+            gc_dist_fig.data[dat_idx].line.color = 'rgba(80, 80, 80, 0.8)'
+            gc_dist_fig.data[dat_idx].line.width = 3
+        elif (gc_dist_fig.data[dat_idx].name != '' and   # ignore the secondary axis trace(s)
+              'residual error' not in gc_dist_fig.data[dat_idx].name):  # vanilla residuals on the secondary axis
+            gc_dist_fig.data[dat_idx].line.color = 'rgb(0, 0, 0)'
+            gc_dist_fig.data[dat_idx].line.width = 4
+    # add residual error annotation:
+    gc_dist_fig.add_annotation(dict(font=dict(
+        size=fig_fontsize - fig_fontsize / 8,
+        color=gc_dist_fig.data[[trc.name == 'residual error' for trc in gc_dist_fig.data].index(True)].line.color),
+        x=gc_values.stop * 0.8, y=0.08 if reduced_bins else 0.04, showarrow=False, text=f"AES = {abs_err:.4f}",
+        xanchor='center'))
+    # add mean GC content annotations:
+    mean_target_gc = sum([gc_pc * rel_freq for gc_pc, rel_freq in enumerate(target_dist)]) / len(target_dist)
+    gc_dist_fig.add_annotation(dict(font=dict(
+        size=fig_fontsize - fig_fontsize / 8,
+        color=gc_dist_fig.data[[trc.name == 'expected reference GC' for trc in gc_dist_fig.data].index(True)
+                               ].line.color),
+        x=gc_values.stop * 0.8, y=0.07 if reduced_bins else 0.035, showarrow=False,
+        text=f"avg. reference GC% = {mean_target_gc:.3%}", xanchor='center'))
+    mean_original_gc = sum([gc_pc * rel_freq for gc_pc, rel_freq in enumerate(original_dist)]) / len(original_dist)
+    gc_dist_fig.add_annotation(dict(font=dict(
+        size=fig_fontsize - fig_fontsize / 8,
+        color=gc_dist_fig.data[[trc.name == 'original' for trc in gc_dist_fig.data].index(True)
+                               ].line.color), x=gc_values.stop * 0.8, y=0.065 if reduced_bins else 0.0325,
+        showarrow=False, text=f"avg. original GC% = {mean_original_gc:.3%}", xanchor='center'))
+    mean_reconstructed_gc = sum([gc_pc * rel_freq
+                                 for gc_pc, rel_freq in enumerate(reconstructed_dist)]) / len(reconstructed_dist)
+    gc_dist_fig.add_annotation(dict(font=dict(
+        size=fig_fontsize - fig_fontsize / 8,
+        color=gc_dist_fig.data[[trc.name == 'reconstructed' for trc in gc_dist_fig.data].index(True)
+                               ].line.color), x=gc_values.stop * 0.8, y=0.06 if reduced_bins else 0.03,
+        showarrow=False, text=f"avg. reconstructed GC% = {mean_reconstructed_gc:.3%}", xanchor='center'))
+
+    # Update figure
+    gc_dist_fig.update_layout(font_family="Ubuntu", font_size=fig_fontsize, showlegend=True,
+                              width=fig_width, height=fig_height,
+                              title_font_size=fig_fontsize + 2, template='simple_white',
+                              title={'text': f"Fragment GC Content - Reconstructed from Genomic Intervals vs. Genome",
+                                     'font': {'family': 'Ubuntu', 'size': fig_fontsize + 6, 'color': 'rgb(20, 20, 20)'},
+                                     'xanchor': 'center', 'yanchor': 'middle', 'x': 0.5},
+                              legend=dict(orientation='h', xanchor='center', yanchor='top', x=0.5, y=-0.1,
+                                          traceorder='reversed', font={'size': fig_fontsize - 2}))
+    # add axis labels
+    gc_dist_fig.update_yaxes(title_text=f"relative frequency{' (2% GC bins)' if reduced_bins else ''} / fraction",
+                             row=1, col=1)
+    gc_dist_fig.update_yaxes(title_text='residual error / 1', row=1, col=1, secondary_y=True)
+    gc_dist_fig.update_xaxes(title_text='fragment GC content / %', row=1, col=1)
+    # adjust axis limits
+    gc_limits = [None, None]
+    res_limits = [None, None]
+    for trc_idx, trace_dat in enumerate(gc_dist_fig.data):
+        if trace_dat.name == '':  # customize the zero line
+            gc_dist_fig.data[trc_idx].line.color = 'rgb(0,0,0)'
+            gc_dist_fig.data[trc_idx].line.width = 1
+            gc_dist_fig.data[trc_idx].showlegend = False
+            continue
+        elif 'residual error' in trace_dat.name:  # signals plotted on primary y-axis
+            if res_limits[0] is None or res_limits[0] > trace_dat.y.min():
+                res_limits = [trace_dat.y.min(), res_limits[1]]
+            if res_limits[1] is None or res_limits[1] < trace_dat.y.max():
+                res_limits = [res_limits[0], trace_dat.y.max()]
+        else:  # find limits for secondary y-axis
+            if gc_limits[0] is None or gc_limits[0] > trace_dat.y.min():
+                gc_limits = [trace_dat.y.min(), gc_limits[1]]
+            if gc_limits[1] is None or gc_limits[1] < trace_dat.y.max():
+                gc_limits = [gc_limits[0], trace_dat.y.max()]
+    # set y-ranges for primary and secondary axes
+    if None not in res_limits:
+        res_limits_range = res_limits[1] - res_limits[0]
+        res_limits = (res_limits[0] - 0.01 * res_limits_range, res_limits[1] + 0.01 * res_limits_range)
+        gc_dist_fig.update_yaxes(range=res_limits, row=1, col=1, secondary_y=True)
+    if None not in gc_limits:
+        if gc_limits[0] < 0:  # make non-negative minimum
+            gc_limits[0] = 0
+        gc_limits_range = gc_limits[1] - gc_limits[0]
+        gc_limits = (gc_limits[0] - 0.01 * gc_limits_range, gc_limits[1] + 0.01 * gc_limits_range)
+        gc_dist_fig.update_yaxes(range=gc_limits, row=1, col=1, secondary_y=False)
+    if show:
+        gc_dist_fig.show()
+    out_dir = Path(out_dir)
+    out_dir.mkdir(parents=True, exist_ok=True)
+    for image_format in image_formats:
+        out_file = out_dir / f"{sample_id}.GCcontent_RefVsReconstructed.{image_format}"
+        try:
+            gc_dist_fig.write_image(out_file)
+        except:
+            print(f"WARNING - could not save figure '{out_file.stem}' in '{image_format}' image format! Continuing ..")
 
 
 def main() -> int:

@@ -27,23 +27,21 @@ from pathlib import Path
 from collections import deque
 from natsort import humansorted
 from pysam import AlignmentFile  # coordinates in pysam are always 0-based (following python convention)
+from scipy.optimize import nnls, minimize
+from scipy.stats import trim_mean
+from twobitreader import TwoBitFile, TwoBitSequence
 from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
-from twobitreader import TwoBitFile, TwoBitSequence
+OneOf = Union
 
 # TODO: add hg19 compatibility and cmdline flag specifying hg19 instead of hg38;
 #                 increment MINOR_RELEASE number and reset patch number -> v0.6.0;
 #                 create new release and upload to zenodo
-#
-# TODO: genomic interval fragment GC content-based optimization of correction matrix averaging using NMF-based weighted
-#       average -> reconstruct genomewide expected fragment GC content distribution using actually used intervals'
-#       precomputed fragment GC content distributions (probably reduce to 25 bins only for speedup)
-
 
 # version
 MAJOR_RELEASE = 0
-MINOR_RELEASE = 5
-PATCH_NUMBER = 5
+MINOR_RELEASE = 6
+PATCH_NUMBER = 0
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -73,16 +71,17 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 #   - polars
 
 # TIMEOUT DEFINITIONS
-UNALIGNED_READS_EXTRACTION_TIMEOUT = 1800  # seconds; wait a maximum of 30 minutes for single pass through entire file,
+READS_EXTRACTION_TIMEOUT = 1800  # seconds; wait a maximum of 30 minutes for single pass through entire file,
 # extracting mates where at least one dir not align
 # default definitions for analysis
+MAX_FRAGMENT_LENGTH = 1200  # maximum allowed fragment length; THIS MUST BE CHANGED TO ENABLE USING LONGER FRAGMENTS!
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!
 DEFAULT_MAX_FRAGMENT_LENGTH = 550
 DEFAULT_TAG_NAME = 'GC'
 DEFAULT_WEIGHT = 1.0
 DEFAULT_MIN_OCCURRENCES = 3
 ABSOLUTE_MIN_OCCURRENCES = 2
-TAGGING_CHUNK_SIZE = 50 * 10 ** 6
+TAGGING_INTERVAL_SIZE = 50 * 10 ** 6
 # estimated HW capacities
 max_logical_cores = multiprocessing.cpu_count()
 max_physical_cores = max_logical_cores // 2 if max_logical_cores > 1 else 1
@@ -95,7 +94,7 @@ DEFAULT_SIMULATION_REPETITIONS = 6
 # ----------------------------------------------------------------------------------------------------------------------
 DEFAULT_FLOAT_PRECISION = 6
 DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3
-DEFAULT_MAX_INTERVAL_PERCENTAGE_BLACKLIST_OVERLAP = 1 / 3 * 100.  # of exclusion-listed regions for 1 Mbp intervals
+DEFAULT_MAX_INTERVAL_PERCENTAGE_EXCLUSIONLIST_OVERLAP = 1 / 3 * 100.  # of exclusion-listed regions for 1 Mbp intervals
 DEFAULT_MIN_UNCLIPPED_ALN_FRACTION = 0.75  # alignment-clipping limitation: regard alignment faulty
 # if more than 25% are clipped and ignore mates of fragment
 # POSTPROCESSING DEFAULTS:
@@ -111,18 +110,22 @@ sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
 DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
-PREDEFINED_1MBP_CHUNKS_TO_PROCESS = SOURCE_CODE_ROOT_PATH.parent.parent / \
-                                    'accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed'
+EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit'
+PREDEFINED_1MBP_INTERVALS_TO_PROCESS = SOURCE_CODE_ROOT_PATH.parent.parent / \
+    'accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed'
+DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION = SOURCE_CODE_ROOT_PATH.parent.parent / \
+    'accessory_files/hg38_reference_GC_content_distribution.tsv'
 TIMESTAMP_FORMAT = '%Y-%m-%d_%H-%M-%S'
-BAD_CHUNKS_FILE_PATTERN_AS_PATH = Path(f'bad_chunks_{TIMESTAMP_FORMAT}.bed')
+BAD_INTERVALS_FILE_PATTERN_AS_PATH = Path(f'bad_intervals_{TIMESTAMP_FORMAT}.bed')
 
 # define custom types
-BadChunksDict = Dict[Tuple[str, int, int], List[int]]
-ChunksList = List[Tuple[str, int, int, int]]
+BadIntervalsDict = Dict[Tuple[str, int, int], List[int]]
+GenomicIntervalList = List[Tuple[str, int, int, int]]
 
 # module imports:
 from utilities.plot_GC_matrices import plot_statistic_matrices, limit_extreme_outliers, smooth_2d_gc_weights
-from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta
+from utilities.plot_distributions import plot_fragment_length_dists, load_txt_to_matrix_with_meta, visualize_weights, \
+    visualize_reconstruction_result
 from utilities.secure_file_handling import AtomicOpen
 from utilities.gc_logging import set_up_logging, set_new_log_paths, log, gib_cmd_logger
 
@@ -197,25 +200,45 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "index file is not found on runtime, GCparagon tries to create it. The alignment "
                                  "algorithm used for creating the input BAM file MUST follow the SAM format "
                                  "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
-    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', required=True,
+    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file',
+                            default=EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
                                  'file using the following command: '
                                  "'faToTwoBit <PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' "
-                                 "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)"
-                                 "[ PARAMETER REQUIRED ]", metavar='File')
-    input_args.add_argument('-c', '--chunks-bed', dest='chunks_bed_file', default=PREDEFINED_1MBP_CHUNKS_TO_PROCESS,
-                            help='Path to BED file containing chunks to process. Should be selected based on minimal '
-                                 'overlap with bad regions of reference genome build used in creation of --bam. '
-                                 f"[ DEFAULT: '{PREDEFINED_1MBP_CHUNKS_TO_PROCESS}' ]", metavar='File')
-    input_args.add_argument('-ec', '--exclude-chunks', dest='exclude_chunks_bed_file',
-                            help='Path to library file (BED-like) holding DoC-specific definition of bad chunks '
-                                 '(chunks must be exact genomic locus match for exclusion, DO NOT expect bedtools '
-                                 'intersect-like behavior!). If the bad chunks library is left default, the bad chunks '
-                                 'library with the most recent time stamp in the parent directory of the default '
-                                 'library/BED file is used. The bad chunks library is intended to speed up the sample '
-                                 'processing by excluding chunks with insufficient DoC form the beginning. Excluded '
-                                 'chunks were observed to appear most frequently close to centromeres.', metavar='File')
+                                 "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)", metavar='File')
+    input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file',
+                            default=PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
+                            help='Path to BED file containing predefined genomic intervals to process. These should '
+                                 'have been selected based on minimal overlap with exclusion-masked regions of the '
+                                 'reference genome build used for read alignment earlier (i.e., creation of --bam). '
+                                 'Since v0.5.6, the table also contains expected GC content counts which should be '
+                                 "computed using the fragment length distribution from 'accessory_files/"
+                                 "reference_fragment_lenght_distribution.tsv'. The GC content distributions are used "
+                                 "to create an optimized consolidated weight matrix using a weighted mean. The weights "
+                                 "for each region are selected such that the reference GC content distribution in "
+                                 f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS}' ]", metavar='File')
+    input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path', 
+                            default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION,
+                            help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
+                                 "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
+                                 "GC) as relative frequencies of these percentage bins which (summing up to 1). If a "
+                                 "custom reference genome is used, this file should be created anew from the simulated "
+                                 "genome-wide ideal fragment GC content as simulated assuming a fragment length "
+                                 "distribution as the one stored in 'accessory_files/"
+                                 "reference_fragment_lenght_distribution.tsv'! The provided information is used to "
+                                 "optimize the combination of correction weight matrices from different genomic "
+                                 "intervals to achieve a linear combination of these regions which resembles the "
+                                 "reference GC content distribution defined here.", metavar='File')
+    input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
+                            help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
+                                 '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
+                                 'intersect-like behavior!). If the bad intervals library is left default, the bad '
+                                 'intervals library with the most recent time stamp in the parent directory of the '
+                                 'default library/BED file is used. The bad intervals library is intended to speed up '
+                                 'the sample processing by excluding intervals with insufficient DoC form the '
+                                 'beginning. Excluded intervals were observed to appear most frequently close to '
+                                 'centromeres.', metavar='File')
     input_args.add_argument('-cw', '--correction-weights', dest='correction_weights', metavar='File',
                             help="Optional input for --tag-only mode: a matrix file ('*_gc_weights.txt.gz') containing "
                                  "correction weights to be used in tag-only mode ('--tag-only' flag must be set) to "
@@ -236,19 +259,19 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'int the rangeof 0-3 (inclusive). A preset value of 0 leaves parameters at '
                                       'default if not defined differently by the user (unchanged parameters will match '
                                       'preset 1). Other integer values from 1 to 3 define presets with increasing '
-                                      'input data usage and required processing time (durations preset 1-3: 02:20, '
-                                      '11:25, and 54:10 (mm:ss)). Computation time of preset 3 depends on the average '
-                                      'DoC of the sample. Maximum across 4 samples and 2 iterations each computed '
-                                      'using 12 cores and the profile_command.py script. Maximum memory consumption '
-                                      'preset 1-3: 2550 MiB, 2440 MiB, and 2630 MiB respectively. If preset is not '
-                                      'zero, any customized parameters conflicting with the preset will be ignored. A '
-                                      'non-zero preset will set the following parameters: number of simulations, the '
-                                      'target number of processed fragments, minimum number of fragment attribute '
-                                      'combination occurrences, and the options for outlier detection and smoothing. '
-                                      'Noise within the resulting correction weights isreduced when selecting a higher '
-                                      'preset value. Preset 3 will attempt to process all genomic chunks (target '
+                                      'input data usage and required processing time (durations preset 1-3: 1-3 min, '
+                                      '5-10 min, and ~1h (depending on file size). Maximum across 4 samples and 2 '
+                                      'iterations each computed using 12 cores and the profile_command.py script. '
+                                      'Maximum memory consumption for any preset should stay below 4 GiB. If preset is '
+                                      'not zero, any customized parameters conflicting with the preset will be '
+                                      'ignored. A non-zero preset will set the following parameters: number of '
+                                      'simulations, the target number of processed fragments, minimum number of '
+                                      'fragment attribute combination occurrences, and the options for outlier '
+                                      'detection and smoothing. Noise within the resulting correction weights is '
+                                      'reduced when selecting a higher '
+                                      'preset value. Preset 3 will attempt to process all genomic intervals (target '
                                       'number of fragments set to 100B) within the limits of the maximum allowed'
-                                      'blacklisted regions overlap (per default default ~1.7 Gb of reference are '
+                                      'exclusion marked regions overlap (per default default ~1.7 Gb of reference are '
                                       'processed). NOTE: the percentage of total GC bias corrected fragments in the '
                                       'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '
@@ -256,7 +279,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       "weights. It is recommended to use a higher preset for a 'preprocess-once,"
                                       "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
                                       'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
-                                      'yield 100.59%%, 99.96%%, and 99,91%% of the raw fragment count respectively '
+                                      'yield 100.74%%, 99.98%%, and 99,91%% of the raw fragment count respectively '
                                       f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',
@@ -274,20 +297,20 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'the number of simulation rounds. Increasing this value increases the '
                                       'computation time almost accordingly (scales linearly). [ DEFAULT: '
                                       f'{DEFAULT_SIMULATION_REPETITIONS} ]')
-    processing_args.add_argument('-uf', '--upper-fragment-length', dest='upper_limit_fragment_length', type=int,
+    processing_args.add_argument('-mafl', '--maximum-fragment-length', dest='upper_limit_fragment_length', type=int,
                                  default=DEFAULT_MAX_FRAGMENT_LENGTH, metavar='Integer',
                                  help=f'Defines upper length limit for fragments which should be included in '
                                       f'computation. This parameter does not impact computation speed. It only '
                                       f'increases plotting times for matrices by a few seconds and memory consumption. '
                                       f'[ DEFAULT: {DEFAULT_MAX_FRAGMENT_LENGTH}bp ]')
-    processing_args.add_argument('-lf', '--lower-fragment-length', dest='lower_limit_fragment_length', type=int,
+    processing_args.add_argument('-mifl', '--minimum-fragment-length', dest='lower_limit_fragment_length', type=int,
                                  default=DEFAULT_MIN_FRAGMENT_LENGTH, metavar='Integer',
                                  help=f'Defines lower length limit for fragments which should be included in '
                                       f'computation. Must be positive integer. A value below the sequenceable '
                                       f'fragment length of the device used to create the dataset is not recommended.'
                                       f' [ DEFAULT: {DEFAULT_MIN_FRAGMENT_LENGTH}bp ]')
     processing_args.add_argument('-t', '--threads', dest='total_number_threads', type=int,
-                                 default=DEFAULT_NUMBER_PROCESSES, metavar='Integer',
+                                 metavar='Integer',
                                  help=f'Total number of threads to be used for BAM processing. If the '
                                       '--single-thread-processes flag was set, this number corresponds to the number '
                                       'of processes spawned for BAM processing. For BAM tagging, multiple threads are '
@@ -348,7 +371,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       "NovaSeq data. If such fragments have to be included, this flag can be set to "
                                       "allow for up to 1/3 N-bases for fragments. Parameter mainly influences the "
                                       "simulation step and how many times random fragment drawing must be repeated for "
-                                      "individual genomic intervals. Also can lead to fewer chunks being discarded "
+                                      "individual genomic intervals. Also can lead to fewer intervals being discarded "
                                       "(and marked as bad genomic interval) if flag is set.")
     processing_args.add_argument('-ucmaf', '--unclipped-min-aln-fraction', dest='min_unclipped_aln_fraction',
                                  default=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, type=float, metavar='Float',
@@ -363,11 +386,12 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'of the (computed) weights matrix. Should be 1.0 for GCparagon. '
                                       'Can be e.g. 0.0 for other algorithms like Griffin. Choose according to the '
                                       f'source of your weights matrix! [ DEFAULT: {DEFAULT_WEIGHT} ]')
-    processing_args.add_argument('-urto', '--unaligned-reads-extraction-timeout', dest='unaligned_extraction_timeout',
-                                 default=UNALIGNED_READS_EXTRACTION_TIMEOUT,
-                                 help='Sets the timout in seconds for unaligned reads extraction. Only has an effect '
-                                      "if '--output-bam' and '--output-unaligned-reads' are set. "
-                                      f"[ DEFAULT: {UNALIGNED_READS_EXTRACTION_TIMEOUT} seconds ]")
+    processing_args.add_argument('-reto', '--reads-extraction-timeout', dest='unaligned_extraction_timeout',
+                                 default=READS_EXTRACTION_TIMEOUT,
+                                 help='Sets the timout in seconds for unaligned reads extraction. '
+                                      "Only has an effect if '--output-bam' or '--tag-only' and "
+                                      "'--output-unaligned-reads' is set. "
+                                      f"[ DEFAULT: {READS_EXTRACTION_TIMEOUT} seconds ]")
     # post-processing options
     postprocessing_args.add_argument('-do', '--detect-outliers', action='store_true', dest='detect_outliers',
                                      help='(PRESET precedence if specified) If this flag is set, extreme outliers will '
@@ -383,7 +407,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                           'inter-quartile range or a method based on standard deviation can be '
                                           "selected. Must be one of {'IQR', 'SD'}. "
                                           f'[ DEFAULT: {DEFAULT_OUTLIER_DETECTION_METHOD} ]',
-                                     metavar='OutlierDetectionBasis')
+                                     metavar='String')
     postprocessing_args.add_argument('-ods', '--outlier-detection-stringency', choices=range(0, 8, 1), type=int,
                                      dest='outlier_stringency', default=DEFAULT_OUTLIER_DETECTION_STRINGENCY,
                                      help='(PRESET precedence if specified) If the --detect-outliers flag is set, this '
@@ -403,7 +427,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                           'Gaussian kernel makes more sense because it assigns directly adjacent '
                                           'values a higher weight in computing the smoothed value of the current '
                                           "position. Must be one of {'gauss', 'constant'}. "
-                                          f'[ DEFAULT: {DEFAULT_SMOOTHING_KERNEL} ]', metavar='KernelType')
+                                          f'[ DEFAULT: {DEFAULT_SMOOTHING_KERNEL} ]', metavar='String')
     postprocessing_args.add_argument('-si', '--smoothing-intensity', dest='smoothing_intensity', type=int,
                                      choices=range(1, 11, 1), default=DEFAULT_SMOOTHING_INTENSITY,
                                      help="(PRESET precedence if specified) If the '--smooth' flag is set, the "
@@ -419,11 +443,13 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   '(GC-bias computation, BAM tagging). The directory will be created if it does '
                                   'not exist. Make sure that it is empty if it exists, otherwise the whole directory '
                                   'will be deleted before writing to it in the GC-bias computation step! '
-                                  'If none is provided, a subdirectory of the input BAM file will be used as '
-                                  'output directory. The output for each sample will be gathered in a subdirectory of '
-                                  '--out-dir which will be named after the sample. Output directory can be located on '
-                                  'slow hardware such as a USB drive or a network storage since everything is '
-                                  'stored in --temporary-directory first and moved after completion of computation.')
+                                  'If none is provided, a new subdirectory named '
+                                  f"'GC_bias_correction_GCparagon{VERSION_STRING}' will be created in the input BAM's "
+                                  'parent directory and used as output directory. The output for each sample will be '
+                                  'gathered in a subdirectory of this --out-dir which will be named after the sample. '
+                                  'The output directory may be located on slow hardware such as a USB drive or a '
+                                  'network storage since everything is stored in --temporary-directory first and moved '
+                                  'after completion of all defined phases of the GC bias computation.')
     output_args.add_argument('-tmp', '--temporary-directory', dest='temporary_directory', metavar='File',
                              default=DEFAULT_TEMPORARY_DIRECTORY,
                              help='Directory to which all files will be written as temporary files in a subdirectory '
@@ -451,7 +477,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'unaligned reads!')
     output_args.add_argument('-our', '--output-unaligned-reads', dest='output_unaligned_reads', action='store_true',
                              help='Optional flag to activate writing of unaligned reads to a separate BAM file. '
-                                  'Per default, unaligned reads are not included in the tagged BAM output file. This '
+                                  'Per default, unaligned reads are not output. Setting this flag '
                                   'only has an effect if either the --output-bam flag was set or GCparagon was '
                                   'started in the --tag-only mode.')
     output_args.add_argument('-fp', '--float-precision', dest='floating_point_precision',
@@ -470,19 +496,20 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   f'than 2 characters! [ DEFAULT: {DEFAULT_TAG_NAME} ]')
     output_args.add_argument('-wie', '--write-interval-exclusion', dest='write_updated_bad_intervals_library',
                              action='store_true',
-                             help='Optional flag for writing an updated version of the library listing chunks marked '
-                                  'for exclusion from the analysis. Per default, genomic chunks are marked for '
-                                  'exclusion if drawing fragments of a specific size repeatedly fails (at least 55 '
-                                  'times (for strict reference N base handling, 33 times otherwise) or 1/3 of number of '
-                                  'fragments that need to be drawn, whichever is higher) due '
+                             help='Optional flag for writing an updated version of the library listing intervals '
+                                  'marked for exclusion from the analysis. Per default, genomic intervals are marked '
+                                  'for exclusion if drawing fragments of a specific size repeatedly fails (at least 55 '
+                                  'times (for strict reference N base handling, 33 times otherwise) or 1/3 of number '
+                                  'of fragments that need to be drawn, whichever is higher) due '
                                   'to getting only poly-N sequences. In general, the frequency of these exclusion '
                                   'events is dependent on the DoC of the sample, which can be substituted by the '
-                                  'number of fragments estimated to be obtained from all predefined chunks in BAM file '
-                                  "in a first approximation. WARNING: don't mix exclusion-marked chunk libraries "
-                                  'computed from different (predefined) chunk BED files! If the user places the output '
-                                  'BED file library in the default directory, the new library will be used per default '
-                                  'for future computations. Chunks will be marked for exclusion depending on a data '
-                                  "set's fragment length distribution and sequencing depth.")
+                                  'number of fragments estimated to be obtained from all predefined intervals in BAM '
+                                  "file in a first approximation. WARNING: don't mix exclusion-marked interval "
+                                  'libraries computed from different (predefined) interval BED files! If the user '
+                                  'places the output BED file library in the default directory, the new library will '
+                                  'be used per default for future computations. Genomic intervals will be marked for '
+                                  "exclusion depending on a data set's fragment length distribution and sequencing "
+                                  "depth.")
     output_args.add_argument('-nfp', '--no-focused-plots', action='store_true', dest='dont_focus_plots',
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
                                   'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
@@ -529,53 +556,74 @@ def silently_open_alignment_file(*args, **kwargs):
 
 # GC-bias computation functions:
 # ----------------------------------------------------------------------------------------------------------------------
-def read_bed_file(bed_path: str) -> List[Tuple[str, int, int, Any]]:
+def read_bed_file(bed_path: str, header=False) -> List[Tuple[str, int, int, Any]]:
     """
 
     :param bed_path:
     :return:
     """
     with AtomicOpen(bed_path, 'rt') as f_bed:
-        return [(chrom, int(region_start), int(region_stop), meta_info)
-                for chrom, region_start, region_stop, *meta_info
-                in filter(lambda x: x not in ('', '\n', None),
-                          [bed_line.strip().split() for bed_line in f_bed.readlines()])]
+        if header:
+            _hdr = f_bed.readline()
+        return_data = [(chrom, int(region_start), int(region_stop),
+                        meta_info)  # list of ints -> exclusion_marked_bases followed by fragment GC content counts
+                       for chrom, region_start, region_stop, *meta_info
+                       in filter(lambda x: x not in ('', '\n', None),
+                                 [bed_line.strip().split() for bed_line in f_bed.readlines()])]
+        return return_data
 
 
-def read_bad_chunks_bed_file(bed_path: str) -> BadChunksDict:
-    bad_chunks = {}
-    chunk_lengths = set()
+def read_bad_genomic_intervals_bed_file(bed_path: str) -> BadIntervalsDict:
+    bad_intervals = {}
+    interval_lengths = set()
     try:
-        for chrm, strt, stp, rst in read_bed_file(bed_path=bed_path):
-            chunk_lengths.update({stp - strt})
-            # values: sample yield(s) as comma-deimited list of integers;
-            if bad_chunks.get((chrm, strt, stp)) is None:
-                bad_chunks.update({(chrm, strt, stp): list(map(lambda v: int(v), rst[0].split(',')))})
-            else:  # chunk locus exists already (= multiple entries! Not expected)
-                bad_chunks[(chrm, strt, stp)].extend(list(map(lambda v: int(v), rst[0].split(','))))
+        for chrm, strt, stp, meta_inf_list in read_bed_file(bed_path=bed_path):
+            interval_lengths.update({stp - strt})
+            # meta_inf_list: yields of samples (total number of reads) as comma-delimited list of integers;
+            # added for cutoff -> some samples with low yield are more likely to run into the problem of randomly not
+            # drawing enough N-bases-free fragments than higher yield samples
+            # -> improved pre-rejection of genomic intervals:
+            # reject all intervals that failed in the fragment drawing process for samples with HIGHER yield!
+            # I don't think this has been implemented yet
+            if bad_intervals.get((chrm, strt, stp)) is None:
+                bad_intervals.update({(chrm, strt, stp): list(map(lambda v: int(v), meta_inf_list[0].split(',')))})
+            else:  # interval locus exists already (= multiple entries! Not expected)
+                bad_intervals[(chrm, strt, stp)].extend(list(map(lambda v: int(v), meta_inf_list[0].split(','))))
     except ValueError:  # not enough values to unpack (expected 4, got X)
         log(message=f"Could not load bad regions from BED file '{bed_path}' (requires column 4 and column 5 to contain "
                     "values that can be cast to int!). Returning no bad regions instead.",
             log_level=logging.WARNING, logger_name=LOGGER)
-    if len(chunk_lengths) > 1:
-        log(message=f"Chunks of different length encountered in file '{bed_path}'. "
-                    f"A BED file containing mixed bad chunks was provided!",
+    if len(interval_lengths) > 1:
+        log(message=f"Genomic intervals of different length encountered in file '{bed_path}'. "
+                    f"A BED file containing mixed bad intervals was provided!",
             log_level=logging.WARNING, logger_name=LOGGER)
-    return bad_chunks
+    return bad_intervals
+
+
+def create_region_label(chrm: str ,start: int, end: int):
+    return f"{chrm}_{start:,}-{end:,}"
 
 
 def read_scored_regions_bed_file(bed_path: str):
+    scored_regions = []
+    region_gc_content_distributions = {}
     try:
-        scored_regions = [(chrm, strt, stp, int(rst[0]))
-                          for chrm, strt, stp, rst in read_bed_file(bed_path=bed_path)]
-        return scored_regions
+        for chrm, strt, stp, meta_info in read_bed_file(bed_path=bed_path, header=True):
+            scored_regions.append((chrm, strt, stp, int(meta_info[0])))
+            # process meta_info
+            assert len(meta_info[1:]) == 101
+            assert region_gc_content_distributions.get(create_region_label(chrm=chrm, start=strt, end=stp)) is None
+            component_counts = np.array(list(map(lambda s: int(s), meta_info[1:])))
+            region_gc_content_distributions[create_region_label(chrm=chrm, start=strt, end=stp)] = \
+                component_counts / component_counts.sum()  # NORMALIZE TO 1!!!
+        return scored_regions, region_gc_content_distributions
     except ValueError:  # not enough values to unpack (expected 4, got X)
         log(message=f"Could not load scored regions from BED file '{bed_path}' (requires column 4 to contain values "
                     "that can be cast to int!). Terminating ..", log_level=logging.ERROR, logger_name=LOGGER)
         sys.exit(1)
 
 
-def save_matrix_to_txt(matrix: Union[np.array, np.matrix], filename: Union[str, Path], output_dir: str,
+def save_matrix_to_txt(matrix: OneOf[np.array, np.matrix], filename: OneOf[str, Path], output_dir: str,
                        gzipped=True, float_data_precision=6, min_frag_length=DEFAULT_MIN_FRAGMENT_LENGTH,
                        max_frag_length=DEFAULT_MAX_FRAGMENT_LENGTH, verbose=False, report_saved_path=False) \
         -> Optional[Path]:
@@ -615,7 +663,7 @@ def save_matrix_to_txt(matrix: Union[np.array, np.matrix], filename: Union[str, 
         return output_path
 
 
-def rhui(num: Union[int, float]):
+def rhui(num: OneOf[int, float]):
     """
 
     :param num:
@@ -640,14 +688,14 @@ def check_region_within_genomic_bounds(chrom: str, start: int, stop: int, chromo
     return True
 
 
-def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: str, chromosome: str, tmp_dir: str,
-                                       sample_id: str, start_coord: int, stop_coord: int,
+def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: OneOf[str, Path], chromosome: str,
+                                       tmp_dir: str, sample_id: str, start_coord: int, stop_coord: int,
                                        save_individual_matrices=False, strict_n_ref_bases_handling=True,
                                        frag_n_cont_thresh=DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD,
                                        min_frag_len=DEFAULT_MIN_FRAGMENT_LENGTH, float_precision=6,
                                        max_frag_len=DEFAULT_MAX_FRAGMENT_LENGTH,
                                        min_unclipped_aln_fraction=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION) \
-        -> Tuple[Union[np.array, np.matrix], int, int]:
+        -> Tuple[OneOf[np.array, np.matrix], int, int]:
     """
 
     :param two_bit_reference_path:
@@ -667,9 +715,9 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
     :return:
     """
     with silently_open_alignment_file(bam_file, mode='rb') as f_aln:
-        # Probably the old chunks loading strategy was better (slicing 500k chars is easier than permanent IO)
-        observed_attributes_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1), dtype=np.uint64)
-        ref_genome_handle = TwoBitFile(two_bit_reference_path)
+        # Probably the old intervals loading strategy was better (slicing 500k chars is easier than permanent IO)
+        observed_attributes_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1), dtype=float)
+        ref_genome_handle = TwoBitFile(str(two_bit_reference_path))
         chromosome_handle = ref_genome_handle[chromosome]
         try:  # assert: template has between 1 and 2 segments (single-end or paired-end data; SAM format supports more)
             # The leftmost segment has a plus sign and the rightmost has a minus sign. It is set as 0 for
@@ -684,10 +732,9 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
             # binary filter:
             exclude_flags = np.uint32(3852)  # = 256 + 2048 + 512 + 1024 + 4 + 8
             exclude_flags_binary = bin(exclude_flags)
-            paired_flag = np.uint32(1)  # only paired!
-            paired_flag_binary = bin(paired_flag)
+            # paired_flag = np.uint32(1)  # only paired!
+            # paired_flag_binary = bin(paired_flag)  # not used -> replaced by simply checking a.is_paired
             # -> not necessary to check for "mapped" attribute (filtered out if "read unmapped")
-
             # complete alignment filter:
             # --------------------------
             # EXCLUDE if:
@@ -780,9 +827,9 @@ def compute_observed_attributes_matrix(bam_file: str, two_bit_reference_path: st
     if save_individual_matrices:
         target_path = Path(tmp_dir)
         target_path.mkdir(parents=True, exist_ok=True)
-        chunk_str = f"{chromosome}_{start_coord}-{stop_coord}"
+        interval_str = f"{chromosome}_{start_coord}-{stop_coord}"
         save_matrix_to_txt(matrix=observed_attributes_matrix, output_dir=str(target_path), max_frag_length=max_frag_len,
-                           filename=f'{sample_id}_observed_attributes_matrix_{chunk_str}.txt.gz',
+                           filename=f'{sample_id}_observed_attributes_matrix_{interval_str}.txt.gz',
                            float_data_precision=float_precision, gzipped=True, min_frag_length=min_frag_len)
     return observed_attributes_matrix, n_fragments_processed, ignored_fragments
 
@@ -812,16 +859,16 @@ def safe_gc_base_count_inference_thresh(f_seq, f_len, threshold=0.3):
         return 99999999  # will lead to an IndexError
 
 
-def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chromosome: str, start_coord: int,
-                                 sample_id: str, stop_coord: int, expected_yield: int,
-                                 statistic_matrix: Union[str, np.ndarray, np.matrix],
+def simulate_fragment_attributes(two_bit_reference_path: OneOf[str, Path], tmp_dir: str, chromosome: str,
+                                 start_coord: int, sample_id: str, stop_coord: int, expected_yield: int,
+                                 statistic_matrix: OneOf[str, np.ndarray, np.matrix],
                                  float_precision=6, save_individual_matrices=False, strict_n_ref_bases_handling=True,
                                  random_seed=RANDOM_SEED, simulation_repetitions=DEFAULT_SIMULATION_REPETITIONS,
                                  min_frag_len=DEFAULT_MIN_FRAGMENT_LENGTH, max_frag_len=DEFAULT_MAX_FRAGMENT_LENGTH,
                                  frag_n_cont_thresh=DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD) \
-        -> Union[Tuple[np.ndarray, Tuple[np.ndarray]], Tuple[str, int, int, int]]:
+        -> OneOf[Tuple[np.ndarray, Tuple[np.ndarray]], Tuple[str, int, int, int]]:
     """
-    May add chunks to bad chunks library
+    May add intervals to bad intervals library
     :param max_frag_len:
     :param strict_n_ref_bases_handling:
     :param sample_id:
@@ -840,19 +887,19 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
     :param random_seed:
     :return:
     """
-    ref_genome_handle = TwoBitFile(two_bit_reference_path)
-    # check if chunk coordinates are valid
+    ref_genome_handle = TwoBitFile(str(two_bit_reference_path))
+    # check if interval coordinates are valid
     try:
         if start_coord < 0 or stop_coord > ref_genome_handle.sequence_sizes()[chromosome]:
             log(message=f"Check your coordinates! Your provided {chromosome}:{start_coord}-{stop_coord}",
                 log_level=logging.CRITICAL, close_handlers=True, logger_name=LOGGER)
             raise OutOfGenomicBoundsError()
     except KeyError:
-        log(message=f"The following contig/scaffold was not found in the BAM file: {chromosome}",
+        log(message=f"The following contig/scaffold was not found in the 2bit reference genome file: {chromosome}",
             log_level=logging.CRITICAL, close_handlers=True, logger_name=LOGGER)
         sys.exit(2)
     chromosome_handle = ref_genome_handle[chromosome]
-    ref_seq_chunk_slice = chromosome_handle[start_coord:stop_coord].upper()
+    ref_seq_interval_slice = chromosome_handle[start_coord:stop_coord].upper()
     if isinstance(statistic_matrix, np.ndarray) or isinstance(statistic_matrix, np.matrix):
         observed_attributes_matrix = statistic_matrix
     elif isinstance(statistic_matrix, str) and Path(statistic_matrix).is_file():
@@ -869,20 +916,20 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
                     "the matrix as np.array itself.",
             log_level=logging.CRITICAL, close_handlers=True, logger_name=LOGGER)
         sys.exit(2)
-    bad_chunk = False
+    bad_interval = False
     n_fragment_length_rows = observed_attributes_matrix.shape[0]
     s_gc_content_columns = observed_attributes_matrix.shape[1]
-    fragments = np.sum(observed_attributes_matrix, axis=1, dtype=np.uint64).flatten()
+    fragments = np.sum(observed_attributes_matrix, axis=1, dtype=int).flatten()
     # create averaged matrix for in-place manipulation
-    simulated_attributes_matrix = np.zeros((n_fragment_length_rows, s_gc_content_columns), dtype=np.uint64)
+    simulated_attributes_matrix = np.zeros((n_fragment_length_rows, s_gc_content_columns), dtype=float)
     # create raw matrices for in-place manipulation
     raw_simulated_matrices = []
     for m_idx in range(simulation_repetitions):
-        raw_simulated_matrices.append(np.zeros((n_fragment_length_rows, s_gc_content_columns), dtype=np.uint64))
+        raw_simulated_matrices.append(np.zeros((n_fragment_length_rows, s_gc_content_columns), dtype=float))
     random_number_generator = np.random.default_rng(seed=random_seed)  # use random seed for reproducibility here!
     if save_individual_matrices:  # check and create before iterating
         Path(tmp_dir).mkdir(parents=True, exist_ok=True)
-    chunk_str = f"{chromosome}_{start_coord}-{stop_coord}"
+    interval_str = f"{chromosome}_{start_coord}-{stop_coord}"
     for sim_iter_idx in range(simulation_repetitions):
         for length_index, amount_fragments in enumerate(fragments):  # simulate each fragment length separately
             if not amount_fragments:  # no fragments observed for current frag length (observed_attributes[f_len] = 0)
@@ -900,7 +947,7 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
             unsorted_randoms = random_number_generator.integers(
                 low=0, high=stop_coord - start_coord - actual_fragment_length + 1,
                 size=sampling_failure_threshold + 1)  # could be rare fragments -> threshold +1 as minimum
-            # 1/3 of target fragment number - whichever is higher - for chunk to be marked for exclusion.
+            # 1/3 of target fragment number - whichever is higher - for interval to be marked for exclusion.
             # Approach if not strict_n_ref_bases_handling: linear extrapolation
             # subtract the N bases from the fragment length, compute GC content of the analyzable portion and
             # extrapolate the number of GC-bases according to the fragment's actual length.
@@ -908,12 +955,12 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
             # (implemented in 'safe_gc_base_count_inference_thresh()')
             if strict_n_ref_bases_handling:  # faster
                 gc_count_iterator = map(lambda q: gc_count_rejecting_n_containing(f_seq=q),
-                                        map(lambda s: ref_seq_chunk_slice[s:s + actual_fragment_length].upper(),
+                                        map(lambda s: ref_seq_interval_slice[s:s + actual_fragment_length].upper(),
                                             rand_ints))
             else:
                 gc_count_iterator = map(lambda q: safe_gc_base_count_inference_thresh(f_seq=q[0], f_len=q[1],
                                                                                       threshold=frag_n_cont_thresh),
-                                        map(lambda s: (ref_seq_chunk_slice[s:s + actual_fragment_length].upper(),
+                                        map(lambda s: (ref_seq_interval_slice[s:s + actual_fragment_length].upper(),
                                                        actual_fragment_length), rand_ints))
             for gc_count in gc_count_iterator:
                 try:
@@ -926,41 +973,41 @@ def simulate_fragment_attributes(two_bit_reference_path: str, tmp_dir: str, chro
                             (backup_seq.count('N') / actual_fragment_length >= frag_n_cont_thresh):  # keep drawing
                         try:
                             cur_start = unsorted_randoms[unsorted_randoms_index]  # get new random fragment start
-                        except IndexError:  # all random integers consumed -> bad chunk! (should not occur)
+                        except IndexError:  # all random integers consumed -> bad interval! (should not occur)
                             log(message=f"Too many attempts of drawing random fragments ({sampling_failure_threshold} "
-                                        f"attempts) for chunk '{chromosome}:{start_coord}-{stop_coord}' were in vain. "
+                                        f"attempts) for interval '{chromosome}:{start_coord}-{stop_coord}' were in vain. "
                                         f"Triggered for fragments of {actual_fragment_length}bp length. "
-                                        f"Discarding chunk ..", log_level=logging.WARNING, logger_name=LOGGER)
-                            bad_chunk = True  # stop redrawing once all fall-back random integers have been used up
+                                        f"Discarding interval ..", log_level=logging.WARNING, logger_name=LOGGER)
+                            bad_interval = True  # stop redrawing once all fall-back random integers have been used up
                             break
-                        unsorted_randoms_index += 1  # can max. be 33, then clause below should trigger chunk marking
+                        unsorted_randoms_index += 1  # can max. be 33, then clause below should trigger interval marking
                         if unsorted_randoms_index >= sampling_failure_threshold:  # should always be the reason why a
-                            # chunk is marked as bad
+                            # interval is marked as bad
                             log(message=f"Too many attempts of drawing random fragments "
-                                        f"for chunk '{chromosome}:{start_coord}-{stop_coord}' were in vain "
-                                        f"(threshold was {sampling_failure_threshold} tries). Discarding chunk ..",
+                                        f"for interval '{chromosome}:{start_coord}-{stop_coord}' were in vain "
+                                        f"(threshold was {sampling_failure_threshold} tries). Discarding interval ..",
                                 log_level=logging.WARNING, logger_name=LOGGER)
-                            bad_chunk = True  # stop redrawing once the threshold has been reached
+                            bad_interval = True  # stop redrawing once the threshold has been reached
                             break
-                        backup_seq = ref_seq_chunk_slice[cur_start:cur_start + actual_fragment_length].upper()
-                    if bad_chunk:
-                        break  # for loop -> bad chunk encountered!
+                        backup_seq = ref_seq_interval_slice[cur_start:cur_start + actual_fragment_length].upper()
+                    if bad_interval:
+                        break  # for loop -> bad interval encountered!
                     if strict_n_ref_bases_handling:
                         gc_count = gc_count_rejecting_n_containing(f_seq=backup_seq)
                     else:
                         gc_count = safe_gc_base_count_inference_thresh(f_seq=backup_seq, f_len=actual_fragment_length,
                                                                        threshold=frag_n_cont_thresh)
                     raw_simulated_matrices[sim_iter_idx][length_index, gc_count] += 1
-            if bad_chunk:
+            if bad_interval:
                 return chromosome, start_coord, stop_coord, expected_yield
         if save_individual_matrices:  # save snapshot of cumulative simulated_attributes_matrix
-            simulated_file = f"{sample_id}_cumulative_simulated_attributes_matrix_{sim_iter_idx + 1}_{chunk_str}.txt.gz"
+            simulated_file = f"{sample_id}_cumulative_simulated_attributes_matrix_{sim_iter_idx + 1}_{interval_str}.txt.gz"
             save_matrix_to_txt(matrix=simulated_attributes_matrix, filename=simulated_file, output_dir=tmp_dir,
                                float_data_precision=float_precision, gzipped=True, max_frag_length=max_frag_len,
                                min_frag_length=min_frag_len)
     if save_individual_matrices:  # store individual raw matrices
         for raw_matrix_idx, simulated_raw_matrix in enumerate(raw_simulated_matrices):
-            simulated_file = f"{sample_id}_simulated_raw_attributes_matrix_{raw_matrix_idx + 1}_{chunk_str}.txt.gz"
+            simulated_file = f"{sample_id}_simulated_raw_attributes_matrix_{raw_matrix_idx + 1}_{interval_str}.txt.gz"
             save_matrix_to_txt(matrix=simulated_raw_matrix, filename=simulated_file, output_dir=tmp_dir,
                                float_data_precision=float_precision, gzipped=True, max_frag_length=max_frag_len,
                                min_frag_length=min_frag_len)
@@ -978,11 +1025,15 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     :param focus_nondefault_values: plots will focus on these values using the integer value of the parameter as border
     :param ignored_fragments:
     :param output_all:
-    :param simulated_attributes_raw_matrix_sums:
+    :param simulated_attributes_raw_matrix_sums: list of n simulated attribute matrices; used for computing correction
+                                                 weights
     :param tmp_dir:
     :param min_frag_occurs:
     :param observed_attributes_matrices_sum:
-    :param simulated_attributes_matrices_sum:
+    :param simulated_attributes_matrices_sum: used to store a "consolidated" version of the n simulation matrices
+                                              is not used for correction weights! simulated_attributes_raw_matrix_sums
+                                              is used instead to create n correction weight matrices which are then
+                                              averaged
     :param n_ogc_summed:
     :param n_sims:
     :param n_sgc_summed:
@@ -1004,19 +1055,19 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
         filename=f'{sample_id}_observed_attributes_matrix.txt.gz', float_data_precision=precision,
         report_saved_path=True, max_frag_length=max_frag_len, min_frag_length=min_frag_len)  # there is 1 row too many!
     if output_all:
-        simulated_attributes_matrix_chunk_average = simulated_attributes_matrices_sum / n_sgc_summed  # avg per chunk
-        save_matrix_to_txt(matrix=simulated_attributes_matrix_chunk_average, float_data_precision=precision,
+        simulated_attributes_matrix_interval_average = simulated_attributes_matrices_sum / n_sgc_summed  # avg per interval
+        save_matrix_to_txt(matrix=simulated_attributes_matrix_interval_average, float_data_precision=precision,
                            verbose=True,
-                           filename=f'{sample_id}_simulated_attributes_matrix_chunk-average.txt.gz', gzipped=True,
+                           filename=f'{sample_id}_simulated_attributes_matrix_interval-average.txt.gz', gzipped=True,
                            output_dir=tmp_dir, max_frag_length=max_frag_len, min_frag_length=min_frag_len)
         for sim_idx, raw_sim_mat in enumerate(simulated_attributes_raw_matrix_sums):
             save_matrix_to_txt(matrix=raw_sim_mat, float_data_precision=precision, verbose=True, output_dir=tmp_dir,
                                filename=f'{sample_id}_simulated_attributes_raw_matrix_{sim_idx}.txt.gz', gzipped=True,
                                max_frag_length=max_frag_len, min_frag_length=min_frag_len)
-        observed_attributes_matrix_chunk_average = observed_attributes_matrices_sum / n_ogc_summed  # average per chunk
+        observed_attributes_matrix_interval_average = observed_attributes_matrices_sum / n_ogc_summed  # average per interval
         save_matrix_to_txt(
-            matrix=observed_attributes_matrix_chunk_average, output_dir=tmp_dir, gzipped=True, verbose=True,
-            float_data_precision=precision, filename=f'{sample_id}_observed_attributes_matrix_chunk-average.txt.gz',
+            matrix=observed_attributes_matrix_interval_average, output_dir=tmp_dir, gzipped=True, verbose=True,
+            float_data_precision=precision, filename=f'{sample_id}_observed_attributes_matrix_interval-average.txt.gz',
             max_frag_length=max_frag_len, min_frag_length=min_frag_len)
     # compute correction matrix
     if min_frag_occurs > 1:  # compute mask based on combination occurrences (f_length and GC base count)
@@ -1141,39 +1192,45 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
         (deleted_rows, deleted_columns)
 
 
-def sort_chunks_by_blacklist_overlap(all_chunks: ChunksList, expected_dataset_fragments: int,
-                                     bad_chunks: Optional[BadChunksDict], remove_bad_chunks=True,
-                                     max_overlap_percentage=DEFAULT_MAX_INTERVAL_PERCENTAGE_BLACKLIST_OVERLAP) \
+def sort_intervals_by_exclusion_ist_overlap(all_intervals_with_score: GenomicIntervalList,
+                                            expected_dataset_fragments: int,
+                                            bad_intervals: Optional[BadIntervalsDict], remove_bad_intervals=True,
+                                            max_overlap_percentage=DEFAULT_MAX_INTERVAL_PERCENTAGE_EXCLUSIONLIST_OVERLAP) \
         -> List[Tuple[str, int, int]]:
-    # sort ascending overlapping bases % (normalized to chunk length to account for possible chunk size differences)
-    chunks_passing_filters = sorted(all_chunks, key=lambda c: c[3] / (c[2] - c[1]), reverse=False)
-    chunks_passing_filters = list(map(lambda t: t[:3],  # discard the blacklist overlap for further processing
-                                      filter(lambda c: max_overlap_percentage >= c[3] / (c[2] - c[1]) * 100.,
-                                             chunks_passing_filters)))
-    log(message=f"{len(all_chunks) - len(chunks_passing_filters):,} chunks were excluded from further "
-                f"analysis based on the {max_overlap_percentage:.1f}% chunk overlap with blacklisted regions "
-                "threshold.", log_level=logging.INFO, logger_name=LOGGER)
-    if remove_bad_chunks and bad_chunks is not None:  # remove bad chunks from library if any are defined
+    # sort ascending overlapping bases % (normalized to interval length accounting for possible size differences)
+    intervals_passing_filters = sorted(all_intervals_with_score,
+                                       key=lambda c: c[3] / (c[2] - c[1]),  # sort: ascending overlap -> exclusion list
+                                       reverse=False)
+    intervals_passing_filters = list(map(
+        lambda t: t[:3],  # discard the exclusion list overlap for further processing
+        filter(lambda c: max_overlap_percentage >= c[3] / (c[2] - c[1]) * 100.,
+               intervals_passing_filters)))
+    log(message=f"{len(all_intervals_with_score) - len(intervals_passing_filters):,} intervals were excluded from "
+                f"further analysis based on the {max_overlap_percentage:.1f}% interval overlap with exclusion marked "
+                "regions threshold.", log_level=logging.INFO, logger_name=LOGGER)
+    if remove_bad_intervals and bad_intervals is not None:  # remove bad intervals from library if any are defined
+        # TODO: UNTESTED CLAUSE!
         # -> select next higher or equal target fragment value
-        bad_chunks_for_check = []
-        pre_bc_removal_chunks = len(chunks_passing_filters)
-        for (chrom, start, stop), sample_frag_yield_list in bad_chunks.items():
-            if max(sample_frag_yield_list) >= expected_dataset_fragments:  # ignore bad chunks from higher DoC samples
-                bad_chunks_for_check.append((chrom, start, stop))
-        chunks_passing_filters = list(filter(lambda c: c not in bad_chunks_for_check,
-                                             chunks_passing_filters))
-        chunks_after_library_exclusion = len(chunks_passing_filters)
-        if pre_bc_removal_chunks != chunks_after_library_exclusion:
-            log(message=f"{pre_bc_removal_chunks - chunks_after_library_exclusion:,} chunks were excluded from "
-                        "further analysis based on the bad chunks library file. Bad chunks are automatically "
-                        "replaced by other chunks.", log_level=logging.INFO, logger_name=LOGGER)
-    return chunks_passing_filters
+        bad_intervals_for_check = []
+        pre_bc_removal_intervals = len(intervals_passing_filters)
+        for (chrom, start, stop), sample_frag_yield_list in bad_intervals.items():
+            if max(sample_frag_yield_list) >= expected_dataset_fragments:
+                # ignore bad intervals which were recorded for samples with HIGHER DoC than the current one!
+                bad_intervals_for_check.append((chrom, start, stop))
+        intervals_passing_filters = list(filter(lambda c: c not in bad_intervals_for_check,
+                                                intervals_passing_filters))
+        intervals_after_library_exclusion = len(intervals_passing_filters)
+        if pre_bc_removal_intervals != intervals_after_library_exclusion:
+            log(message=f"{pre_bc_removal_intervals - intervals_after_library_exclusion:,} intervals were excluded "
+                        "from further analysis based on the bad intervals library file. Bad intervals are "
+                        "automatically replaced by other intervals.", log_level=logging.INFO, logger_name=LOGGER)
+    return intervals_passing_filters
 
 
-def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, sender: mp_connection.Connection,
-                   min_frag_len: int, max_frag_len: int, two_bit_genome_file: str, chromosome_sizes: Dict[str, int],
-                   target_fragment_count: int, mproc_lock: mp.Lock, shared_counter: mp.Value, input_bam: str,
-                   sample_id: str, expected_yield: int, precision=6,
+def gc_bias_worker(weighted_intervals_to_process: List[Tuple[float, Tuple[str, int, int]]], n_sims: int,
+                   sender: mp_connection.Connection, min_frag_len: int, max_frag_len: int,
+                   two_bit_genome_file: OneOf[str, Path],
+                   chromosome_sizes: Dict[str, int], input_bam: str, sample_id: str, expected_yield: int, precision=6,
                    min_unclipped_aln_fraction=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, random_seed=RANDOM_SEED, tmp_dir=None,
                    keep_interval_data=False, strict_n_base_exclusion=True):
     """
@@ -1182,13 +1239,10 @@ def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, s
     :param sample_id:
     :param expected_yield:
     :param tmp_dir:
-    :param target_fragment_count:
     :param two_bit_genome_file:
     :param chromosome_sizes:
     :param input_bam:
-    :param mproc_lock:
-    :param shared_counter:
-    :param chunks_to_process:
+    :param weighted_intervals_to_process:
     :param n_sims:
     :param sender:
     :param min_frag_len:
@@ -1199,67 +1253,101 @@ def gc_bias_worker(chunks_to_process: List[Tuple[str, int, int]], n_sims: int, s
     :param min_unclipped_aln_fraction:
     :return:
     """
-    discarded_chunks = 0
+    n_discarded_intervals = 0
     n_observed_gc_matrices = 0
     n_expected_gc_matrices = 0
     observed_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                    dtype=np.uint64)  # interval is both sides inclusive
+                                                    dtype=float)  # interval is both sides inclusive
     simulated_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                     dtype=np.uint64)  # interval is both sides inclusive
+                                                     dtype=float)  # interval is both sides inclusive
     simulated_attributes_cumulated_raw_matrices = []
     for mat_idx in range(n_sims):
         simulated_attributes_cumulated_raw_matrices.append(np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                                    dtype=np.uint64))
-    fragments_processed = 0
-    fragments_ignored = 0
-    individual_matrices_tmp_dir = str(Path(tmp_dir) / 'data_per_chunk') if keep_interval_data else None
-    bad_chunks_list = []
-    # process chunks either until global number of processed fragments suffices or we processed all chunks received here
-    for chunk_chrom, chunk_start, chunk_end in chunks_to_process:
-        check_region_within_genomic_bounds(chrom=chunk_chrom, start=chunk_start, stop=chunk_end,
+                                                                    dtype=float))
+    n_fragments_processed = 0
+    n_fragments_ignored = 0
+    individual_matrices_tmp_dir = str(Path(tmp_dir) / 'data_per_interval') if keep_interval_data else None
+    bad_intervals_list = []
+    # process all received intervals (combine using weight!)
+    for region_weight, (interval_chrom, interval_start, interval_end) in weighted_intervals_to_process:
+        check_region_within_genomic_bounds(chrom=interval_chrom, start=interval_start, stop=interval_end,
                                            chromosome_sizes=chromosome_sizes, raise_error=True)
-        gc_matrix_observed, chunk_fragments_processed, frag_ignored = compute_observed_attributes_matrix(
+        # COMPUTE O_GC
+        gc_matrix_observed, interval_fragments_processed, frag_ignored = compute_observed_attributes_matrix(
             two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, bam_file=input_bam,
-            start_coord=chunk_start, stop_coord=chunk_end, save_individual_matrices=keep_interval_data,
-            sample_id=sample_id, float_precision=precision, min_frag_len=min_frag_len, chromosome=chunk_chrom,
+            start_coord=interval_start, stop_coord=interval_end, save_individual_matrices=keep_interval_data,
+            sample_id=sample_id, float_precision=precision, min_frag_len=min_frag_len, chromosome=interval_chrom,
             max_frag_len=max_frag_len, strict_n_ref_bases_handling=strict_n_base_exclusion,
-            min_unclipped_aln_fraction=min_unclipped_aln_fraction)
-        # in-place manipulate the expected matrix
+            min_unclipped_aln_fraction=min_unclipped_aln_fraction)  # returns unweighted matrices
+        # COMPUTE S_GC; in-place manipulate the expected matrix
         simulated_attributes_matrix, raw_simulated_matrices = simulate_fragment_attributes(
             two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, min_frag_len=min_frag_len,
-            statistic_matrix=gc_matrix_observed, chromosome=chunk_chrom, sample_id=sample_id, start_coord=chunk_start,
-            stop_coord=chunk_end, simulation_repetitions=n_sims, save_individual_matrices=keep_interval_data,
+            statistic_matrix=gc_matrix_observed, chromosome=interval_chrom, sample_id=sample_id,
+            start_coord=interval_start,
+            stop_coord=interval_end, simulation_repetitions=n_sims, save_individual_matrices=keep_interval_data,
             random_seed=random_seed, float_precision=precision, expected_yield=expected_yield,
             strict_n_ref_bases_handling=strict_n_base_exclusion, max_frag_len=max_frag_len)
-        if isinstance(simulated_attributes_matrix, tuple) and len(simulated_attributes_matrix) == 4:  # got a bad chunk
-            # -> discard entire chunk info
-            bad_chunk = simulated_attributes_matrix
-            bad_chunks_list.append(bad_chunk)
-            discarded_chunks += 1
+        # check if we've got a bad interval
+        if isinstance(simulated_attributes_matrix, tuple) and len(simulated_attributes_matrix) == 4:
+            # if so, discard entire interval info!
+            # (reduces the accuracy of the reconstruction but what can you do. It is what it is.)
+            bad_interval = (region_weight, simulated_attributes_matrix)  # in this case, simulated_attributes_matrix is
+            # a tuple: (chromosome, start_coord, stop_coord, expected_yield)
+            bad_intervals_list.append(bad_interval)
+            n_discarded_intervals += 1
             continue
-        observed_attributes_cumulated_matrix += gc_matrix_observed
-        fragments_processed += chunk_fragments_processed - frag_ignored
-        fragments_ignored += frag_ignored
+        observed_attributes_cumulated_matrix += (gc_matrix_observed * region_weight)
+        n_fragments_processed += interval_fragments_processed - frag_ignored  # use actual fragment count?
+        n_fragments_ignored += frag_ignored  # use actual fragment count?
         n_observed_gc_matrices += 1
-        simulated_attributes_cumulated_matrix += simulated_attributes_matrix
+        simulated_attributes_cumulated_matrix += (simulated_attributes_matrix * region_weight)
         for mat_idx in range(n_sims):
-            simulated_attributes_cumulated_raw_matrices[mat_idx] += raw_simulated_matrices[mat_idx]
+            simulated_attributes_cumulated_raw_matrices[mat_idx] += (raw_simulated_matrices[mat_idx] * region_weight)
         n_expected_gc_matrices += n_sims
-        with mproc_lock:
-            shared_counter.value += chunk_fragments_processed
-            if shared_counter.value > target_fragment_count:
-                break  # end iteration and send results
     sender.send((observed_attributes_cumulated_matrix, simulated_attributes_cumulated_matrix,
                  simulated_attributes_cumulated_raw_matrices, n_observed_gc_matrices,
-                 n_expected_gc_matrices, fragments_processed, fragments_ignored, discarded_chunks, bad_chunks_list))
+                 n_expected_gc_matrices, n_fragments_processed, n_fragments_ignored, n_discarded_intervals,
+                 bad_intervals_list))
     sender.close()
 
 
-def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], threads: int, simulation_count: int,
+def compute_lin_comb_reconstructed_gc_distribution_error(
+        bad_region_labels: List[str], processed_regions_weighted: List[Tuple[float, Tuple[str, int, int]]],
+        reference_distribution: np.array, all_fgcds: Dict[str, np.array]) \
+        -> Tuple[np.array, np.array, np.array, float]:
+    # insanity check
+    assert 0.999 < reference_distribution.sum() < 1.001
+    # used_weights = [reg_weight if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else 0
+    #                 for reg_weight, (hrm, strt, nd) in processed_regions_weighted]
+    weighted_fgcds = np.array([(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)] * reg_weight)
+                               if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else
+                               np.zeros(len(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)]))
+                               for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
+    original_fgcd_dist = np.array([(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)])
+                               if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else
+                               np.zeros(len(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)]))
+                               for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
+    original_fgcd_dist = original_fgcd_dist.sum(axis=0) / len(processed_regions_weighted)
+    # assert 0.999 < original_fgcd_dist.sum() < 1.001
+    reconstructed_ref_fgcd = weighted_fgcds.sum(axis=0)  # column-wise sum over all rows
+    # assert 0.999 < reconstructed_ref_fgcd.sum() < 1.001
+    # assert len(reconstructed_ref_fgcd) == len(reference_distribution)
+    residual_distribution = reconstructed_ref_fgcd - reference_distribution
+    # assert np.abs(residual_distribution).sum() < 1.0
+    absolute_reconstruction_error_pc = np.abs(residual_distribution).sum()
+    # from aes(): np.abs((components.T * weights).sum(axis=1) - target).sum()
+    return original_fgcd_dist, reconstructed_ref_fgcd, residual_distribution, absolute_reconstruction_error_pc
+
+
+def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tuple[str, int, int]]], threads: int,
+                             simulation_count: int,
                              min_flen: int, max_flen: int, out_dir_sample: str, in_bam: str, sample_name: str,
-                             two_bit_reference_file: str, chrom_sizes: Dict[str, int], min_frag_occurs: int,
+                             two_bit_reference_file: OneOf[str, Path], chrom_sizes: Dict[str, int],
+                             min_frag_occurs: int,
                              target_fragments_processed: int, expected_yield: int, tmp_dir_sample: str,
-                             bad_chunks_library_file: Optional[str], plot_focus_border: Optional[int],
+                             bad_intervals_library_file: Optional[str], plot_focus_border: Optional[int],
+                             reference_gc_content_distribution: np.array,
+                             interval_gc_content_distributions: Dict[str, np.array],
                              float_precision=6, strict_n_base_exclusion=True, keep_interval_data=False,
                              visualize_matrices=False, output_all=False, write_updated_bad_intervals_library=True,
                              detect_outliers=True, focus_custom_values=True,
@@ -1268,6 +1356,8 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
                              min_unclipped_aln_fraction=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, random_seed=RANDOM_SEED) \
         -> Tuple[np.array, np.array]:
     """
+    :param interval_gc_content_distributions:
+    :param reference_gc_content_distribution:
     :param show_plots:
     :param focus_custom_values:
     :param plot_focus_border:
@@ -1279,15 +1369,15 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     :param outlier_detection_method:
     :param detect_outliers:
     :param output_all:
-    :param bad_chunks_library_file:
+    :param bad_intervals_library_file:
     :param write_updated_bad_intervals_library:
     :param expected_yield:
-    :param tmp_dir_sample:
+    :param tmp_dir_sample: primary output directory used by this function. Results stored here will be moved later.
     :param min_frag_occurs:
     :param target_fragments_processed:
     :param chrom_sizes:
     :param two_bit_reference_file:
-    :param chunks_to_process:
+    :param weighted_intervals_to_process:
     :param threads:
     :param simulation_count:
     :param min_flen:
@@ -1304,10 +1394,23 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     """
     n_processes = int(threads)
     # -> multiprocessing gives better performance than threading
-    # split up sorted chunks in lists for workers
-    chunks_for_workers = [[] for _i in range(n_processes)]
-    for c_idx, cur_chunk in enumerate(chunks_to_process):
-        chunks_for_workers[c_idx % n_processes].append(cur_chunk)
+    # split up sorted intervals in lists for workers
+    intervals_for_workers = [[] for _i in range(n_processes)]
+    # sort intervals according to chromosome
+    sorted_weighted_intervals_to_process = humansorted(weighted_intervals_to_process,
+                                                       key=lambda t: (t[1][0], t[1][1]))  # sort by chrom., then start
+    n_intervals = len(sorted_weighted_intervals_to_process)
+    # create consecutive intervals on as few chromosomes as much as possible for all workers
+    # (speedup due to BAM file pointer requiring less jumping?)
+    intervals_per_process = math.ceil(len(sorted_weighted_intervals_to_process) / n_processes)
+    for split_idx in range(n_processes):
+        if split_idx < n_processes - 1:  # not last split
+            intervals_for_workers[split_idx] = sorted_weighted_intervals_to_process[
+                                               intervals_per_process * split_idx:
+                                               intervals_per_process * (split_idx + 1)]
+        else:
+            intervals_for_workers[split_idx] = sorted_weighted_intervals_to_process[
+                                               intervals_per_process * split_idx:]
     # create connections, workers, and processes
     receivers = []
     senders = []
@@ -1323,14 +1426,11 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
         shutil.rmtree(tmp_sample_output_path)
     tmp_sample_output_path.mkdir(parents=True, exist_ok=True)
     # create shared value and lock for counting processed fragments
-    shared_fragment_counter = mp.Value('i', 0)  # integer value, initialized as zero
-    multiproc_lock = mp.Lock()
-    all_worker_kwargs = [{'chunks_to_process': chunks_for_workers[w_idx], 'n_sims': simulation_count,
+    all_worker_kwargs = [{'weighted_intervals_to_process': intervals_for_workers[w_idx], 'n_sims': simulation_count,
                           'sender': senders[w_idx], 'min_frag_len': min_flen, 'max_frag_len': max_flen,
-                          'keep_interval_data': keep_interval_data, 'random_seed': random_seed,
+                          'keep_interval_data': keep_interval_data, 'random_seed': random_seed, 'input_bam': in_bam,
                           'precision': float_precision, 'two_bit_genome_file': two_bit_reference_file,
-                          'chromosome_sizes': chrom_sizes, 'target_fragment_count': target_fragments_processed,
-                          'mproc_lock': multiproc_lock, 'shared_counter': shared_fragment_counter, 'input_bam': in_bam,
+                          'chromosome_sizes': chrom_sizes,
                           'tmp_dir': tmp_dir_sample, 'expected_yield': expected_yield, 'sample_id': sample_name,
                           'strict_n_base_exclusion': strict_n_base_exclusion,
                           'min_unclipped_aln_fraction': min_unclipped_aln_fraction}
@@ -1339,101 +1439,140 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     gc_bias_workers = [mp.Process(target=gc_bias_worker, kwargs=worker_kwargs)
                        for worker_kwargs in all_worker_kwargs]
     # start all workers, receive results, wait until finished, and close them
-    observed_attributes_matrices_sum = np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=np.uint64)
-    simulated_attributes_matrices_sum = np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=np.uint64)
+    observed_attributes_matrices_sum = np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=float)
+    simulated_attributes_matrices_sum = np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=float)
     simulated_attributes_raw_matrix_sums = []
     for _s_idx in range(simulation_count):
-        simulated_attributes_raw_matrix_sums.append(np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=np.uint64))
+        simulated_attributes_raw_matrix_sums.append(np.zeros((max_flen - min_flen + 1, max_flen + 1), dtype=float))
     n_summed_observed_attributes_matrices = 0
     n_summed_s_gc_matrices = 0
+    total_processed_fragments = 0
     total_ignored_fragments = 0
-    total_discarded_chunks = 0
-    all_bad_chunks = {}
+    total_discarded_intervals = 0
+    all_bad_intervals = {}
+    bad_interval_weights = []
     deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
     # if memory profiler is applied to code and processes are spawned rather than forked, we get a PicklingError her:
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
-    for o_gc_sum_mat, s_gc_sum_mat, s_gc_sum_raw_mats, n_observed, n_expected, _fragments_processed, \
-            ignored_fragments, discarded_chunks, list_of_bad_chunks in received_data:
+    for o_gc_sum_mat, s_gc_sum_mat, s_gc_sum_raw_mats, n_observed, n_expected, n_fragments_processed, \
+            n_fragments_ignored, n_discarded_intervals, list_of_bad_intervals in received_data:
+        # received:
+        # (observed_attributes_cumulated_matrix, simulated_attributes_cumulated_matrix,
+        #  simulated_attributes_cumulated_raw_matrices, n_observed_gc_matrices, n_expected_gc_matrices,
+        #  n_fragments_processed, n_fragments_ignored, n_discarded_intervals, bad_intervals_list)
         observed_attributes_matrices_sum += o_gc_sum_mat  # inplace np.array manipulation
-        simulated_attributes_matrices_sum += s_gc_sum_mat  # inplace np.array manipulation
+        simulated_attributes_matrices_sum += s_gc_sum_mat  # inplace np.array manipulation; interval weights already
+        # included. Note for computing the proper average, weights in discarded_intervals (List[Tuple[float, interval]])
+        # must be subtracted from the denominator before the division operation in averaging!
+        # The matrices can simply be summed below because their intervals have been scaled already by
+        # their corresponding weights.
         for mat_idx, s_gc_sum_raw_mat in enumerate(s_gc_sum_raw_mats):
             simulated_attributes_raw_matrix_sums[mat_idx] += s_gc_sum_raw_mat
+        # UPDATE COUNT STATS
         n_summed_observed_attributes_matrices += n_observed
         n_summed_s_gc_matrices += n_expected
-        total_ignored_fragments += ignored_fragments
-        total_discarded_chunks += discarded_chunks
-        for chrm, strt, stp, rst in list_of_bad_chunks:
-            if all_bad_chunks.get((chrm, strt, stp)) is None:
-                all_bad_chunks.update({(chrm, strt, stp): [int(rst[1])]})
-            else:  # chunk locus already exists (= multiple entries! Not expected)
-                all_bad_chunks[(chrm, strt, stp)].append(int(rst[1]))
+        total_processed_fragments += n_fragments_processed
+        total_ignored_fragments += n_fragments_ignored
+        total_discarded_intervals += n_discarded_intervals
+        # process bad regions information
+        for bad_region_weight, (chrm, strt, stp, rst) in list_of_bad_intervals:
+            bad_interval_weights.append(bad_region_weight)
+            if all_bad_intervals.get((chrm, strt, stp)) is None:
+                all_bad_intervals.update({(chrm, strt, stp): [int(rst[1])]})
+            else:  # insanity check: interval locus already exists (= multiple entries! Not expected)
+                raise KeyError(f"the interval {(chrm, strt, stp)} has already been processed and should ot be present "
+                               f"during accumulation of consolidated results!")
+                # all_bad_intervals[(chrm, strt, stp)].append(int(rst[1]))
+    actually_processed_intervals = n_intervals - len(list_of_bad_intervals)
+    # divide by applied region weights to finalize weighted mean
+    bad_interval_labels = list(map(lambda t: create_region_label(chrm=t[0], start=t[1], end=t[2]),
+                                   all_bad_intervals.keys()))
+    # used_weights_sum = sum([0 if create_region_label(chrm=hrm, start=strt, end=nd) in bad_interval_labels else reg_wght
+    #                         for reg_wght, (hrm, strt, nd) in sorted_weighted_intervals_to_process])
+    observed_attributes_matrices_sum *= actually_processed_intervals
+    simulated_attributes_matrices_sum *= actually_processed_intervals
+    for mat_idx in range(len(simulated_attributes_raw_matrix_sums)):
+        simulated_attributes_raw_matrix_sums[mat_idx] *= actually_processed_intervals
     # create user feedback
     log(message="---------------------------------------------------------------------------------",
         log_level=logging.INFO, logger_name=LOGGER)
-    if shared_fragment_counter.value < target_fragments_processed:
-        if shared_fragment_counter.value == 0:
+    if total_processed_fragments - total_ignored_fragments < target_fragments_processed:
+        if total_processed_fragments == 0:
             log(message="No fragments were processed. Check your environment for samtools and pysam! Terminating ..",
                 log_level=logging.CRITICAL, close_handlers=True, logger_name=LOGGER)
             sys.exit(3)
-        log(message=f"Could not reach target count of processed fragments: {shared_fragment_counter.value:,}/"
-                    f"{target_fragments_processed:,} fragments included in statistics. GC-bias weights matrix "
-                    "might be subject to stochastic noise!" + (" (see plot if created)" if visualize_matrices else ''),
+        log(message="Could not reach target count of processed fragments: "
+                    f"{total_processed_fragments-total_ignored_fragments:,}/{target_fragments_processed:,} fragments "
+                    "included in statistics." + (" (check W_gc plot for safety)" if visualize_matrices else ''),
             log_level=logging.WARNING, logger_name=LOGGER)
     else:
-        log(message=f"Target number of fragments to process reached: {shared_fragment_counter.value:,}/"
-                    f"{target_fragments_processed:,} (incl. ignored fragments).",
+        log(message=f"Target number of fragments to process reached: "
+                    f"{total_processed_fragments - total_ignored_fragments:,}/{target_fragments_processed:,} "
+                    f"(incl. ignored fragments).", log_level=logging.INFO, logger_name=LOGGER)
+    if total_discarded_intervals:
+        log(message=f"Discarded some intervals that contained too many fragments with N-bases: "
+                    f"{total_discarded_intervals:,} (NOTE: this reduces the accuracy of the approximation of the "
+                    f"reference genome fragment GC content by a linear combination of the processed intervals)",
             log_level=logging.INFO, logger_name=LOGGER)
-    if total_discarded_chunks:
-        log(message=f"Number of discarded chunks that contained too many fragments with N-bases: "
-                    f"{total_discarded_chunks:,}", log_level=logging.INFO, logger_name=LOGGER)
     log(message=f"In total, {n_summed_observed_attributes_matrices:,} "
-                "genomic chunks were included in GC-bias computation.", log_level=logging.INFO, logger_name=LOGGER)
+                "genomic intervals were included in GC-bias computation.", log_level=logging.INFO, logger_name=LOGGER)
     if total_ignored_fragments:
-        log(message=f"Total number of all ignored fragments due to length out of bounds, extensively clipped, or "
-                    f"extensive reference base N-content: "
-                    f"{total_ignored_fragments:,} which corresponds to an ignored alignment percentage of "
-                    f"{total_ignored_fragments / shared_fragment_counter.value:.2%}\n"
-                    f"Effective number of fragments included in statistics: "
-                    f"{shared_fragment_counter.value - total_ignored_fragments:,}",
-            log_level=logging.INFO, logger_name=LOGGER)
-        if total_ignored_fragments / shared_fragment_counter.value > 0.05:
+        log(message=f"Total number of all ignored fragments due to length out of bounds, extensive clipping, or "
+                    f"excessive reference base N-content: "
+                    f"{total_ignored_fragments:,} (= {total_ignored_fragments / total_processed_fragments:.2%} "
+                    f"processed alignments ignored)", log_level=logging.INFO, logger_name=LOGGER)
+        log(message=f"Fragments included in statistics: "
+                    f"{total_processed_fragments - total_ignored_fragments:,}", log_level=logging.INFO,
+            logger_name=LOGGER)
+        if total_ignored_fragments / total_processed_fragments > 0.05:
             log(message="More than 5% of all processed fragments with length out of bounds, were extensively clipped, "
                         "or had extensive reference base N-content! You may want to re-run this analysis with a higher "
                         "maximum fragment length!", log_level=logging.WARNING, logger_name=LOGGER)
     else:
         log(message=f"No alignments were rejected.", log_level=logging.INFO, logger_name=LOGGER)
+    # give feedback about the reconstruction accuracy of the distribution of the reference genome fragment GC content
+    original_fgcd, reconstructed_fgcd, residual_distribution, absolute_error_pc = \
+        compute_lin_comb_reconstructed_gc_distribution_error(
+            bad_region_labels=bad_interval_labels, processed_regions_weighted=sorted_weighted_intervals_to_process,
+            reference_distribution=reference_gc_content_distribution, all_fgcds=interval_gc_content_distributions)
+    visualize_reconstruction_result(out_dir=tmp_dir_sample, show=show_plots, original_dist=original_fgcd,
+                                    target_dist=reference_gc_content_distribution, abs_err=absolute_error_pc,
+                                    reconstructed_dist=reconstructed_fgcd, residual_dists=residual_distribution,
+                                    sample_id=sample_name, reduced_bins=True)
+    log(message="Actual cumulative reconstruction error of the fragment GC content distribution of the reference "
+                f"genome: {absolute_error_pc:.2%}", log_level=logging.INFO, logger_name=LOGGER)
     _ = deque(map(lambda w: w.join(), gc_bias_workers), maxlen=0)  # wait until all processes have finished
     _ = deque(map(lambda w: w.close(), gc_bias_workers), maxlen=0)
-    # update bad chunks library
+    # update bad intervals library
     if write_updated_bad_intervals_library:
-        if not all_bad_chunks:
-            log(message="No bad chunks encountered. No new bad chunks library will be output.",
+        if not all_bad_intervals:
+            log(message="No bad intervals encountered. No new bad intervals library will be output.",
                 log_level=logging.INFO, logger_name=LOGGER)
         else:
-            # re-read bad chunks (might have changed in the meantime by other processes;
-            # include also bad chunks form lower-expected fragment count datasets in new library!)
-            if bad_chunks_library_file is not None:
-                curren_bad_chunks = read_bad_chunks_bed_file(bed_path=bad_chunks_library_file)
-                for k, yield_list in curren_bad_chunks.items():
-                    if all_bad_chunks.get(k) is None:
-                        all_bad_chunks.update({k: yield_list})
+            # re-read bad intervals (might have changed in the meantime by other processes;
+            # include also bad intervals form lower-expected fragment count datasets in new library!)
+            if bad_intervals_library_file is not None:
+                curren_bad_intervals = read_bad_genomic_intervals_bed_file(bed_path=bad_intervals_library_file)
+                for k, yield_list in curren_bad_intervals.items():
+                    if all_bad_intervals.get(k) is None:
+                        all_bad_intervals.update({k: yield_list})
                     else:
-                        all_bad_chunks[k].extend(yield_list)  # append received sample yield list to existing list
+                        all_bad_intervals[k].extend(yield_list)  # append received sample yield list to existing list
             newline = '\n'
-            # create lines for (possibly) combined bad chunks
+            # create lines for (possibly) combined bad intervals
             new_lib_buffer = [f"{newline if line_idx else ''}{chrm}\t{strt}\t{stp}\t{max(yld_lst)}"
                               for line_idx, ((chrm, strt, stp), yld_lst) in
-                              enumerate(humansorted(all_bad_chunks.items(),
+                              enumerate(humansorted(all_bad_intervals.items(),
                                                     key=lambda t: (t[0][0], t[0][1]),
                                                     reverse=False))]
             new_lib_path = Path(out_dir_sample) / \
-                f'bad_chunks_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
+                f'bad_intervals_{time.strftime(TIMESTAMP_FORMAT, time.localtime())}.bed'
             with AtomicOpen(new_lib_path, 'wt') as f_new_bclib:
                 f_new_bclib.writelines(new_lib_buffer)
-            log(message=f"Updated bad chunks library BED file written to: '{new_lib_path}'",
+            log(message=f"Updated bad intervals library BED file written to: '{new_lib_path}'",
                 log_level=logging.INFO, logger_name=LOGGER)
-    # combine results
+    # combine results across simulations using specific binary masks for each iteration; output consensus S_gc and mask
     (use_correction_matrix_path, correction_matrix), \
         (weights_mask_path, weights_mask), \
         trimmed_dimensions = consolidate_results(
@@ -1527,45 +1666,45 @@ def compute_gc_bias_parallel(chunks_to_process: List[Tuple[str, int, int]], thre
     return (moved_correction_matrix_path, use_correction_matrix), (moved_weights_mask_matrix_path, weights_mask)
 
 
-def load_until_leftmost_not_poly_n(loaded_sequences: List[Optional[str]], loaded_chunks: List[bool], chrom_seq: str,
-                                   chunk_loading_size=5000000, max_loaded=10, trigger_garbage_collection=False) \
+def load_until_leftmost_not_poly_n(loaded_sequences: List[Optional[str]], loaded_intervals: List[bool], chrom_seq: str,
+                                   interval_loading_size=5000000, max_loaded=10, trigger_garbage_collection=False) \
         -> Tuple[List[Optional[str]], List[bool]]:
     if max_loaded < 2:
-        log(message=f"Invalid choice for maximum number of loaded genomic chunks! Must be at least 2. Setting it to "
+        log(message=f"Invalid choice for maximum number of loaded genomic intervals! Must be at least 2. Setting it to "
                     f"default of 10 ..",
             log_level=logging.WARNING, close_handlers=True, logger_name=LOGGER)
         max_loaded = 10
-    first_loaded_sequence_index = loaded_chunks.index(True)
-    while loaded_sequences[first_loaded_sequence_index].count('N') == chunk_loading_size:
-        loaded_sequences[first_loaded_sequence_index] = None  # unload leftmost poly-N chunk
-        loaded_chunks[first_loaded_sequence_index] = False
-        if first_loaded_sequence_index >= len(loaded_sequences) - 2:  # add rightmost reference chunk(s) if < 2 loaded
-            for i in range(first_loaded_sequence_index - len(loaded_sequences) + 3):  # load >=2 non-poly-N chunks
-                loaded_sequences.append(chrom_seq[chunk_loading_size * len(loaded_chunks):
-                                                  chunk_loading_size * (len(loaded_chunks) + 1)])
-                loaded_chunks.append(True)
-        first_loaded_sequence_index = loaded_chunks.index(True)
-    # check for too many loaded chunks
-    if sum(loaded_chunks) > max_loaded:
-        remove_n = sum(loaded_chunks) - max_loaded
-        # unload chunk with most neighboring not loaded entries; if tied, unload leftmost of these chunks
+    first_loaded_sequence_index = loaded_intervals.index(True)
+    while loaded_sequences[first_loaded_sequence_index].count('N') == interval_loading_size:
+        loaded_sequences[first_loaded_sequence_index] = None  # unload leftmost poly-N interval
+        loaded_intervals[first_loaded_sequence_index] = False
+        if first_loaded_sequence_index >= len(loaded_sequences) - 2:  # add rightmost reference interval(s) if < 2 loaded
+            for i in range(first_loaded_sequence_index - len(loaded_sequences) + 3):  # load >=2 non-poly-N intervals
+                loaded_sequences.append(chrom_seq[interval_loading_size * len(loaded_intervals):
+                                                  interval_loading_size * (len(loaded_intervals) + 1)])
+                loaded_intervals.append(True)
+        first_loaded_sequence_index = loaded_intervals.index(True)
+    # check for too many loaded intervals
+    if sum(loaded_intervals) > max_loaded:
+        remove_n = sum(loaded_intervals) - max_loaded
+        # unload interval with most neighboring not loaded entries; if tied, unload leftmost of these intervals
         for _i in range(remove_n):
-            unloaded_neighbors = [0] * len(loaded_chunks)
-            inverted_loaded_chunks = [not entr for entr in loaded_chunks]
-            for pos in range(len(loaded_chunks)):
-                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos + 1:]) + sum(inverted_loaded_chunks[:pos])
-            idx_chunk_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
-            loaded_sequences[idx_chunk_to_remove] = None
-            loaded_chunks[idx_chunk_to_remove] = False
+            unloaded_neighbors = [0] * len(loaded_intervals)
+            inverted_loaded_intervals = [not entr for entr in loaded_intervals]
+            for pos in range(len(loaded_intervals)):
+                unloaded_neighbors[pos] = sum(inverted_loaded_intervals[pos + 1:]) + sum(inverted_loaded_intervals[:pos])
+            idx_interval_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
+            loaded_sequences[idx_interval_to_remove] = None
+            loaded_intervals[idx_interval_to_remove] = False
     if trigger_garbage_collection:
         gc.collect()
-    return loaded_sequences, loaded_chunks
+    return loaded_sequences, loaded_intervals
 
 
-def extend_chunks_for_index(target_index: int, scaffold_length: int, scaffold_name: str,
-                            loaded_sequences: List[Optional[str]], loaded_chunks: List[bool],
-                            chrom_handle: TwoBitSequence, parent_logger: logging.Logger, max_loaded=10,
-                            chunk_loading_size=5000000, trigger_garbage_collection=False) \
+def extend_intervals_for_index(target_index: int, scaffold_length: int, scaffold_name: str,
+                            loaded_sequences: List[Optional[str]], loaded_intervals: List[bool],
+                            chrom_handle: TwoBitSequence, parent_logger: str, max_loaded=10,
+                            interval_loading_size=5000000, trigger_garbage_collection=False) \
         -> Tuple[List[Optional[str]], List[bool]]:
     """
 
@@ -1573,56 +1712,56 @@ def extend_chunks_for_index(target_index: int, scaffold_length: int, scaffold_na
     :param scaffold_length:
     :param scaffold_name:
     :param loaded_sequences:
-    :param loaded_chunks:
+    :param loaded_intervals:
     :param chrom_handle:
     :param parent_logger:
     :param max_loaded:
-    :param chunk_loading_size:
+    :param interval_loading_size:
     :param trigger_garbage_collection:
     :return:
-    :raises: AttributeError if scaffold length is smaller than starting coordinate of chunk which should be loaded
+    :raises: AttributeError if scaffold length is smaller than starting coordinate of interval which should be loaded
     """
-    last_idx = target_index - len(loaded_chunks)
-    for l_idx in range(target_index - len(loaded_chunks) + 1):
+    last_idx = target_index - len(loaded_intervals)
+    for l_idx in range(target_index - len(loaded_intervals) + 1):
         if l_idx == last_idx:  # actually load the sequence
-            hypothetical_end_coordinate = chunk_loading_size * (len(loaded_chunks) + 1)
+            hypothetical_end_coordinate = interval_loading_size * (len(loaded_intervals) + 1)
             if hypothetical_end_coordinate > scaffold_length:
-                if scaffold_length < chunk_loading_size * len(loaded_chunks):  # should never occur - illogical error
-                    log(message=f"Critical error encountered loading chunk  {target_index} for scaffold {scaffold_name}"
+                if scaffold_length < interval_loading_size * len(loaded_intervals):  # should never occur - illogical error
+                    log(message=f"Critical error encountered loading interval  {target_index} for scaffold {scaffold_name}"
                                 f". Length of scaffold {scaffold_length:,}bp was smaller than starting coordinate "
-                                f"{chunk_loading_size * len(loaded_chunks)}bp. Terminating..",
+                                f"{interval_loading_size * len(loaded_intervals)}bp. Terminating..",
                         log_level=logging.CRITICAL, flush=True, logger_name=parent_logger)
                     raise AttributeError
-                loaded_sequences.append(chrom_handle[chunk_loading_size * len(loaded_chunks):scaffold_length].upper())
+                loaded_sequences.append(chrom_handle[interval_loading_size * len(loaded_intervals):scaffold_length].upper())
             else:
-                loaded_sequences.append(chrom_handle[chunk_loading_size * len(loaded_chunks):
-                                                     chunk_loading_size * (len(loaded_chunks) + 1)].upper())
-            loaded_chunks.append(True)
+                loaded_sequences.append(chrom_handle[interval_loading_size * len(loaded_intervals):
+                                                     interval_loading_size * (len(loaded_intervals) + 1)].upper())
+            loaded_intervals.append(True)
         else:  # just elongate the list without loading anything
             loaded_sequences.append(None)
-            loaded_chunks.append(False)
-    # check for too many loaded chunks
-    if sum(loaded_chunks) > max_loaded:
-        remove_n = sum(loaded_chunks) - max_loaded
-        # unload chunk with most neighboring not loaded entries; if tied, unload leftmost of these chunks
+            loaded_intervals.append(False)
+    # check for too many loaded intervals
+    if sum(loaded_intervals) > max_loaded:
+        remove_n = sum(loaded_intervals) - max_loaded
+        # unload interval with most neighboring not loaded entries; if tied, unload leftmost of these intervals
         for _i in range(remove_n):
-            unloaded_neighbors = [0] * len(loaded_chunks)
-            inverted_loaded_chunks = [not entry for entry in loaded_chunks]
-            for pos in range(len(loaded_chunks)):
-                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos + 1:]) + sum(inverted_loaded_chunks[:pos])
-            idx_chunk_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
-            # unload leftmost chunk with the most not-loaded neighbors
-            loaded_sequences[idx_chunk_to_remove] = None
-            loaded_chunks[idx_chunk_to_remove] = False
+            unloaded_neighbors = [0] * len(loaded_intervals)
+            inverted_loaded_intervals = [not entry for entry in loaded_intervals]
+            for pos in range(len(loaded_intervals)):
+                unloaded_neighbors[pos] = sum(inverted_loaded_intervals[pos + 1:]) + sum(inverted_loaded_intervals[:pos])
+            idx_interval_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
+            # unload leftmost interval with the most not-loaded neighbors
+            loaded_sequences[idx_interval_to_remove] = None
+            loaded_intervals[idx_interval_to_remove] = False
     if trigger_garbage_collection:
         gc.collect()
-    return loaded_sequences, loaded_chunks
+    return loaded_sequences, loaded_intervals
 
 
-def load_specific_chunk(target_index: int, scaffold_length: int, scaffold_name: str,
-                        loaded_sequences: List[Optional[str]], loaded_chunks: List[bool],
-                        chrom_handle: TwoBitSequence, parent_logger: logging.Logger, max_loaded=10,
-                        chunk_loading_size=5000000, trigger_garbage_collection=False) \
+def load_specific_interval(target_index: int, scaffold_length: int, scaffold_name: str,
+                        loaded_sequences: List[Optional[str]], loaded_intervals: List[bool],
+                        chrom_handle: TwoBitSequence, parent_logger: str, max_loaded=10,
+                        interval_loading_size=5000000, trigger_garbage_collection=False) \
         -> Tuple[List[Optional[str]], List[bool]]:
     """
     Use only if target_index lies within len(laoded_seqeunces) - 1!
@@ -1631,45 +1770,45 @@ def load_specific_chunk(target_index: int, scaffold_length: int, scaffold_name: 
     :param target_index:
     :param scaffold_length:
     :param loaded_sequences:
-    :param loaded_chunks:
+    :param loaded_intervals:
     :param chrom_handle:
     :param max_loaded:
-    :param chunk_loading_size:
+    :param interval_loading_size:
     :param trigger_garbage_collection:
     :return:
     """
     if target_index >= len(loaded_sequences):
-        log(message=f"Cannot load chunk {target_index} for scaffold {scaffold_name}. Terminating..",
+        log(message=f"Cannot load interval {target_index} for scaffold {scaffold_name}. Terminating..",
             log_level=logging.CRITICAL, flush=True, close_handlers=True, logger_name=parent_logger)
         raise AttributeError
-    if chunk_loading_size * (target_index + 1) > scaffold_length:
-        loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:scaffold_length].upper()
+    if interval_loading_size * (target_index + 1) > scaffold_length:
+        loaded_sequences[target_index] = chrom_handle[interval_loading_size * target_index:scaffold_length].upper()
     else:
-        loaded_sequences[target_index] = chrom_handle[chunk_loading_size * target_index:
-                                                      chunk_loading_size * (target_index + 1)].upper()
-    loaded_chunks[target_index] = True
-    # check for too many loaded chunks
-    if sum(loaded_chunks) > max_loaded:
-        remove_n = sum(loaded_chunks) - max_loaded
-        # unload chunk with most neighboring not-loaded-entries; if tied, unload leftmost of these chunks
+        loaded_sequences[target_index] = chrom_handle[interval_loading_size * target_index:
+                                                      interval_loading_size * (target_index + 1)].upper()
+    loaded_intervals[target_index] = True
+    # check for too many loaded intervals
+    if sum(loaded_intervals) > max_loaded:
+        remove_n = sum(loaded_intervals) - max_loaded
+        # unload interval with most neighboring not-loaded-entries; if tied, unload leftmost of these intervals
         for _i in range(remove_n):
-            unloaded_neighbors = [0] * len(loaded_chunks)
-            inverted_loaded_chunks = [not entr for entr in loaded_chunks]
-            for pos in range(len(loaded_chunks)):
-                unloaded_neighbors[pos] = sum(inverted_loaded_chunks[pos + 1:]) + sum(inverted_loaded_chunks[:pos])
-            idx_chunk_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
-            if target_index == idx_chunk_to_remove:  # must not be target index!
+            unloaded_neighbors = [0] * len(loaded_intervals)
+            inverted_loaded_intervals = [not entr for entr in loaded_intervals]
+            for pos in range(len(loaded_intervals)):
+                unloaded_neighbors[pos] = sum(inverted_loaded_intervals[pos + 1:]) + sum(inverted_loaded_intervals[:pos])
+            idx_interval_to_remove = unloaded_neighbors.index(max(unloaded_neighbors))
+            if target_index == idx_interval_to_remove:  # must not be target index!
                 dummy = unloaded_neighbors[:]
-                dummy[idx_chunk_to_remove] = -1  # set to lowest
-                idx_chunk_to_remove = dummy.index(max(dummy))  # find next maximum
-            loaded_sequences[idx_chunk_to_remove] = None
-            loaded_chunks[idx_chunk_to_remove] = False
+                dummy[idx_interval_to_remove] = -1  # set to lowest
+                idx_interval_to_remove = dummy.index(max(dummy))  # find next maximum
+            loaded_sequences[idx_interval_to_remove] = None
+            loaded_intervals[idx_interval_to_remove] = False
     if trigger_garbage_collection:
         gc.collect()
-    return loaded_sequences, loaded_chunks
+    return loaded_sequences, loaded_intervals
 
 
-def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Path], tag_name: str):
+def unaligned_bam_worker(bam_path: OneOf[str, Path], output_path: OneOf[str, Path], tag_name: str):
     # binary filter:
     unaligned_read = np.uint32(4)
     unaligned_read_binary = bin(unaligned_read)
@@ -1688,6 +1827,7 @@ def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Pat
     with AlignmentFile(bam_path, mode='rb') as f_in:
         unaligned_pair_segments = filter(lambda a: bin(np.uint32(a.flag) & unaligned_flags) in unaligned_options,
                                          f_in.fetch(until_eof=True, multiple_iterators=True))
+        # todo: add functionality to extract aligned but broken pairs! ("extract singular reads" or similar)
         with AlignmentFile(output_path, header=f_in.header, mode='wb') as f_unaligned_tagged:
             for aln in unaligned_pair_segments:
                 # if not aln.is_mapped or not aln.mate_is_mapped:  # LEGACY
@@ -1696,16 +1836,16 @@ def unaligned_bam_worker(bam_path: Union[str, Path], output_path: Union[str, Pat
                 f_unaligned_tagged.write(aln)
 
 
-def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array, temp_dir: str, gc_bases_offset: int,
-                                    fragment_length_range: range, two_bit_reference_path: str,
-                                    tagging_chunks_list: List[str], reference_lengths: Dict[str, int],
-                                    sender_connection: mp_connection.Connection, parent_logger: str,
-                                    default_weight: float = 1.0,
-                                    tag_name=DEFAULT_TAG_NAME, ref_chunk_loading_size=500000, annotation_str=None):
+def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.array, temp_dir: str, gc_bases_offset: int,
+                                       fragment_length_range: range, two_bit_reference_path: OneOf[str, Path],
+                                       tagging_intervals_list: List[str], reference_lengths: Dict[str, int],
+                                       sender_connection: mp_connection.Connection, parent_logger: str,
+                                       default_weight: float = 1.0, tag_name=DEFAULT_TAG_NAME,
+                                       ref_interval_loading_size: int = 500000, annotation_str=None):
     """
 
     :param default_weight:
-    :param tagging_chunks_list: (chromosome, chunk_start, chunk_end, chunk_size)
+    :param tagging_intervals_list: (chromosome, interval_start, interval_end, interval_size)
     :param gc_bases_offset: this is the offset for the weights matrix column required for weights retrieval
     :param parent_logger:
     :param two_bit_reference_path:
@@ -1717,19 +1857,19 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
     :param reference_lengths: length of reference chromosomes and other scaffolds
     :param sender_connection:
     :param tag_name:
-    :param ref_chunk_loading_size:
+    :param ref_interval_loading_size:
     :return:
     """
     # get chromosome sequence handle
-    reference_handle = TwoBitFile(two_bit_reference_path)
-    # (chunk is sliced again subsequently for faster access)
+    reference_handle = TwoBitFile(str(two_bit_reference_path))
+    # (interval is sliced again subsequently for faster access)
     min_frag_len = fragment_length_range.start
     # compute corrected alignments -> use buffer of 200000 entries
     tagged_bam_files = []
     with silently_open_alignment_file(bam_path, mode='rb') as input_bam_file:
-        for c_idx, (chromosome, start_coord, stop_coord, _ch_len) in enumerate(tagging_chunks_list):
+        for c_idx, (chromosome, start_coord, stop_coord, _ch_len) in enumerate(tagging_intervals_list):
             scaffold_length = reference_lengths[chromosome]
-            chromosome_handle = reference_handle[chromosome]  # is large; just slice for chunk sequence retrieval
+            chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
             tagged_bam_file = str(Path(temp_dir) /
                                   '.'.join(Path(bam_path).name.split('.')[:-2] +
                                            [f"{Path(bam_path).name.split('.')[-2]}"  # anno str will be None
@@ -1739,25 +1879,25 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                 # reference scaffold handle management:
                 # ______________________________________________________________________________________________________
                 # preload first 5 Mbp of reference sequence; use 2 lists, one stores the sequences, the other stores
-                # loading status of each chunk as boolean value (chunks are loaded consecutively without gaps)
-                if ref_chunk_loading_size > scaffold_length:
-                    ref_chunk_sequences = [chromosome_handle[0:scaffold_length].upper()]
-                    loaded_ref_chunks = [True]
-                elif scaffold_length < 2 * ref_chunk_loading_size:
-                    ref_chunk_sequences = [chromosome_handle[0:ref_chunk_loading_size].upper(),
-                                           chromosome_handle[ref_chunk_loading_size:scaffold_length].upper()]
-                    loaded_ref_chunks = [True, True]
+                # loading status of each interval as boolean value (intervals are loaded consecutively without gaps)
+                if ref_interval_loading_size > scaffold_length:
+                    ref_interval_sequences = [chromosome_handle[0:scaffold_length].upper()]
+                    loaded_ref_intervals = [True]
+                elif scaffold_length < 2 * ref_interval_loading_size:
+                    ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
+                                           chromosome_handle[ref_interval_loading_size:scaffold_length].upper()]
+                    loaded_ref_intervals = [True, True]
                 else:
-                    ref_chunk_sequences = [chromosome_handle[0:ref_chunk_loading_size].upper(),
-                                           chromosome_handle[ref_chunk_loading_size:2 * ref_chunk_loading_size].upper()]
-                    loaded_ref_chunks = [True, True]
-                # fastforward until no N-contigs are in ref_contig_chunks-deque any more
+                    ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
+                                           chromosome_handle[ref_interval_loading_size:2 * ref_interval_loading_size].upper()]
+                    loaded_ref_intervals = [True, True]
+                # fastforward until no N-contigs are in ref_contig_intervals-deque any more
                 try:
-                    ref_chunk_sequences, loaded_ref_chunks = load_until_leftmost_not_poly_n(
-                        loaded_sequences=ref_chunk_sequences, loaded_chunks=loaded_ref_chunks, max_loaded=10,
-                        chrom_seq=chromosome_handle, chunk_loading_size=ref_chunk_loading_size)
+                    ref_interval_sequences, loaded_ref_intervals = load_until_leftmost_not_poly_n(
+                        loaded_sequences=ref_interval_sequences, loaded_intervals=loaded_ref_intervals, max_loaded=10,
+                        chrom_seq=chromosome_handle, interval_loading_size=ref_interval_loading_size)
                 except AttributeError:
-                    log(message=f"An error occurred when trying to load initial chunks for tagging. Cannot continue "
+                    log(message=f"An error occurred when trying to load initial intervals for tagging. Cannot continue "
                                 f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
                         log_level=logging.ERROR, logger_name=parent_logger)
                     sender_connection.send(-1)
@@ -1768,14 +1908,14 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                 exclude_flags = np.uint32(12)
                 exclude_flags_binary = bin(exclude_flags)
                 # -> not necessary to check for "mapped" attribute (filtered out if "read unmapped")
-                # complete alignment filter: skip alns outside of chunk borders and unaligned reads
+                # complete alignment filter: skip alns outside of interval borders and unaligned reads
                 # ---------------------------------------------------------------------------------
                 # EXCLUDE if:
                 # read unmapped = 4    '0b100'
                 # mate unmapped = 8    '0b1000'
                 #          SUM  = 12 (excluded alns are handled in unaligned reads extraction)
                 # REQUIRE THAT:
-                # alignment start lies inside chunk -> otherwise processed by previous chunk!
+                # alignment start lies inside interval -> otherwise processed by previous interval!
                 alignments_mapped_to_interval = filter(
                     lambda a: bin(~np.uint32(a.flag) & exclude_flags) == exclude_flags_binary and
                               start_coord <= a.pos < stop_coord,
@@ -1788,11 +1928,12 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                         if frag_size < min_frag_len:
                             raise IndexError
                         correction_weights_row = correction_weights[frag_size - min_frag_len]
-                    except TypeError:  # unaligned: '<' not supported between instances of 'NoneType' and 'int'
-                        # this should not occur at all! -> unaligned are filtered and are only extracted if the
-                        # --output-unaligned flag was set
+                    except TypeError:  # this should not occur at all! -> unaligned are filtered and are only extracted
+                        # if the --output-unaligned flag was set by another process!
+                        # in case of unaligned segment or mate: '<' not supported between instances of
+                        # 'NoneType' and 'int'
                         aln_seg.set_tag(tag_name, value=0.,  # give unaligned reads a GC weight of 0.
-                                        value_type="f", replace=True)  # should not occur when fetching chunks
+                                        value_type="f", replace=True)  # should not occur when fetching intervals
                         aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
                         continue
                     except IndexError:  # fragment length not in reduced weight matrix -> use default value
@@ -1805,39 +1946,39 @@ def bam_tagging_worker_single_chunk(bam_path: str, correction_weights: np.array,
                         # ^-- This is now a substring of query_sequence, excluding flanking bases that were soft clipped
                     else:  # get fragment sequence from reference genome
                         frag_start_scaffold = min(aln_seg.reference_start, aln_seg.next_reference_start)
-                        target_chunk_index = frag_start_scaffold // ref_chunk_loading_size
-                        if target_chunk_index >= len(loaded_ref_chunks):  # required chunk was not loaded -> load it!
+                        target_interval_index = frag_start_scaffold // ref_interval_loading_size
+                        if target_interval_index >= len(loaded_ref_intervals):  # required interval not loaded -> load!
                             try:
-                                ref_chunk_sequences, loaded_ref_chunks = extend_chunks_for_index(
-                                    target_index=target_chunk_index, loaded_sequences=ref_chunk_sequences,
-                                    parent_logger=parent_logger, loaded_chunks=loaded_ref_chunks,
+                                ref_interval_sequences, loaded_ref_intervals = extend_intervals_for_index(
+                                    target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
+                                    parent_logger=parent_logger, loaded_intervals=loaded_ref_intervals,
                                     chrom_handle=chromosome_handle, scaffold_name=chromosome, max_loaded=10,
-                                    chunk_loading_size=ref_chunk_loading_size, scaffold_length=scaffold_length)
+                                    interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
                             except AttributeError:
-                                log(message=f"Error occurred when trying to load a downstream chunk. Cannot continue "
+                                log(message=f"Error occurred when trying to load a downstream interval. Cannot continue "
                                             f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
                                     log_level=logging.ERROR, logger_name=parent_logger)
                                 sender_connection.send(-1)
                                 sender_connection.close()
                                 return -1
-                        elif not loaded_ref_chunks[target_chunk_index]:  # chunk in range but was unloaded/not loaded
-                            try:
-                                ref_chunk_sequences, loaded_ref_chunks = load_specific_chunk(  # shouldn't be necessary
-                                    target_index=target_chunk_index, loaded_sequences=ref_chunk_sequences,
-                                    loaded_chunks=loaded_ref_chunks, chrom_handle=chromosome_handle, max_loaded=10,
-                                    scaffold_name=chromosome, chunk_loading_size=ref_chunk_loading_size,
-                                    scaffold_length=scaffold_length, parent_logger=parent_logger)
+                        elif not loaded_ref_intervals[target_interval_index]:
+                            try:  # interval in range but was unloaded/not loaded (shouldn't be necessary)
+                                ref_interval_sequences, loaded_ref_intervals = load_specific_interval(
+                                    target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
+                                    loaded_intervals=loaded_ref_intervals, chrom_handle=chromosome_handle,
+                                    max_loaded=10, scaffold_name=chromosome, parent_logger=parent_logger,
+                                    interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
                             except AttributeError:
-                                log(message="Error occurred when trying to load an unloaded/intermediate chunk. Cannot"
-                                            f"continue processing scaffold '{chromosome}'. "
+                                log(message="Error occurred when trying to load an unloaded/intermediate interval. "
+                                            f"Cannotcontinue processing scaffold '{chromosome}'. "
                                             "Exiting BAM tagging worker..",
                                     log_level=logging.ERROR, logger_name=parent_logger)
                                 sender_connection.send(-1)
                                 sender_connection.close()
                                 return -1
-                        frag_start_chunk = frag_start_scaffold % ref_chunk_loading_size
-                        frag_seq = ref_chunk_sequences[target_chunk_index][
-                                   frag_start_chunk:frag_start_chunk + frag_size].upper()
+                        frag_start_interval = frag_start_scaffold % ref_interval_loading_size
+                        frag_seq = ref_interval_sequences[target_interval_index][
+                                   frag_start_interval:frag_start_interval + frag_size].upper()
                     try:  # to retrieve correction weight
                         gc_column_index = frag_seq.count('G') + frag_seq.count('C') \
                                           - gc_bases_offset  # shift back by trimmed columns!
@@ -1956,7 +2097,7 @@ def reduce_matrix(matrix_to_trim: np.array, trim_dimensions_exclusively_containi
                             range(delete_initial_columns, delete_tailing_columns))
 
 
-def get_unaligned_reads(bam_path: Union[str, Path], output_dir: Union[str, Path], tag_name: str) \
+def get_unaligned_reads(bam_path: OneOf[str, Path], output_dir: OneOf[str, Path], tag_name: str) \
         -> Tuple[Optional[Path], mp.Process]:
     sample_id = Path(bam_path).stem
     output_bam_unaligned = Path(output_dir) / f'{sample_id}.unaligned.bam'
@@ -1968,8 +2109,8 @@ def get_unaligned_reads(bam_path: Union[str, Path], output_dir: Union[str, Path]
     return output_bam_unaligned, unaligned_process_handle
 
 
-def samtools_cat_bams(list_of_bams: List[str], samtools_path: Union[str, Path],
-                      tmp_dir: Union[str, Path], output_bam: Path, keep_input=False):
+def samtools_cat_bams(list_of_bams: List[str], samtools_path: OneOf[str, Path],
+                      tmp_dir: OneOf[str, Path], output_bam: Path, keep_input=False):
     concatenation_command = [str(samtools_path), 'cat', '-o', output_bam, '--no-PG', '--threads', '4'] + list_of_bams
     called_concatenation_command = sp.run(concatenation_command)
     try:
@@ -1998,7 +2139,7 @@ def samtools_cat_bams(list_of_bams: List[str], samtools_path: Union[str, Path],
             shutil.rmtree(temp_bam_parent)
 
 
-def bring_bams_in_order(bam_list: List[str]) -> List[str]:
+def order_bams(bam_list: List[str]) -> List[str]:
     # extract ref scaffold order form header:
     with AlignmentFile(bam_list[0], mode='rb') as f_scaff_order:
         scaffold_order = f_scaff_order.references
@@ -2011,37 +2152,38 @@ def bring_bams_in_order(bam_list: List[str]) -> List[str]:
             sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))]
 
 
-def get_genomic_chunks_for_tagging(bam_for_tagging: Union[str, Path], chunk_size=TAGGING_CHUNK_SIZE, offset=0) \
-        -> list:
+def get_genomic_intervals_for_tagging(bam_for_tagging: OneOf[str, Path], interval_size=TAGGING_INTERVAL_SIZE,
+                                      offset=0) -> list:
     ref_lengths = get_reference_tuples(bam=bam_for_tagging)
     whole_genome_regions = [(chrm, offset, r_len) for chrm, r_len in ref_lengths]
-    genomic_chunks = []
+    genomic_intervals = []
     for chrom, _strt, stop in whole_genome_regions:
-        n_splits = (stop - offset) // chunk_size
+        n_splits = (stop - offset) // interval_size
         cum_size = offset
         for _split_idx in range(0, n_splits, 1):
-            genomic_chunks.append((chrom, cum_size, cum_size + chunk_size, chunk_size))
-            cum_size += chunk_size
-        resudual_bases = stop - n_splits * chunk_size
-        if resudual_bases * 10 <= chunk_size and n_splits:  # remaining part of scaffold is <= 10% of chunk size
-            # -> just add to last! BUT: we need to have at least one full chunk. Otherwise, just add the entire sequence
-            #    because it is smaller than one chunk
-            last_chrom, last_start, last_end, _chk_size = genomic_chunks[-1]
-            genomic_chunks[-1] = (last_chrom, last_start, stop, chunk_size + resudual_bases)
-        else:  # just add as separate chunk otherwise
-            genomic_chunks.append((chrom, cum_size, stop, stop - cum_size))
-    return genomic_chunks
+            genomic_intervals.append((chrom, cum_size, cum_size + interval_size, interval_size))
+            cum_size += interval_size
+        resudual_bases = stop - n_splits * interval_size
+        if resudual_bases * 10 <= interval_size and n_splits:  # remaining part of scaffold is <= 10% of interval size
+            # -> just add to last! BUT: we need to have at least one full interval. Otherwise, just add the entire sequence
+            #    because it is smaller than one interval
+            last_chrom, last_start, last_end, _chk_size = genomic_intervals[-1]
+            genomic_intervals[-1] = (last_chrom, last_start, stop, interval_size + resudual_bases)
+        else:  # just add as separate interval otherwise
+            genomic_intervals.append((chrom, cum_size, stop, stop - cum_size))
+    return genomic_intervals
 
 
-def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_genome_file: str, threads: int,
-                                             correction_matrix: np.array, frag_len_range: range, bam_path: str,
-                                             ref_lengths: Dict[str, int], temporary_directory_sample: str,
-                                             gc_base_limits: range, output_unaligned=False,
-                                             default_fragment_weight: float = 1.,
+def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_genome_file: OneOf[str, Path],
+                                             threads: int, correction_matrix: np.array, frag_len_range: range,
+                                             bam_path: str, ref_lengths: Dict[str, int],
+                                             temporary_directory_sample: str, gc_base_limits: range,
+                                             output_unaligned=False, default_fragment_weight: float = 1.,
                                              tag_name=DEFAULT_TAG_NAME, samtools_path=DEFAULT_SAMTOOLS_PATH):
     """
     Size increase of BAM file: 6.8 Gb to 6.9 Gb ~= 1.5%
     Test on the 22/11/2022: duration of BAM file tagging was 0:11:30 (h:mm:ss)
+    :param default_fragment_weight:
     :param gc_base_limits:
     :param frag_len_range:
     :param threads:
@@ -2062,41 +2204,42 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
     receivers = []
     senders = []
     all_worker_kwargs = []
-    chunks_per_proc = []
-    chunk_lengths_per_proc = []
+    intervals_per_proc = []
+    interval_lengths_per_proc = []
     proc_list_done = []
     for _idx in range(n_processes):
         all_worker_kwargs.append([])
         recv, sender = mp.Pipe(duplex=False)
         receivers.append(recv)
         senders.append(sender)
-        chunks_per_proc.append([])
-        chunk_lengths_per_proc.append([])
+        intervals_per_proc.append([])
+        interval_lengths_per_proc.append([])
         proc_list_done.append(False)
     # reference_contigs -> ref_lengths! compute total number of bases;
     # add contigs until over threshold, then record base+/-; regard in next iteration (add fewer/more bases)
     # -> as soon as the next added contig would overrun the threshold,
     #    look for the most fitting contig and add that one instead
-    genomic_chunks = get_genomic_chunks_for_tagging(bam_for_tagging=bam_path, chunk_size=TAGGING_CHUNK_SIZE, offset=0)
-    target_base_sum_per_process = 1 + sum(map(lambda c: c[3], genomic_chunks)) // n_processes
-    for scaff_idx, (scaff, strt, stp, scaff_length) in enumerate(genomic_chunks):
+    genomic_intervals = get_genomic_intervals_for_tagging(bam_for_tagging=bam_path,
+                                                          interval_size=TAGGING_INTERVAL_SIZE, offset=0)
+    target_base_sum_per_process = 1 + sum(map(lambda c: c[3], genomic_intervals)) // n_processes
+    for scaff_idx, (scaff, strt, stp, scaff_length) in enumerate(genomic_intervals):
         target_proc_idx = scaff_idx % n_processes
         # check if adding to list is possible; if so, just add to current (base_offset does not change)
-        if sum(chunk_lengths_per_proc[target_proc_idx]) + scaff_length <= target_base_sum_per_process:
-            chunk_lengths_per_proc[target_proc_idx].append(scaff_length)
-            chunks_per_proc[target_proc_idx].append((scaff, strt, stp, scaff_length))
+        if sum(interval_lengths_per_proc[target_proc_idx]) + scaff_length <= target_base_sum_per_process:
+            interval_lengths_per_proc[target_proc_idx].append(scaff_length)
+            intervals_per_proc[target_proc_idx].append((scaff, strt, stp, scaff_length))
         else:  # the current contig should be added somewhere else and choose a better suited list
-            bp_overshot = [sum(chunk_lengths_per_proc[list_search_index]) + scaff_length - target_base_sum_per_process
+            bp_overshot = [sum(interval_lengths_per_proc[list_search_index]) + scaff_length - target_base_sum_per_process
                            for list_search_index in range(n_processes)]
             final_index = bp_overshot.index(min(bp_overshot))
-            chunk_lengths_per_proc[final_index].append(scaff_length)
-            chunks_per_proc[final_index].append((scaff, strt, stp, scaff_length))
+            interval_lengths_per_proc[final_index].append(scaff_length)
+            intervals_per_proc[final_index].append((scaff, strt, stp, scaff_length))
     # feedback to user
     log(message='\n'.join([f"process ID {cid} processes contigs: {', '.join(map(lambda e: e[0], chrms))}\n"
-                           f"This corresponds to {sum(chunk_lengths_per_proc[cid]):,} bp (bp compared to target of "
+                           f"This corresponds to {sum(interval_lengths_per_proc[cid]):,} bp (bp compared to target of "
                            f"{target_base_sum_per_process:,}bp = "
-                           f"{sum(chunk_lengths_per_proc[cid]) / target_base_sum_per_process:.1%})"
-                           for cid, chrms in enumerate(chunks_per_proc)]), log_level=logging.DEBUG, logger_name=LOGGER)
+                           f"{sum(interval_lengths_per_proc[cid]) / target_base_sum_per_process:.1%})"
+                           for cid, chrms in enumerate(intervals_per_proc)]), log_level=logging.DEBUG, logger_name=LOGGER)
     # start unaligned reads extraction
     worker_output_path = Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
     worker_output_path.mkdir(parents=True, exist_ok=True)
@@ -2112,14 +2255,14 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                                     'tag_name': tag_name, 'temp_dir': worker_output_dir,
                                     'fragment_length_range': frag_len_range,
                                     'two_bit_reference_path': two_bit_genome_file,
-                                    'tagging_chunks_list': chunks_per_proc[w_idx],
+                                    'tagging_intervals_list': intervals_per_proc[w_idx],
                                     'sender_connection': senders[w_idx],
                                     'reference_lengths': ref_lengths,
                                     'parent_logger': LOGGER,
                                     'gc_bases_offset': gc_start,
                                     'default_weight': default_fragment_weight}
     # create worker processes
-    bam_tagging_workers = [mp.Process(target=bam_tagging_worker_single_chunk, kwargs=worker_kwargs)
+    bam_tagging_workers = [mp.Process(target=bam_tagging_worker_single_interval, kwargs=worker_kwargs)
                            for worker_kwargs in all_worker_kwargs]
     # start all workers, receive results, wait until finished, and close them
     _ = deque(map(lambda w: w.start(), bam_tagging_workers), maxlen=0)  # ~1GB RAM usage using 12 dual-thread processes
@@ -2144,13 +2287,13 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                  [f"{Path(bam_path).name.split('.')[-2]}", "GCtagged", "bam"])
     tagged_bam_file = tagged_bam_file_path
     # concatenate BAM files and index
-    tagged_scaffold_bam_files_in_order = bring_bams_in_order(bam_list=tagged_scaffold_bam_files)
+    tagged_scaffold_bam_files_in_order = order_bams(bam_list=tagged_scaffold_bam_files)
     if output_unaligned and unaligned_extraction_handle is not None:
-        unaligned_extraction_handle.join(timeout=UNALIGNED_READS_EXTRACTION_TIMEOUT)  # wait for max. 30 minutes
+        unaligned_extraction_handle.join(timeout=READS_EXTRACTION_TIMEOUT)  # wait for max. 30 minutes
         if unaligned_extraction_handle.is_alive():
             log(message=f"Unaligned reads extraction terminated due to timeout "
-                        f"({UNALIGNED_READS_EXTRACTION_TIMEOUT} seconds). You can increase this via the "
-                        f"'--unaligned-reads-extraction-timeout' commandline parameter. Continuing ..",
+                        f"({READS_EXTRACTION_TIMEOUT} seconds). You can increase this via the "
+                        f"'--reads-extraction-timeout' commandline parameter. Continuing ..",
                 log_level=logging.WARNING, logger_name=LOGGER)
             unaligned_extraction_handle.terminate()
         else:
@@ -2170,7 +2313,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                 log_level=logging.INFO, logger_name=LOGGER)
             unaligned_bam.unlink()  # delete empty uBAM
             Path(f'{unaligned_bam}.bai').unlink()  # delete empty index
-        else:  # there were unaligned reads - add unaligned reads at the end of the BAM file!
+        else:  # there were unaligned reads
             if output_unaligned:
                 _ = shutil.move(unaligned_bam, target_path)  # copy uBAM to target dir
                 _ = shutil.move(f'{unaligned_bam}.bai', target_path)  # move index for index-free samtools cat
@@ -2277,13 +2420,13 @@ def reduce_weights_for_tagging(weights_path: Path, mask_path: Optional[Path], sa
     return reduced_weights, resulting_flen_range, resulting_gc_bases_range
 
 
-def get_reference_tuples(bam: Union[str, Path]) -> Tuple[Tuple[Any, Any]]:
+def get_reference_tuples(bam: OneOf[str, Path]) -> Tuple[Tuple[Any, Any]]:
     with silently_open_alignment_file(bam, mode='rb', threads=1) as input_bam_file:
         # allow for any error output resulting from BAM access to be printed here
         return tuple(zip(input_bam_file.references, input_bam_file.lengths))
 
 
-def get_reference_contig_lengths(bam: Union[str, Path]):
+def get_reference_contig_lengths(bam: OneOf[str, Path]):
     reference_tuples = get_reference_tuples(bam=bam)
     # create chromosome/scaffold length dictionary
     reference_lengths = {}.fromkeys([r_n for r_n, _r_l in reference_tuples])
@@ -2293,12 +2436,12 @@ def get_reference_contig_lengths(bam: Union[str, Path]):
 
 
 def sufficient_aligned_reads_available(bam_path: str, target_fragments_processed: int,
-                                       chunks_for_processing: ChunksList) -> Tuple[bool, int]:
+                                       intervals_for_processing_with_score: GenomicIntervalList) -> Tuple[bool, int]:
     """
-    Only standard-non-sex-contigs are counted. Number of mappable GRCh38 bases (without blacklist): 2,848,552,403
+    Only standard-non-sex-scaffolds are counted. Number of mappable GRCh38 bases (without exclusion list): 2,848,552,403
     :param bam_path:
     :param target_fragments_processed:
-    :param chunks_for_processing:
+    :param intervals_for_processing_with_score:
     :return: bool if enough fragments can be expected from te computation
     """
     std_chroms = [f'chr{idx}' for idx in range(1, 23, 1)]
@@ -2307,18 +2450,18 @@ def sufficient_aligned_reads_available(bam_path: str, target_fragments_processed
     mapped_std_reads = sum(filter(lambda x: x is not None,
                                   [idx_stat.mapped if idx_stat.contig.lower() in std_chroms else None
                                    for idx_stat in index_statistics]))
-    # get number of bases in all chunks = max. portion of reference genome we can compute over
-    bases_in_all_std_chunks = sum(filter(lambda x: x is not None,
-                                         [stop - start if chrom in std_chroms else None
-                                          for (chrom, start, stop, _score) in chunks_for_processing]))
-    fraction_chunked_genome = bases_in_all_std_chunks / 2848552403  # second number is "usable" bases of hg38 reference
-    expected_number_fragments_in_chunks = int(round(mapped_std_reads / 2 * fraction_chunked_genome, ndigits=0))
+    # get number of bases in all intervals = max. portion of reference genome we can compute over
+    bases_in_all_std_intervals = sum(filter(
+        lambda x: x is not None, [stop - start if chrom in std_chroms else None
+                                  for chrom, start, stop, _score in intervals_for_processing_with_score]))
+    fraction_intervaled_genome = bases_in_all_std_intervals / 2848552403  # second number is "usable" bases of hg38
+    expected_number_fragments_in_intervals = int(round(mapped_std_reads / 2 * fraction_intervaled_genome, ndigits=0))
     # paired-end data -> divide by 2
-    # expected_number_fragments_in_chunks = 0  # coding instruction: if exception, catch it here and set value to 0
-    return expected_number_fragments_in_chunks >= target_fragments_processed, expected_number_fragments_in_chunks
+    # expected_number_fragments_in_intervals = 0  # coding instruction: if exception, catch it here and set value to 0
+    return expected_number_fragments_in_intervals >= target_fragments_processed, expected_number_fragments_in_intervals
 
 
-def create_bam_index(bam_path: Union[Path, str], samtools_path: Union[Path, str], check_success=True):
+def create_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str], check_success=True):
     bam_path = Path(bam_path)
     indexing_command = [str(samtools_path), 'index', str(bam_path)]
     ran_indexing_subp = sp.run(indexing_command)
@@ -2339,7 +2482,7 @@ def create_bam_index(bam_path: Union[Path, str], samtools_path: Union[Path, str]
             sys.exit(2)
 
 
-def fix_bam_index(bam_path: Union[Path, str], samtools_path: str, silent=True):
+def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: str, silent=True):
     with AlignmentFile(bam_path, 'rb') as f_aln:
         try:
             f_aln.get_index_statistics()  # check_index(self) could also be used
@@ -2355,13 +2498,13 @@ def fix_bam_index(bam_path: Union[Path, str], samtools_path: str, silent=True):
             sys.exit(2)
 
 
-def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
+def manage_bad_intervals(bad_genomic_intervals_bed: Optional[str]) \
         -> Tuple[Optional[Dict[Tuple[str, int, int],
                                List[int]]],
                  Optional[str]]:
-    if bad_chunks_bed is not None:  # figure out most recent one!
-        candidate_bad_library_files = Path(bad_chunks_bed).parent.glob(
-            Path(bad_chunks_bed).name)  # yields generator object -> no iteration if empty/nothing found
+    if bad_genomic_intervals_bed is not None:  # figure out most recent one!
+        candidate_bad_library_files = Path(bad_genomic_intervals_bed).parent.glob(
+            Path(bad_genomic_intervals_bed).name)  # yields generator object -> no iteration if empty/nothing found
         lib_dates = []
         for bc_library in candidate_bad_library_files:  # may contain timestamp
             cur_lib = Path(bc_library)
@@ -2372,19 +2515,285 @@ def manage_bad_chunks(bad_chunks_bed: Optional[str]) \
         # find most recent time stamp, assuming default output naming -> just use input as-is otherwise
         try:
             most_recent_lib_date = max(lib_dates)
-            new_bad_chunks_bed_path = Path(
-                time.strftime(str(Path(bad_chunks_bed).parent / BAD_CHUNKS_FILE_PATTERN_AS_PATH),
+            new_bad_genomic_intervals_bed_path = Path(
+                time.strftime(str(Path(bad_genomic_intervals_bed).parent / BAD_INTERVALS_FILE_PATTERN_AS_PATH),
                               most_recent_lib_date))
-            if new_bad_chunks_bed_path.is_file():
-                log(message=f"Using bad chunks library file '{new_bad_chunks_bed_path}'",
+            if new_bad_genomic_intervals_bed_path.is_file():
+                log(message=f"Using bad intervals library file '{new_bad_genomic_intervals_bed_path}'",
                     log_level=logging.INFO, logger_name=LOGGER)
-                bad_chunks_bed = new_bad_chunks_bed_path
+                bad_genomic_intervals_bed = new_bad_genomic_intervals_bed_path
         except ValueError:  # max() arg is an empty sequence
-            pass  # leave bad_chunks_bed as was input
-    if bad_chunks_bed is None or not Path(bad_chunks_bed).exists():  # if none was found/path is not valid
+            pass  # leave bad_genomic_intervals_bed as was input
+    if bad_genomic_intervals_bed is None or not Path(bad_genomic_intervals_bed).exists():  # if none was found/path is not valid
         return None, None
-    bad_chunks = read_bad_chunks_bed_file(bed_path=bad_chunks_bed)  # requires score in col 4 and integer field in col 5
-    return bad_chunks, bad_chunks_bed
+    bad_intervals = read_bad_genomic_intervals_bed_file(bed_path=bad_genomic_intervals_bed)  # requires score in col 4 and integer field in col 5
+    return bad_intervals, bad_genomic_intervals_bed
+
+
+def read_gc_distribution(ref_table_path: OneOf[str, Path]):
+    gc_dist = []
+    with open(ref_table_path, 'rt') as f_gc:
+        hdr_content = f_gc.readline().strip().split('\t')  # gc_percentage	relative_frequency
+        if hdr_content != ['gc_percentage', 'relative_frequency']:
+            raise ValueError(f"expected header content like: "
+                             f"['gc_percentage', 'relative_frequency'] but got {hdr_content}.")
+        gc_pc_range = tuple(range(0, 101, 1))
+        for line_idx, data_line in enumerate(f_gc.readlines()):
+            gc_content, relative_freq = data_line.strip().split('\t')
+            assert int(gc_content) == gc_pc_range[line_idx]  # relative frequencies in ascending GC content order
+            gc_dist.append(float(relative_freq))
+    return np.array(gc_dist)
+
+
+def infer_intervals_for_n_fragments(intervals: List[Tuple[str, int, int]], bam_path: OneOf[str, Path],
+                                    target_fragment_count: int, flength_range: range,
+                                    estimate_from_n_intervals: int = 8, repetitions: int = 3):
+    log(message=f"Inferring required number of genomic intervals to reach {target_fragment_count:,} processed "
+                f"fragments ..", log_level=logging.INFO, logger_name=LOGGER)
+    start_time = time.localtime()
+    max_num_intervals = len(intervals)
+    rep_results = []
+    n_frag_results = []
+    for rep in range(repetitions):
+        # create random intervals list
+        n_frags = 0
+        random_intervals = []
+        for i in range(estimate_from_n_intervals):
+            not_drawn = True
+            while not_drawn:
+                random_interval = random.choice(intervals)
+                if random_interval in random_intervals:
+                    continue  # draw again
+                random_intervals.append(random_interval)
+                not_drawn = False
+        assert len(set(random_intervals)) == estimate_from_n_intervals
+        with AlignmentFile(bam_path, 'rb') as f_aln:
+            for chrom, start, end, *rest in random_intervals:
+                exclude_flags = np.uint32(3852)  # = 256 + 2048 + 512 + 1024 + 4 + 8
+                exclude_flags_binary = bin(exclude_flags)
+                # -> not necessary to check for "mapped" attribute (filtered out if "read unmapped")
+                # complete alignment filter:
+                # --------------------------
+                # EXCLUDE if:
+                # read unmapped = 4               '0b100'
+                # mate unmapped = 8               '0b1000'
+                # not primary (secondary) = 256   '0b100000000'
+                # vendor/QC fail = 512            '0b1000000000'
+                # PCR or optical duplicate = 1024 '0b10000000000'
+                # supplementary = 2048            '0b100000000000'
+                # = 3852
+                # REQUIRE THAT:
+                # alignment is paired = 1 '0b1'
+                # mates map to different strands
+                #    a.is_forward != a.mate_is_forward
+                # TLEN column is (positive and) between defined fragment length limits (inclusive)
+                #    min_frag_len <= a.template_length <= max_frag_len
+                filtered_alignments = filter(lambda a:
+                                             # bin(np.uint32(a.flag) & paired_flag) == paired_flag_binary and
+                                             a.is_paired and
+                                             bin(~np.uint32(a.flag) & exclude_flags) == exclude_flags_binary and
+                                             a.is_forward != a.mate_is_forward and
+                                             (flength_range.start <= a.template_length <= flength_range.stop),
+                                             f_aln.fetch(chrom, start, end, multiple_iterators=True))
+                for _aln in filtered_alignments:
+                    n_frags += 1
+        # estimated number of required GI to reach target_fragment_count:
+        use_n_intervals = math.ceil(target_fragment_count / n_frags * estimate_from_n_intervals) + 1
+        rep_results.append(use_n_intervals)
+        n_frag_results.append(n_frags)
+    # consolidate:
+    actually_use_n_intervals = round(np.mean(rep_results))
+    actually_required_fragments = round(np.mean(n_frag_results))
+    if actually_use_n_intervals * 1.1 < 1.0:
+        actually_use_n_intervals += 1  # require one additional interval
+        actually_required_fragments += actually_required_fragments / (actually_use_n_intervals - 1)  # estimate
+    else:
+        actually_use_n_intervals *= 1.1  # add 10%
+        actually_required_fragments *= 1.1
+    # cast to closest int
+    actually_use_n_intervals = round(actually_use_n_intervals)
+    actually_required_fragments = round(actually_required_fragments)
+    elapsed_time = datetime.timedelta(seconds=time.mktime(time.localtime()) - time.mktime(start_time))
+    log(message=f"Estimated in {elapsed_time} (h:mm:ss) from {estimate_from_n_intervals:,} genomic intervals that "
+                f"{actually_use_n_intervals:,} intervals will be needed to reach the target number of "
+                f"{target_fragment_count:,} processed fragments (est. number: "
+                f"{round(actually_required_fragments / estimate_from_n_intervals * actually_use_n_intervals):,}; "
+                f"average over {repetitions} repetitions.)",
+        log_level=logging.INFO, logger_name=LOGGER)
+    # limit insanity
+    if actually_use_n_intervals < 10:
+        if max_num_intervals < 10:
+            log(message=f"the number of estimated genomic intervals was below 10. Will use all {max_num_intervals:,} "
+                        "pre-defined intervals instead.",
+                log_level=logging.WARNING, logger_name=LOGGER)
+            actually_use_n_intervals = max_num_intervals
+        else:
+            log(message=f"the number of estimated genomic intervals was below 10. Will use 10 intervals instead!",
+                log_level=logging.WARNING, logger_name=LOGGER)
+            actually_use_n_intervals = 10
+    elif actually_use_n_intervals > max_num_intervals:
+        log(message=f"the number of estimated genomic intervals was higher than the number of available genomic "
+                    f"intervals. Will use all {max_num_intervals:,} pre-defined intervals.",
+            log_level=logging.WARNING, logger_name=LOGGER)
+        actually_use_n_intervals = max_num_intervals
+    return actually_use_n_intervals
+
+
+def aes(target: np.array, components: np.array, weights: np.array) -> float:
+    """
+    Asserts target sums up to 1 and each row of components to sum up to 1;
+    The product of components and weights must also result in 1.0 if summed.
+    :param target: target distribution array relative to which the erorr is computed
+    :param components: the components that will be weighted by weights to approximate the target distribution
+    :param weights: np.array of weights with its dimension matching the number of components
+    :return: sum of absolute errors
+    """
+    return np.abs((components.T * weights).sum(axis=1) - target).sum()
+
+
+def objective_function_mse(scale_factor: float, to_scale: np.array, target_func: np.array):
+    # Ensure positive and non-zero scaling factor
+    if scale_factor <= 0:
+        return np.inf  # Return a large value to indicate infeasibility
+    scaled = scale_factor * to_scale
+    mean_squared_diff = np.mean((scaled - target_func) ** 2)
+    return np.sum(mean_squared_diff)
+
+
+def reconstruct_distribution_nnls(target_distribution: np.array,
+                                  components: Dict[str, np.array],
+                                  component_order: List[str], verbose=True) \
+        -> Tuple[Dict[str, float], float]:
+    start_time = time.perf_counter_ns()
+    # force all components to individually sum up to one:
+    for cmp_lab, cmp in components.items():  # TypeError: 'cell' object is not callable
+        if not (0.999999 <= cmp.sum() <= 1.00000001):
+            components[cmp_lab] = cmp / cmp.sum()
+    if isinstance(target_distribution, (list, tuple)):  # not a np.array
+        target_distribution = np.array(target_distribution)
+    # create normalized target distribution:
+    normalized_target_distribution = target_distribution / target_distribution.sum()
+    ordered_components = np.array([components[cmp] for cmp in component_order])
+    # make sure most weights are not zero
+    n_components = len(component_order)
+    if ordered_components.shape != (len(component_order), len(target_distribution)):  # check dimensions
+        if ordered_components.T.shape != (len(component_order), len(target_distribution)):
+            raise ValueError(f"the expected dimensions of the components matrix ({ordered_components.shape}) seems to "
+                             "be broken (not transposed, I checked that).")
+        ordered_components = ordered_components.T  # try transposed version...
+    # compute initial error
+    initial_re = aes(target=normalized_target_distribution, components=ordered_components,
+                     weights=np.array([1 / n_components] * n_components))
+    component_weight_boundaries = (0.1, 10)
+    # compute component fit:
+    residuals_from_component_fit = []
+    for cmp_idx, o_cmp in enumerate(ordered_components):  # scale each component linearly
+        # Initial guess for the scaling factor:
+        initial_guess = normalized_target_distribution.sum() / o_cmp.sum()
+        # Use scipy.optimize.minimize to find the optimal scaling factor
+        # Define constraint to ensure that the scaling factor is positive
+        positive_constraint = {'type': 'ineq',  # "[..] inequality means that it is to be non-negative."
+                               'fun': lambda x: x}
+        result = minimize(fun=objective_function_mse, x0=initial_guess, args=(o_cmp, normalized_target_distribution),
+                          method='SLSQP', constraints=positive_constraint)
+        optimal_scale_factor = result.x[0]
+        scaled_component_residual = aes(target=normalized_target_distribution,
+                                        components=np.array([o_cmp]),
+                                        weights=np.array([optimal_scale_factor]))
+        residuals_from_component_fit.append((scaled_component_residual, component_order[cmp_idx]))
+    # such that sum of multiplied components is one
+    min_weight, max_weight = component_weight_boundaries
+    residual_values = [res[0] for res in residuals_from_component_fit]
+    _5pc, upper_bound = np.percentile(residual_values, (5, 95))  # to make more resilient against outliers
+    lower_bound = min(residual_values)  # try lowering lower bound
+    # transform residuals to weights
+    weights_per_component = {}.fromkeys(component_order)
+    for cmp_idx, o_cmp in enumerate(component_order):  # scale each component linearly
+        res, cmp_lab = residuals_from_component_fit[cmp_idx]
+        assert o_cmp == cmp_lab
+        if res <= lower_bound:
+            weights_per_component[o_cmp] = max_weight  # low deviation -> gets highest weight!
+        elif upper_bound <= res:
+            weights_per_component[o_cmp] = min_weight  # large deviation -> gets lowest weight
+        else:  # scaled somewhere in the middle
+            weights_per_component[o_cmp] = ((max_weight - min_weight) *
+                                            (1 - (res - lower_bound) / (upper_bound - lower_bound))
+                                            + min_weight)  # res == upper_bound -> min_weight AND
+            # res == lower_bound -> max_weight
+    ordered_weights = np.array([weights_per_component[o_cmp] for o_cmp in component_order])
+    total_weights_sum = ordered_weights.sum()
+    final_ordered_weights = ordered_weights / total_weights_sum
+    # compute final weights which can directly be used for the computation of a weighted mean across GIs
+    for o_cmp in component_order:
+        weights_per_component[o_cmp] /= total_weights_sum
+    # compute improvement:
+    residual_error = aes(target=normalized_target_distribution,
+                         components=ordered_components,
+                         weights=final_ordered_weights)
+
+    elapsed_time_ns = time.perf_counter_ns() - start_time
+    if residual_error > initial_re:
+        log(message=f"Could not achieve a reduction of reconstruction error (took {elapsed_time_ns / 10**6:,.2f} ms). "
+                    f"Will use default weights to combine results from genomic intervals.",
+            log_level=logging.INFO, logger_name=LOGGER)
+        fallback_weights_per_component = {}.fromkeys(weights_per_component)
+        for comp in fallback_weights_per_component.keys():
+            fallback_weights_per_component[comp] = 1 / n_components
+        return fallback_weights_per_component, initial_re
+    log(message=f"Successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
+                f"{residual_error:.3f} (took {elapsed_time_ns / 10**6:,.2f} ms).", log_level=logging.INFO,
+        logger_name=LOGGER)
+    if verbose:
+        # default case: reduced residual error between weighted mean of preselected GI FGCDs and the reference FGCD
+        log(message=f"Range of weights used for minimizing MSE: [{min_weight}, {max_weight}]).\n"
+                    f"(Range of residuals used for the computation of component weights: "
+                    f"[{lower_bound:.6f}, {upper_bound:.6f}])\n"
+                    f"Range of weights (before weighted mean): [{min(ordered_weights):.3f}, "
+                    f"{max(ordered_weights):.3f}].\n"
+                    f"Range of actual weights is: [{min(final_ordered_weights):.6f}, "
+                    f"{max(final_ordered_weights):.6f}].",
+            log_level=logging.INFO, logger_name=LOGGER)
+    return weights_per_component, residual_error
+
+
+def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, int]], reference_fgcd: np.array,
+                                interval_fgcds, bam_file: OneOf[str, Path], target_fragment_number: int,
+                                fragment_length_range: range, output_path: OneOf[str, Path], sample_name: str,
+                                show_figures: bool = False) -> Tuple[List[Tuple[float, Tuple[str, int, int]]], float]:
+    # infer number of required intervals based on # fragments in 10 intervals
+    inferred_number_of_required_intervals = infer_intervals_for_n_fragments(
+        intervals=genomic_intervals_sorted, bam_path=bam_file, target_fragment_count=target_fragment_number,
+        flength_range=fragment_length_range, repetitions=3, estimate_from_n_intervals=8)
+    log(message=f"Will use {inferred_number_of_required_intervals:,} genomic intervals for GC bias computation.",
+        log_level=logging.INFO, logger_name=LOGGER)
+    # select genomic intervals
+    preselected_intervals = genomic_intervals_sorted[:inferred_number_of_required_intervals]
+    # create interval FGCD subset
+    preselected_interval_fgcds = {}
+    interval_order = []
+    ordered_intervals = []
+    for pi_c, pi_s, pi_e, *rest in preselected_intervals:  # rest should be empty...
+        region_id = create_region_label(chrm=pi_c, start=pi_s, end=pi_e)
+        interval_order.append(region_id)
+        if not rest:  # expect this to be an empty list: []
+            ordered_intervals.append((pi_c, pi_s, pi_e))
+        else:
+            ordered_intervals.append((pi_c, pi_s, pi_e, *rest))
+        try:
+            preselected_interval_fgcds[region_id] = interval_fgcds[region_id]
+        except KeyError:
+            log(message=f"There was no precomputed FGCD available for region '{region_id}'. Recompute!",
+                log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
+            sys.exit(2)  # TODO: compute the interval instead of terminating !!
+    # create linear combination for best reference FGCD representation
+    interval_weights_per_component, reconstruction_residual = reconstruct_distribution_nnls(
+        target_distribution=reference_fgcd, components=preselected_interval_fgcds, component_order=interval_order,
+        verbose=False)  # supress additional debugging info output
+    visualize_weights(region_weights=np.array(list(interval_weights_per_component.values()), dtype=float),
+                      sample_label=sample_name, out_dir=output_path, compute_skew=True, compute_curtosis=True,
+                      show_figure=show_figures)
+    return list(zip([interval_weights_per_component[create_region_label(chrm=hrm, start=strt, end=nd)]
+                     for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
 
 def main() -> int:
@@ -2394,10 +2803,11 @@ def main() -> int:
     # input options
     input_bams = cmd_args.input_bams
     two_bit_reference_file = cmd_args.two_bit_reference_file
-    chunks_bed_file = cmd_args.chunks_bed_file
-    exclude_chunks_bed_file = cmd_args.exclude_chunks_bed_file
+    genomic_intervals_bed_file = cmd_args.genomic_intervals_bed_file
+    exclude_genomic_intervals_bed_file = cmd_args.exclude_genomic_intervals_bed_file
     correction_weights_matrix_path = cmd_args.correction_weights
     mask_path = cmd_args.weights_mask
+    ref_gc_dist_path = cmd_args.ref_gc_dist_path
     # processing options
     preset_number = cmd_args.parameter_preset_number
     n_simulations = cmd_args.n_simulations
@@ -2434,6 +2844,7 @@ def main() -> int:
     show_plots = cmd_args.show_plots
     output_unaligned_reads = cmd_args.output_unaligned_reads
     # processing settings
+    compute_bias = not only_tag_bam
     if correction_weights_matrix_path is not None:
         correction_weights_matrix_path = Path(correction_weights_matrix_path)
     if mask_path is not None:
@@ -2443,6 +2854,12 @@ def main() -> int:
     # check and fix correctable parameters
     exit_after_warnings = 0
     print_warnings = []
+    if two_bit_reference_file is None:
+        if not EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH.is_file():
+            print("cannot proceed - no two-boit reference file defined and default expected file not present under "
+                  f"{EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH}. Terminating ..")
+            sys.exit(3)
+        two_bit_reference_file = EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH
     if floating_point_precision < 2:
         print_warnings.append(f"Floating pint precision was set to {floating_point_precision} but needs to "
                               f"be at least 3! Setting to default of {DEFAULT_FLOAT_PRECISION} instead. Continuing ..")
@@ -2456,13 +2873,22 @@ def main() -> int:
                               f"at least 1 higher than lower limit of {lower_limit_fragment_length}. Setting to "
                               f"default value of {DEFAULT_MAX_FRAGMENT_LENGTH} instead ..")
         upper_limit_fragment_length = DEFAULT_MAX_FRAGMENT_LENGTH
+    if lower_limit_fragment_length > MAX_FRAGMENT_LENGTH or upper_limit_fragment_length > MAX_FRAGMENT_LENGTH:
+        raise ValueError(f"Maximum allowed fragment length (= {MAX_FRAGMENT_LENGTH:,} bp) violation: one of the "
+                         "specified minimum or maximum fragment length specified exceeded defined limits: "
+                         f"[{lower_limit_fragment_length:,} bp, {upper_limit_fragment_length:,} bp].")
+    if upper_limit_fragment_length < lower_limit_fragment_length:
+        raise ValueError(f"Maximum fragment length was smaller than minimum fragment length: "
+                         f"[{lower_limit_fragment_length:,} bp, {upper_limit_fragment_length:,} bp].")
     if not (0. <= min_unclipped_aln_fraction <= 1.):
         print_warnings.append(f"Minimum unclipped alignment fraction was set to {min_unclipped_aln_fraction} but must "
                               "be a floating point value between 0 and 1. Setting to default value of "
                               f"{DEFAULT_MIN_UNCLIPPED_ALN_FRACTION} instead ..")
         min_unclipped_aln_fraction = DEFAULT_MIN_UNCLIPPED_ALN_FRACTION
+    # TODO: make preset not taking precedence over defined parameters -> make preset settings customizable!
+    #       If user customizes, check if there was also a preset != 0 and add "<preset-str>-CUSTOMIZED" to output dir!
     # set preset parameters if defined
-    if preset_number:  # 1, 2, or 3
+    if preset_number:  # 1, 2, or 3; 0 means no changes relative to default parameters
         match preset_number:
             case 1:
                 min_frag_occurs = 2
@@ -2500,31 +2926,52 @@ def main() -> int:
                               f"of {ABSOLUTE_MIN_OCCURRENCES} instead ..")
         min_frag_occurs = ABSOLUTE_MIN_OCCURRENCES
     if n_simulations < 1:
-        print_warnings.append(f"Number of simulations per chunk was set to {n_simulations} but must be at least 1. "
+        print_warnings.append(f"Number of simulations per interval was set to {n_simulations} but must be at least 1. "
                               f"Setting to default of {DEFAULT_SIMULATION_REPETITIONS} instead ..")
         n_simulations = DEFAULT_SIMULATION_REPETITIONS
     # find cpu count boundaries (asserts hyper-threading architecture)
     available_logical_cores = len(os.sched_getaffinity(0))
     max_efficiently_usable_physical_cores = available_logical_cores // 2 if available_logical_cores > 1 else 1
     max_efficiently_usable_threads = max_efficiently_usable_physical_cores
-    if max_efficiently_usable_physical_cores * 2 < 4:  # general HW check
-        print_warnings.append('GCparagon requires at least 4 logical cores for being able to run. Only '
-                              f'{max_efficiently_usable_physical_cores * 2} were estimated to be available. Exiting..')
-        exit_after_warnings = 1
-    if total_number_threads > max_efficiently_usable_threads:
+    if total_number_threads is None:  # only optimize number of threads if no number was specified
+        total_number_threads = DEFAULT_NUMBER_PROCESSES
+        if max_efficiently_usable_physical_cores * 2 < 4:  # general HW check
+            print_warnings.append('GCparagon requires at least 4 logical cores for being able to run. Only '
+                                  f'{max_efficiently_usable_physical_cores * 2} were estimated to be available. '
+                                  f'Exiting..')
+            exit_after_warnings = 1
+        if total_number_threads > max_efficiently_usable_threads:
+            print_warnings.append(f'CPUs to use in multiprocessing operations was set to {total_number_threads} but '
+                                  f'number of available efficiently usable logical cores estimated to be only '
+                                  f'{max_efficiently_usable_threads}. Setting to {max_efficiently_usable_threads}.')
+            total_number_threads = max_efficiently_usable_threads
+    elif total_number_threads > available_logical_cores:  # limit to 75% of max. available cores
         print_warnings.append(f'CPUs to use in multiprocessing operations was set to {total_number_threads} but number '
-                              f'of available efficiently usable logical cores estimated to be only '
-                              f'{max_efficiently_usable_threads}. Setting to '
-                              f'{max_efficiently_usable_threads}.')
-        total_number_threads = max_efficiently_usable_threads
-    # check unfixable parameters:
-    if not os.path.isfile(two_bit_reference_file):
+                              f'of available logical cores is only {available_logical_cores}. Setting to '
+                              f'{int(available_logical_cores/4*3)} (= 75%).')
+        total_number_threads = int(available_logical_cores/4*3)
+    # check unfixable parameters
+    two_bit_reference_file_path = Path(two_bit_reference_file)
+    if not two_bit_reference_file_path.is_file():
         raise AttributeError(f"2bit reference genome file '{two_bit_reference_file}' does not exist!")
     if not samtools_path or not Path(samtools_path).exists() or not Path(samtools_path).is_file():
         raise AttributeError("path to samtools executable either not found or not accessible. Please provide a valid "
                              "and accessible path using '-sp' or '--samtools-path'.")
+    if not ref_gc_dist_path.is_file():
+        raise FileNotFoundError(f"the reference GC content distribution file could not be found/accessed!")
+
+    if compute_bias:  # load information that needs to be loaded only once
+        # choose most recent bad intervals library version if multiple are present in parent directory
+        bad_intervals, exclude_genomic_intervals_bed_file = manage_bad_intervals(
+            bad_genomic_intervals_bed=exclude_genomic_intervals_bed_file)
+        ref_gc_dist = read_gc_distribution(ref_table_path=ref_gc_dist_path)
+        # read interval list (should be >=150Mbp in total)
+        generally_processable_intervals_with_score, interval_gc_content_distributions = read_scored_regions_bed_file(
+            bed_path=genomic_intervals_bed_file)
+
     # process all input BAM files sequentially
     for input_bam in input_bams:
+        log_file, error_log = None, None
         try:
             if not os.path.isfile(input_bam):
                 raise AttributeError(f"input BAM file '{input_bam}' does not exist!")
@@ -2532,7 +2979,6 @@ def main() -> int:
             input_bam_path = Path(input_bam)
             input_bam_parent_path = input_bam_path.parent
             sample_id = input_bam_path.stem
-            compute_bias = not only_tag_bam
             if only_tag_bam and not Path(correction_weights_matrix_path).is_file():
                 print_warnings.append('input argument --correction-weights missing. '
                                       'Tag-only-mode not possible. Exiting..')
@@ -2540,9 +2986,7 @@ def main() -> int:
             if not output_directory or output_directory == str(input_bam_parent_path):
                 print_warnings.append('Output directory is either input BAM parent directory or was None. Setting '
                                       "it to subdirectory of input BAM parent directory: 'GC_correction_output'")
-                output_directory = str(input_bam_parent_path / 'GC_correction_output')
-            # choose most recent bad chunks library version if multiple are present in parent directory
-            bad_chunks, exclude_chunks_bed_file = manage_bad_chunks(bad_chunks_bed=exclude_chunks_bed_file)
+                output_directory = str(input_bam_parent_path / f'GC_bias_correction_GCparagon{VERSION_STRING}')
             # set up target output directory and logfile
             start_time = time.localtime()
             sample_out_dir_path = Path(output_directory) / sample_id
@@ -2558,15 +3002,15 @@ def main() -> int:
                 sample_out_dir_path.mkdir(parents=True, exist_ok=True)
             sample_out_dir = str(sample_out_dir_path)
             # set up logging (cmdline handler + file handler are created)
+            log_file = sample_out_dir_path / (f"{sample_id}_GCbiasCorrection_"
+                                              f"{time.strftime('%d-%m-%Y_%H-%M', start_time)}.log")
+            error_log = log_file.parent / f"{log_file.stem}.err"
             if LOGGER != 'GCparagon':  # entered when specifying logfiles for the first time
-                LOGGER = set_up_logging(logfile_path=sample_out_dir_path /
-                                        f"{sample_id}_GCbiasCorrection_{time.strftime('%d-%m-%Y_%H-%M', start_time)}"
-                                        f".log", logger_name='GCparagon', verbose=verbose)
+                LOGGER = set_up_logging(logfile_path=log_file, logger_name='GCparagon', verbose=verbose)
+
             else:  # logger exists - delete handlers of logger and create new ones (and add to logger)
                 assert logging.getLogger('GCparagon')
-                set_new_log_paths(logfile_path=sample_out_dir_path /
-                                  f"{sample_id}_GCbiasCorrection_"
-                                  f"{time.strftime('%d-%m-%Y_%H-%M', start_time)}.log",
+                set_new_log_paths(logfile_path=log_file,
                                   logger_name='GCparagon',  # a logger instance with this name MUST exist!
                                   verbose=verbose)
             if print_warnings:
@@ -2587,29 +3031,28 @@ def main() -> int:
             sample_temp_dir = str(sample_temp_dir_path)
             # check if index is there. if not, create it!
             fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
-            # get reference contigs and lengths
+            # get reference scaffolds and lengths
             reference_contig_lengths = get_reference_contig_lengths(bam=input_bam)  # stderr enabled for AlignmentFile
             # TASK 1: compute the GC bias present in the BAM file of the current sample
             #         WARNING: don't use multi-sample/run BAM files!)
             log(message=f"Number of available physical cores: {max_efficiently_usable_physical_cores:,}. "
-                        f"Estimate of available efficiently usable logical cores: {max_efficiently_usable_threads}. "
                         f"Will use {total_number_threads:,} threads.",
                 log_level=logging.INFO, logger_name=LOGGER)
             correction_weights_matrix = None
             weights_mask = None
             if compute_bias:
-                # read chunk list (should be >=150Mbp in total)
-                all_processable_chunks = read_scored_regions_bed_file(bed_path=chunks_bed_file)
-                # remove all bad chunks based on BED library file that occurred for previous samples based on target
-                # fragments processed as lower boundary of how many fragments are in the dataset
+                # Integrate information about all encountered bad intervals so far using bad regions library file which
+                # contains bad regions that were recorded during the analyiss of previous samples. Remove regions based
+                # on "target fragments processed" which acts as a lower boundary for how many fragments are expected to
+                # be available for processing by GCparagon in a dataset.
                 expect_sufficient_fragment_count, n_expected_fragments = sufficient_aligned_reads_available(
                     bam_path=input_bam, target_fragments_processed=process_n_fragments,
-                    chunks_for_processing=all_processable_chunks)
+                    intervals_for_processing_with_score=generally_processable_intervals_with_score)
                 log(message='GCparagon (GC-bias computation) Started.\n' +
                             f"|---------------------------------------------------------------------------------\n"
                             f"|   Configuration for processing sample {sample_id} was:\n"
                             f"|   ++++++++++++++++++++++++++++++++++++++++{'+' * len(sample_id)}\n" +
-                            (f'|   Using parameter preset {preset_number} for analysis setup\n'
+                            (f'|   Using parameter preset {preset_number}\n'
                              if preset_number in (1, 2, 3) else '') +
                             f"|   Minimum fragment length: {lower_limit_fragment_length:,}bp\n"
                             f"|   Maximum fragment length: {upper_limit_fragment_length:,}bp\n"
@@ -2619,8 +3062,9 @@ def main() -> int:
                             ('all' if process_n_fragments == 9999999999 else f'{process_n_fragments:,}') +
                             f" ({'' if expect_sufficient_fragment_count else 'not '}expected to be reached)\n" +
                             ('' if expect_sufficient_fragment_count or not n_expected_fragments else
-                             f"|   Estimated number of fragments that will be processed: {n_expected_fragments:,}\n") +
-                            f"|   Repetitions for simulation of expected GC-content per chunk: {n_simulations:,}\n"
+                             f"|   Number of fragments estimated from BAM index statistics that will be processed: "
+                             f"{n_expected_fragments:,}\n") +
+                            f"|   Repetitions for simulation of expected GC-content per interval: {n_simulations:,}\n"
                             f"|   Random seed was: {random_seed}\n"
                             f"|   Temporary data will be written to: {sample_temp_dir}\n"
                             f"|   Final results will be moved from temporary path to directory: {sample_out_dir}\n"
@@ -2628,42 +3072,57 @@ def main() -> int:
                     log_level=logging.INFO, logger_name=LOGGER)
                 if not expect_sufficient_fragment_count:
                     if n_expected_fragments == 0:
-                        log(message="Number of expected aligned fragments from all chunks could not be determined."
-                                    "The BAM index might not contain information about mapped reads per "
-                                    "contig/scaffold or you likely have provided an unaligned BAM file (uBAM).",
-                            log_level=logging.WARNING, logger_name=LOGGER)
+                        log(message="Number of expected aligned fragments from all intervals could not be determined "
+                                    "from the BMA index. The BAM index might not contain information about mapped "
+                                    "reads per contig/scaffold or you likely have provided an unaligned BAM file "
+                                    "(uBAM).", log_level=logging.WARNING, logger_name=LOGGER)
                     else:
-                        log(message=f"Number of aligned fragments expected from all chunks (={n_expected_fragments:,}) "
-                                    "over the genome was lower than the target fragment count!",
+                        log(message=f"Number of aligned fragments expected from all intervals "
+                                    f"(= {n_expected_fragments:,}) over the genome was lower than the target fragment "
+                                    f"count!",
                             log_level=logging.WARNING, logger_name=LOGGER)
-                # sort chunks based on blacklist overlap
-                # check all predefined chunks against bad chunks library (remove exactly matching chunks)
-                target_chunks = sort_chunks_by_blacklist_overlap(
-                    all_chunks=all_processable_chunks, bad_chunks=bad_chunks,
+                # sort intervals based on exclusion list overlap
+                # check all predefined intervals against bad intervals library (remove exactly matching intervals)
+                sorted_eligible_genomic_intervals = sort_intervals_by_exclusion_ist_overlap(
+                    all_intervals_with_score=generally_processable_intervals_with_score, bad_intervals=bad_intervals,
                     expected_dataset_fragments=n_expected_fragments,
-                    max_overlap_percentage=DEFAULT_MAX_INTERVAL_PERCENTAGE_BLACKLIST_OVERLAP)
-                log(message=f"Predefined genomic chunks loaded: {len(target_chunks):,} chunks available for "
-                            f"processing. Will stop either after processing " +
-                            ('all ' if process_n_fragments == 9999999999 else f'{process_n_fragments:,} ') +
-                            "fragments or having exhausted list of genomic chunks, whichever occurs first.",
-                    log_level=logging.INFO, logger_name=LOGGER)
-                (correction_weights_matrix_path, correction_weights_matrix), \
-                    (mask_path, weights_mask) = compute_gc_bias_parallel(
+                    max_overlap_percentage=DEFAULT_MAX_INTERVAL_PERCENTAGE_EXCLUSIONLIST_OVERLAP)
+                log(message=f"Predefined genomic intervals loaded: {len(sorted_eligible_genomic_intervals):,} genomic "
+                            "intervals available for processing.", log_level=logging.INFO, logger_name=LOGGER)
+                if len(sorted_eligible_genomic_intervals) < 10:
+                    log(message="The number of predefined genomic intervals is low! You might consider decreasing "
+                                "the size of your intervals and increase their number.",
+                        log_level=logging.WARNING, logger_name=LOGGER)
+                target_genomic_intervals_with_weights, _reconstruction_error = preselect_genomic_intervals(
+                    genomic_intervals_sorted=sorted_eligible_genomic_intervals,  # = (chrom, start, end)
+                    reference_fgcd=ref_gc_dist, bam_file=input_bam, target_fragment_number=process_n_fragments,
+                    interval_fgcds=interval_gc_content_distributions, output_path=sample_out_dir_path,
+                    fragment_length_range=range(lower_limit_fragment_length, upper_limit_fragment_length),
+                    show_figures=show_plots, sample_name=sample_id)
+                # get intervals with weights from estimated reference genome fragment GC content reconstruction!
+                # -> linear combination of selected intervals GC content that best approximates the reference GC content
+                # following a typical cfDNA fragment length distribution (provided for blood plasma cfDNA, plasmaSeq
+                # protocol in file: 'reference_fragment_length_distribution.tsv')
+                # NOW: compute GC bias!
+                ((correction_weights_matrix_path, correction_weights_matrix),
+                 (mask_path, weights_mask)) = compute_gc_bias_parallel(
                     visualize_matrices=plot_result, output_all=output_simulation_results, in_bam=input_bam,
                     out_dir_sample=sample_out_dir, min_unclipped_aln_fraction=min_unclipped_aln_fraction,
-                    max_flen=upper_limit_fragment_length, chunks_to_process=target_chunks,
-                    min_flen=lower_limit_fragment_length,
+                    max_flen=upper_limit_fragment_length,
+                    weighted_intervals_to_process=target_genomic_intervals_with_weights,
+                    min_flen=lower_limit_fragment_length, reference_gc_content_distribution=ref_gc_dist,
                     simulation_count=n_simulations, threads=total_number_threads, tmp_dir_sample=sample_temp_dir,
                     keep_interval_data=keep_interval_data, random_seed=random_seed, sample_name=sample_id,
                     chrom_sizes=reference_contig_lengths, float_precision=floating_point_precision,
-                    two_bit_reference_file=two_bit_reference_file, min_frag_occurs=min_frag_occurs,
+                    two_bit_reference_file=two_bit_reference_file_path, min_frag_occurs=min_frag_occurs,
                     target_fragments_processed=process_n_fragments, expected_yield=n_expected_fragments,
                     write_updated_bad_intervals_library=write_updated_bad_intervals_library,
-                    bad_chunks_library_file=exclude_chunks_bed_file, strict_n_base_exclusion=strict_n_base_exclusion,
+                    bad_intervals_library_file=exclude_genomic_intervals_bed_file,
+                    strict_n_base_exclusion=strict_n_base_exclusion, plot_focus_border=10 if focus_plots else None,
+                    interval_gc_content_distributions=interval_gc_content_distributions,
                     detect_outliers=detect_outliers, outlier_detection_method=outliers_method,
                     outlier_detection_stringency=outlier_stringency, smooth_weights=smooth_weights,
-                    smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity, show_plots=show_plots,
-                    plot_focus_border=10 if focus_plots else None)
+                    smoothing_kernel=smoothing_kernel, smoothing_intensity=smoothing_intensity, show_plots=show_plots)
                 # compute end time and give feedback
                 log(message=f"Correction weights matrix averaged from {n_simulations:,} simulations written to file: "
                             f"'{correction_weights_matrix_path}'", log_level=logging.INFO, logger_name=LOGGER)
@@ -2688,7 +3147,8 @@ def main() -> int:
                 tag_bam_with_correction_weights_parallel(
                     bam_path=input_bam, tag_name=gc_tag_name, samtools_path=samtools_path,
                     correction_matrix=weights_matrix_for_tagging, gc_base_limits=gc_bas_range,
-                    output_unaligned=output_unaligned_reads, two_bit_genome_file=two_bit_reference_file,
+                    output_unaligned=output_unaligned_reads,
+                    two_bit_genome_file=two_bit_reference_file_path,
                     temporary_directory_sample=sample_temp_dir, threads=total_number_threads,
                     default_fragment_weight=default_fragment_weight,
                     ref_lengths=reference_contig_lengths, frag_len_range=flen_range, sample_output_dir=sample_out_dir)
@@ -2701,18 +3161,25 @@ def main() -> int:
             current_logger = logging.getLogger(LOGGER)
             for hdlr in current_logger.handlers:
                 hdlr.flush()
+                if hdlr in current_logger.handlers:
+                    current_logger.removeHandler(hdlr)
                 hdlr.close()
-                current_logger.removeHandler(hdlr)
         except Exception as e:
             log(message=f"The following exception occurred when trying to process BAM file {input_bam}:\n"
                         f"{create_exception_stack_trace(e)}\n"
                         f"Continuing to processing next BAM file..", log_level=logging.ERROR, logger_name=LOGGER)
         finally:
             # close logging handlers
-            for hdlr in logging.getLogger(LOGGER).handlers:
+            final_logger = logging.getLogger(LOGGER)
+            for hdlr in final_logger.handlers:
                 hdlr.flush()
+                if hdlr in final_logger.handlers:
+                    final_logger.removeHandler(hdlr)  # local variable 'hdlr' referenced before assignment
                 hdlr.close()
-                current_logger.removeHandler(hdlr)
+            # delete empty log files
+            for lg_fl in (log_file, error_log):
+                if lg_fl is not None and lg_fl.stat().st_size == 0:
+                    lg_fl.unlink()
             continue
     logging.shutdown()
     return 0

@@ -26,3 +26,4 @@ dependencies:
   - memory_profiler
   - pybedtools
   - polars
+  - scikit-learn

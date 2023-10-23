@@ -287,7 +287,7 @@ The user can expect a memory usage between 4 and 9 GiB for default settings (12 
 ![linregress_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_memory_consumption_presets_SSD-ref.png?raw=true)
 
 Memory consumption over time can be visualized using the [profile_command.py](src/GCparagon/profile_command.py) script 
-(figure: B01, preset 3; v0.6.0):
+(figure: P01, preset 2; v0.6.0):
 
 ![memory_consumption_over_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/memory_usage.png?raw=true)
 
@@ -295,7 +295,7 @@ Writing of tagged BAM files also uses multiprocessing. This step usually takes l
 computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB BAM file took 25 minutes 
 (computing GC weights + writing tagged BAM file).
 
-A benchmark of GCparagon, preset2 against the Griffin algorithm showed superior computaiton speed:
+A benchmark of GCparagon, preset2 (v0.5.5) against the Griffin algorithm showed superior computation speed:
 
 | Sample |    Griffin table output    | GCparagon table output | GCparagon tagged BAM output | 
 |:------:|:--------------------------:|:----------------------:|:---------------------------:|
@@ -307,7 +307,8 @@ A benchmark of GCparagon, preset2 against the Griffin algorithm showed superior 
 
 Concerning time to **output of correction or bias table was up to 144x but at least 62 times faster** than Griffin.
 When comparing Griffin table output time to duration of GCparagon bias computation and tagged BAM output, 
-GCparagon was up to 31x but at least 18x faster than Griffin. 
+GCparagon was up to 31x but at least 18x faster than Griffin. The update to v0.6.0 resulted in increased FGCD correction
+and cDoC to Griffin results but also slightly increased the computation time compared to the v0.5.4 benchmark. 
 
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
 directory before running GCparagon with `--output-bam`!
@@ -584,14 +585,13 @@ Post-processing options:
 Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
 samples from [EGAS00001006963].
-(Preset 0 is the default which leaves all values at default and customizable.)
+(Preset 2 is default)
 
-|   Preset    | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing |   smoothing strength   | est. computation time |
-|:-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:----------------------:|----------------------:|
-| 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |               1-3 min |
-|      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |               1-3 min |
-|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |              5-10 min |
-|      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
+|     Preset | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing | smoothing strength | est. computation time |
+|-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:------------------:|----------------------:|
+|          1 |              5,000,000 |                 6 |                            2 |        on         |        on         |         5          |               1-3 min |
+| DEFAULT: 2 |             50,000,000 |                 4 |                           10 |        on         |        on         |         2          |              5-10 min |
+|          3 |         99,999,999,999 |                 4 |                           20 |        on         |        on         |         2          |              ~50 min* |
 
 *depends on DoC of BAM file
 

@@ -146,14 +146,14 @@ Intended for research use only.
 ## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using parameter preset 1 (1-3 min) of 4 human cfDNA samples (paired-end WGS, 
-[EGAS00001006963]) are visualized below.
-For each sample, the original GC (dashed lines), the corrected GC (solid lines),
-and the fragment length distribution and sample specific simulated GC content across the whole genome (GRCh38, black 
-lines) are displayed.
-The GC content of fragments was estimated either from the read sequence if template length is shorter or equal to the 
-read sequence length,
-or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
+GC bias correction results using default parameter preset 2 (5-10 min) of 2 human cfDNA samples (paired-end WGS, 
+[EGAS00001006963]) are shown below.
+For each sample, the original fragment GC content distribution (= "FGCD", dotted colored lines), the GCparagon-corrected
+FGCD (solid colored lines), the correction achieved with the Griffin algorithm (grey dashed lines), and the simulated 
+FGCD across the entire analyzable genome (GRCh38, black lines) are displayed.
+The GC content of fragments was estimated either using the read sequence if template length is (shorter or) equal to the 
+read sequence length, or from slices of the reference genome using the leftmost alignment position and the template 
+length otherwise.
 
 ![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/B01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
 
@@ -164,34 +164,44 @@ or from slices of the reference genome using the leftmost alignment position and
 
 (P01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
 
-Residual bias depends on the strength of GC bias (i.e. over-representation of high GC content fragments) and on the 
-representativeness of the combined fragment GC content distribution of preselected genomic intervals that were actually 
-used for computing GC bias (more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
-achieve a comparable number of processed fragments).
+The maximum residual bias seems to depend on the initial intensity of GC bias and on the representativeness of the 
+combined FGCDs of preselected genomic intervals that were used for computing GC bias 
+(more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
+achieve a comparable number of processed fragments). With increasing preset number, the number of genomic intervals used
+for GC bias computation also increases. This also allows for a better representation of the reference FGCD by linear 
+combination of weight matrices computed from individual preseleted genomic intervals.
 
-When applied to multiple transcription start sites (TSSs) of genes expected to be inactive 
-([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
-and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)) of WGS cfDNA 
-data, a GC bias manifests as changes in the average DoC across these 5' -> 3' oriented sites. Active genes are expected 
-to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
-should show an almost flat DoC profile.
+When applied to multiple transcription start sites (TSSs) of genes which are generally expected to be inactive in adult 
+humans ([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
+and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)), GC bias manifests as changes in the average
+central 61 bp fragment depth of coverage (cDoC) across these 5' -> 3' oriented sites. Active genes are expected 
+to show a nucleosome depleted region (unprotected -> decrease in coverage) slightly upstream to the TSS, whereas 
+unexpressed or lowly expressed genes should show an almost flat cDoC profile.
 
 Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
-unexpressed genes is shown below (fragments in silico reduced to their central 60 bp portion).
+unexpressed genes is shown below (fragment coverage in silico reduced to their central 61 bp).
+Original coverage before correctoin is shown as thin colored lines. cDoC of mono-nucleosomal fragments after GC bias 
+correction with GCparagon is shown as thick colored lines.
+
+For these plots, only mono-nucleosomal fragments with observed template length between 110-210bp were included to create 
+a surrogate signal to assess the average nucleosome positioning across combined regions (active genes: expected 
+increased positioning of nculeosomes downstream to the TSS; inactive genes: negligible positioning).
 The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
-GC bias. Hence, the original and corrected DoC profiles are very similar. 
+GC bias. Hence, the original and corrected DoC profiles are very similar. We also corrected the same samples using the 
+Griffin algorithm and processed fragments accordingly. Correction resulting from Griffin is shown as back lines.
 
 ![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TSSs_preset2.png?raw=true)
 
-The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
-the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
-as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
-(approx. every 3rd promoter).
+The DoC increase/decrease before correction and downstream to position 0 (= TSS) for samples showing a positive/negative
+GC bias (P01/B01) is because of the increased GC content of human genomic exon 1 sequences compared to the immediate 
+upstream core promoter sequences as shown below. These promoter sequences tend to contain the [TATA-box] element 25bp 
+upstream to position zero (approx. every 3rd promoter).
 
 ![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TFBSs_preset2.png?raw=true)
 
-Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
-showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.
+Similarly, many transcription factor binding motifs show an increased GC content. Original cDoC is increased/decreased 
+for samples showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus 
+of P01 which shows the most intense GC bias (+5.0% GC).
 
 
 ## Output
@@ -202,7 +212,7 @@ Default outputs are:
 - log files (stdout and stderr logged individually)
 - fragment length distribution (plot only; can be computed from `*_observed_attributes_matrix.txt.gz`)
 
-(P01 examples shown)
+(P01, default preset 2 examples shown)
 
 ![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.fragment_length_distribution.png?raw=true)
 

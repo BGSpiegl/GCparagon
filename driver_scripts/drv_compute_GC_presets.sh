@@ -49,7 +49,6 @@ if [ ! -d "${bam_dir}" ]; then
   echo "  ERROR: test BAM directory not found at: ${bam_dir}"
   exit 1
 fi
-output_dir=bam_dir  # TODO: change this if needed!
 # fetch BAM files & exit if none found
 test_bam_wildcard="${bam_dir}/*.bam"
 test_bam_files=$(eval ls $test_bam_wildcard)
@@ -75,8 +74,11 @@ echo "  WARNING: all output will be written temporarily to ${tmp_out_dir}. Pleas
 "available there or terminate this script!"
 
 # TASK: profile each one of the B01, H01, C01, P01 samples from the publication
-declare -a presets=(1 2 3)  # preset 1 suffices for local test
+declare -a presets=(1 2)  # presets 1 and 2 suffice for local computing
 
+old_dir="$(pwd)"
+
+cd "${bam_dir}" || exit 1  # output benchmark results to the preset computation directory
 
 for test_bam in $test_bam_wildcard
 do
@@ -85,14 +87,18 @@ do
   for preset in "${presets[@]}"
   do
     echo "  i: preset is: ${preset}"
-    preset_out_dir="${output_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
+    preset_out_dir="${test_output_dir}/preset${preset}"  # subdir with sample_id will be created by the GCparagon script
     echo "  i: output for sample ${sample_id} will be moved to path ${preset_out_dir}"
     if [ ! -d "${preset_out_dir}" ]; then
       mkdir -p "${preset_out_dir}"
     fi
-    "${python3_path}" "${profiling_script}" --track-spawns --iter 2 --sampling-frequency 10 \
-    --output-path "${test_output_dir}" --script "${GCparagon_script}" --preset "${preset}" \
-    --bam "${test_bam}" --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
-    --temporary-directory "${tmp_out_dir}" --write-chunk-exclusion --threads "${n_processes}" --track-spawns
+
+    "${python3_path}" "${profiling_script}" --track-spawns --iter 3 --sampling-frequency 10 \
+    --script "${GCparagon_script}" --preset "${preset}" --bam "${test_bam}" \
+    --two-bit-reference-genome "${TWOBIT_REF_GENOME}" --out-dir "${preset_out_dir}" \
+    --temporary-directory "${tmp_out_dir}" --write-interval-exclusion --threads "${n_processes}" \
+    --output-bam
   done
 done
+
+cd "${old_dir}" || exit 1  # switch back to initial directory

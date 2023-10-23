@@ -10,7 +10,7 @@ from pandas import DataFrame as pd_DF
 from scipy.ndimage import gaussian_filter
 from typing import Optional
 # project imports
-from utilities.gc_logging import log
+from GCparagon.utilities.gc_logging import log
 
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
 USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainbow', 'plotly3', or 'blackbody'
@@ -129,7 +129,6 @@ def limit_extreme_outliers(outliers_matrix: np.array, outliers_factor=8, parent_
     relevant_masked_weights = outliers_matrix[(outliers_matrix != 0.) * (outliers_matrix != 1.)].flatten()
     outliers_replaced_matrix = outliers_matrix.copy()
     if detection_method == 'IQR':  # gives lower threshold in general (more weights get limited)
-
         q3 = np.quantile(relevant_masked_weights, 0.75, method='linear')
         iqr = q3 - np.quantile(relevant_masked_weights, 0.25, method='linear')
         outliers_threshold = q3 + outliers_factor * iqr  # Q3 + 3SD is def. of extreme outliers; here: lenient def.
@@ -147,7 +146,7 @@ def limit_extreme_outliers(outliers_matrix: np.array, outliers_factor=8, parent_
             print(f"ERROR - unknown outliers detection method '{detection_method}'. Must be one of 'SD', 'IQR'.")
         else:
             log(message=f"unknown outliers detection method '{detection_method}'. Must be one of 'SD', 'IQR'.",
-                logger_name=logging.getLogger(parent_logger), log_level=logging.ERROR, flush=True, close_handlers=True)
+                logger_name=parent_logger, log_level=logging.ERROR, flush=True, close_handlers=True)
         raise AttributeError
     # give user feedback
     log(message=f" i :  {outliers_factor} x{detection_method.upper()} outlier threshold was {outliers_threshold:.3} " +
@@ -161,7 +160,7 @@ def limit_extreme_outliers(outliers_matrix: np.array, outliers_factor=8, parent_
 
 
 # postprocessing functions
-def smooth_2d_gc_weights(smooth_matrix: np.array, min_flen: int, parent_logger: logging.Logger, default_matrix_value=1.,
+def smooth_2d_gc_weights(smooth_matrix: np.array, min_flen: int, parent_logger: str, default_matrix_value=1.,
                          smoothing_kernel='gauss', smoothing_intensity=1):
     available_smoothing_kernels = ('constant', 'gauss')
     if smoothing_intensity < 1:

@@ -199,6 +199,7 @@ lines) are displayed.
 The GC content of fragments was estimated either from the read sequence if template length is shorter or equal to the 
 read sequence length,
 or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
+
 ![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/B01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
 
 (B01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
@@ -214,8 +215,8 @@ used for computing GC bias (more intervals are used for shallow sequenced sample
 achieve a comparable number of processed fragments).
 
 When applied to multiple transcription start sites (TSSs) of genes expected to be inactive 
-([975 genes](accessory_files/TSSs/PAU_genes.hg38.txt) as derived from the protein atlas),
-and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/housekeeping_genes_hg38.txt)) of WGS cfDNA 
+([975 genes](accessory_files/TSSs/PAU.txt) as derived from the protein atlas),
+and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)) of WGS cfDNA 
 data, a GC bias manifests as changes in the average DoC across these 5' -> 3' oriented sites. Active genes are expected 
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes
 should show an almost flat DoC profile.
@@ -225,14 +226,14 @@ unexpressed genes is shown below (fragments in silico reduced to their central 6
 The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
 GC bias. Hence, the original and corrected DoC profiles are very similar. 
 
-![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TSSs_preset2.png?raw=true)
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TSSs_preset2.png?raw=true)
 
 The DoC increase/decrease after position 0 (= TSS) for samples showing a positive/negative GC bias (P01/B01) is due to 
 the increased GC content of human genomic exon 1 sequences compared to the immediate upstream core promoter sequences 
 as shown below. These promoter sequences tend to contain the [TATA-box] element 25 bp upstream to position zero 
 (approx. every 3rd promoter).
 
-![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/loci_overlay_central_coverages/plot_output/DoC_bias_correction_effect_TFBSs_preset2.png?raw=true)
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TFBSs_preset2.png?raw=true)
 
 Similarly, for TFBSs showing an increased reference sequence GC content, the DoC is increased/decreased for samples 
 showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus of P01.
@@ -248,34 +249,34 @@ Default outputs are:
 
 (P01 examples shown)
 
-![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.fragment_length_distribution.png?raw=true)
+![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.fragment_length_distribution.png?raw=true)
 
 - observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
 
-![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.O_gc.heatmap.png?raw=true)
+![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.O_gc.heatmap.png?raw=true)
 
 - simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
 `*_simulated_attributes_matrix.txt.gz`)
 
-![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.S_gc.heatmap.png?raw=true)
+![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.S_gc.heatmap.png?raw=true)
 
 - weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
 
-![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.Mask.heatmap.png?raw=true)
+![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.Mask.heatmap.png?raw=true)
 
 - correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
 
-![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc.heatmap.png?raw=true)
+![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
 
-![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
+![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
 
 - correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
 `*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
 
-![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/output_preset3/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
+![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 ## Optimization of Combining Results from Preselected Regions
 From v0.6.0 on, fragment attribute counts form preselected genomic intervals are combined using a linear combination 
@@ -284,12 +285,15 @@ dropping information gathered from individual regions. The range of weights from
 genomic interval FGCDs is created is: [0.1, 10].
 
 A plot showing the relative frequency of selected weights within this range is created by default:
+
 ![p01_int_w](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.preselectedRegionWeights_refGCreconstruction.png?raw=true)
+
 The weights should not accumulate at the lower end of the scale because this would mean an over-fitting to a small 
 subset of genomic intervals that themselves resemble the reference GC content best in a specific linear combination. 
 
 Another plot shows the improvement of the reference GC content approximation by the computed linear combination over 
 a naive combination of GC correction weights:
+
 ![p01_recons_GC](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.GCcontent_RefVsReconstructed.png?raw=true)
 
 This measure was found to impact the accuracy of the achieved correction only minimally if at all.
@@ -640,20 +644,20 @@ hg38 reference genome for processing. Preselection was carried on the basis of a
 implemented)
 
 Creation of the exclusion listed regions BED file, starting from the 
-[ENCODE exclusion listed regions v2 BED file](accessory_files/individual_bad_region_sets/hg38-ENCODE_blacklist.v2.bed),
+[ENCODE exclusion listed regions v2 BED file](accessory_files/bad_regions/hg38-ENCODE_blacklist.v2.bed),
 is documented [here](accessory_files/GC_correction_exclusion_list_creation.info).
 The final exclusion list includes 429,045,481 reference positions (=14.7% of GRCh38).
 
 Currently, only a preselection of GRCh38 genomic 1 Mb regions is available.
 Preselection for GRCh37/hg19 currently has to be carried out by the user using their own exclusion list 
-and the scripts [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList.py](accessory_files/genomic_interval_preselection/01-GI-preselection_test_Mbp_intervals_against_ExclusionList.py) 
+and the scripts [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList.py](accessory_files/genomic_interval_preselection-shifted4x/01-GI-preselection_test_Mbp_intervals_against_ExclusionList.py) 
 (creation of equal-sized genomic intervals intersected with exclusion marked regions list), 
-[02-GI-preselection_select_low_scoring_regions_from_overlapping.py](accessory_files/genomic_interval_preselection/02-GI-preselection_select_low_scoring_regions_from_overlapping.py) 
+[02-GI-preselection_select_low_scoring_regions_from_overlapping.py](accessory_files/genomic_interval_preselection-shifted4x/02-GI-preselection_select_low_scoring_regions_from_overlapping.py) 
 (selection of least-exclusion-list-overlapping regions), and 
-[03-GI-preselection_compute_genomic_interval_fragment_GC_content.py](accessory_files/genomic_interval_preselection/03-GI-preselection_compute_genomic_interval_fragment_GC_content.py)
+[03-GI-preselection_compute_genomic_interval_fragment_GC_content.py](accessory_files/genomic_interval_preselection-shifted4x/03-GI-preselection_compute_genomic_interval_fragment_GC_content.py)
 (computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI)).
 The diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
-[04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py](accessory_files/genomic_interval_preselection/04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py)
+[04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
 Size of preselected genomic intervals should be uniform and fit the application (i.e. larger genomic intervals for 
@@ -662,7 +666,7 @@ shallow sequenced WGS data). A tradeoff was made for GRCh38 by choosing 1 Mb gen
 An IGV screenshot visualizing the distribution of 
 [hg38 preselected 1Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed)
 across the whole genome and two chromosomes is provided 
-[here](accessory_files/genomic_interval_preselection/IGV_composite_preselected_intervals_hg38.png).
+[here](accessory_files/genomic_interval_preselection-shifted4x/IGV_composite_preselected_intervals_hg38.png).
 
 
 ## Repository Structure

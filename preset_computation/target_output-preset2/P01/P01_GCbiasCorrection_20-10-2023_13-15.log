@@ -1,0 +1,43 @@
+| 2023-10-20 13:15:57,613 - GCparagon - WARNING - Output path for GC bias computation exists. Deleting completely: '/media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01'
+| 2023-10-20 13:15:57,662 - GCparagon - INFO - Number of available physical cores: 18. Will use 12 threads.
+| 2023-10-20 13:15:57,683 - GCparagon - INFO - GCparagon (GC-bias computation) Started.
+|---------------------------------------------------------------------------------
+|   Configuration for processing sample P01 was:
+|   +++++++++++++++++++++++++++++++++++++++++++
+|   Using parameter preset 2
+|   Minimum fragment length: 20bp
+|   Maximum fragment length: 550bp
+|   Minimum number of specific fragment attribute combination occurrences: 10
+|   Target number of fragments to process: 50,000,000 (expected to be reached)
+|   Repetitions for simulation of expected GC-content per interval: 4
+|   Random seed was: 107
+|   Temporary data will be written to: /media/benjamin/Analyses/GC_bias_correction_GCparagon/tmp_dir/P01
+|   Final results will be moved from temporary path to directory: /media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01
+|---------------------------------------------------------------------------------
+| 2023-10-20 13:15:57,684 - GCparagon - INFO - 7 intervals were excluded from further analysis based on the 33.3% interval overlap with blacklisted regions threshold.
+| 2023-10-20 13:15:57,685 - GCparagon - INFO - Predefined genomic intervals loaded: 1,692 genomic intervals available for processing.
+| 2023-10-20 13:15:57,685 - GCparagon - INFO - Inferring required number of genomic intervals to reach 50,000,000 processed fragments ..
+| 2023-10-20 13:16:06,606 - GCparagon - INFO - Estimated in 0:00:09 (h:mm:ss) from 8 genomic intervals that 421 intervals will be needed to reach the target number of 50,000,000 processed fragments (est. number: 61,509,626; average over 3 repetitions.)
+| 2023-10-20 13:16:06,611 - GCparagon - INFO - Will use 421 genomic intervals for GC bias computation.
+| 2023-10-20 13:16:06,761 - GCparagon - INFO - Successfully reduced the AES reconstruction error of the genomic GC content from 0.136 to 0.087 (took 149.27 ms).
+| 2023-10-20 13:21:33,721 - GCparagon - INFO - ---------------------------------------------------------------------------------
+| 2023-10-20 13:21:33,722 - GCparagon - INFO - Target number of fragments to process reached: 63,650,695/50,000,000 (incl. ignored fragments).
+| 2023-10-20 13:21:33,722 - GCparagon - INFO - In total, 421 genomic intervals were included in GC-bias computation.
+| 2023-10-20 13:21:33,722 - GCparagon - INFO - Total number of all ignored fragments due to length out of bounds, extensive clipping, or excessive reference base N-content: 469,946 (= 0.73% processed alignments ignored)
+| 2023-10-20 13:21:33,722 - GCparagon - INFO - Fragments included in statistics: 63,650,695
+| 2023-10-20 13:21:34,072 - GCparagon - INFO - Actual cumulative reconstruction error of the fragment GC content distribution of the reference genome: 8.74%
+| 2023-10-20 13:21:34,072 - GCparagon - INFO - No bad intervals encountered. No new bad intervals library will be output.
+| 2023-10-20 13:21:34,073 - GCparagon - INFO - Saving statistic matrix 'P01_simulated_attributes_matrix.txt.gz' to output directory
+| 2023-10-20 13:21:34,276 - GCparagon - INFO - Saving statistic matrix 'P01_observed_attributes_matrix.txt.gz' to output directory
+| 2023-10-20 13:21:34,429 - GCparagon - INFO - Mask computation: used a minimum threshold of 10 for total counts of individual GC-base count-fragment length combinations.
+| 2023-10-20 13:21:37,115 - GCparagon - INFO - Estimated percentage of weighted fragments in dataset: 99.7800% (based on 60,965,254 processed fragments included in statistics, which is 99.24% of all processed fragments)
+| 2023-10-20 13:21:37,120 - GCparagon - INFO -  i :  8 xIQR outlier threshold was 7.3 (Q3 of weights != {0.0; 1.0} + 8 * IQR). Number of correction weights above 7.3: 289 (= 0.5068% of all weights != {0.0; 1.0})
+| 2023-10-20 13:21:38,572 - GCparagon - INFO - Copying GC-bias computation output from '/media/benjamin/Analyses/GC_bias_correction_GCparagon/tmp_dir/P01' to '/media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01' ..
+| 2023-10-20 13:21:38,574 - GCparagon - INFO - Correction weights matrix averaged from 4 simulations written to file: '/media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01/P01_gc_weights_4simsMean.2IQRoutliersRemoved.2IgaussSmoothed.txt.gz'
+| 2023-10-20 13:21:38,575 - GCparagon - INFO - GCparagon (GC-bias computation) Finished Successfully. Elapsed time: 0:05:45 (h:mm:ss)
+| 2023-10-20 13:21:38,575 - GCparagon - INFO - ---------------------------------------------------------------------------------
+| 2023-10-20 13:21:38,575 - GCparagon - INFO - GCparagon (adding weights to BAM file) Tagging Started.
+| 2023-10-20 13:34:16,423 - GCparagon - INFO - Combining tagged scaffold BAMs '/media/benjamin/Analyses/GC_bias_correction_GCparagon/tmp_dir/P01' to '/media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01' ..
+| 2023-10-20 13:34:16,424 - GCparagon - INFO - Merging tagged scaffold BAMs into temporary output file '/media/benjamin/Analyses/GC_bias_correction_GCparagon/tmp_dir/P01/P01.GCtagged.bam' ..
+| 2023-10-20 13:46:31,532 - GCparagon - INFO - Moving GC-bias computation output from '/media/benjamin/Analyses/GC_bias_correction_GCparagon/tmp_dir/P01' to '/media/benjamin/Analyses/GC_bias_correction_GCparagon/preset_computation_v0.6.0/preset2/P01' ..
+| 2023-10-20 13:46:31,552 - GCparagon - INFO - GCparagon (adding weights to BAM file) Finished Successfully. Elapsed time: 0:24:53 (h:mm:ss)

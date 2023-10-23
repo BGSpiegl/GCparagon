@@ -585,14 +585,13 @@ Post-processing options:
 Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
 samples from [EGAS00001006963].
-(Preset 0 is the default which leaves all values at default and customizable.)
+(Preset 2 is default)
 
-|   Preset    | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing |   smoothing strength   | est. computation time |
-|:-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:----------------------:|----------------------:|
-| 0 (DEFAULT) |   DEFAULT (=5,000,000) |      DEFAULT (=6) |                 DEFAULT (=3) |  DEFAULT (=off)   |  DEFAULT (=off)   | DEFAULT (=5; not used) |               1-3 min |
-|      1      |              5,000,000 |                 6 |                            2 |        on         |        on         |           5            |               1-3 min |
-|      2      |             50,000,000 |                 4 |                           10 |        on         |        on         |           2            |              5-10 min |
-|      3      |         99,999,999,999 |                 4 |                           20 |        on         |        on         |           2            |              ~50 min* |
+|     Preset | target fragment number | simulation rounds | minimum attribute pair count | outlier detection | weights smoothing | smoothing strength | est. computation time |
+|-----------:|-----------------------:|------------------:|-----------------------------:|:-----------------:|:-----------------:|:------------------:|----------------------:|
+|          1 |              5,000,000 |                 6 |                            2 |        on         |        on         |         5          |               1-3 min |
+| DEFAULT: 2 |             50,000,000 |                 4 |                           10 |        on         |        on         |         2          |              5-10 min |
+|          3 |         99,999,999,999 |                 4 |                           20 |        on         |        on         |         2          |              ~50 min* |
 
 *depends on DoC of BAM file
 

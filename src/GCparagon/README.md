@@ -215,7 +215,7 @@ used for computing GC bias (more intervals are used for shallow sequenced sample
 achieve a comparable number of processed fragments).
 
 When applied to multiple transcription start sites (TSSs) of genes expected to be inactive 
-([975 genes](accessory_files/TSSs/PAU.txt) as derived from the protein atlas),
+([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
 and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)) of WGS cfDNA 
 data, a GC bias manifests as changes in the average DoC across these 5' -> 3' oriented sites. Active genes are expected 
 to show a nucleosome depleted region (unprotected -> decrease in coverage), whereas unexpressed or lowly expressed genes

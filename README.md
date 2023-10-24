@@ -306,8 +306,6 @@ a naive combination of GC correction weights:
 
 ![p01_recons_GC](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.GCcontent_RefVsReconstructed.png?raw=true)
 
-This measure was found to impact the accuracy of the achieved correction only minimally if at all.
-
 
 ## Performance
 

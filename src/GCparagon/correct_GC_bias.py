@@ -260,7 +260,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'default if not defined differently by the user (unchanged parameters will match '
                                       'preset 1). Other integer values from 1 to 3 define presets with increasing '
                                       'input data usage and required processing time (durations preset 1-3: 1-3 min, '
-                                      '5-10 min, and ~1h (depending on file size). Maximum across 4 samples and 2 '
+                                      '5-10 min, and ~1h depending on file size. Maximum across 4 samples and 2 '
                                       'iterations each computed using 12 cores and the profile_command.py script. '
                                       'Maximum memory consumption for any preset should stay below 4 GiB. If preset is '
                                       'not zero, any customized parameters conflicting with the preset will be '
@@ -276,7 +276,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '
                                       'advantage of processing more fragments is the reduction of noise in computed '
-                                      "weights. It is recommended to use a higher preset for a 'preprocess-once,"
+                                      "weights and a better reconstruction of the reference fragment GC content "
+                                      "distribution. It is recommended to use a higher preset for a 'preprocess-once,"
                                       "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
                                       'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
                                       'yield 100.74%%, 99.98%%, and 99,91%% of the raw fragment count respectively '

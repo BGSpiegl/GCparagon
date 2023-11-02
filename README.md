@@ -119,7 +119,7 @@ Activate the new environment:
 `conda activate GCparagon`
 
 Run the `setup.py` in combination with `pip` to make GCparagon directly executable from the 
-console afterwards:
+console afterward:
 
 `python setup.py bdist_wheel && python -m pip install --force-reinstall dist/*.whl`
 
@@ -430,22 +430,50 @@ If required, a new EGA account can be created for free.
 ## Usage
 
 -------------------------------------------------------------------------------------------------------------------
-Run the GCparagon.py script using an appropriate Python3.10 interpreter.
+Run the GCparagon.py script with installed [dependencies](#software-dependencies) using an appropriate Python3.10+ 
+interpreter.
 
-The following parameters are required: `-b`/`--bam`, and `-tbr`/`--two-bit-reference-genome`
+### Examples
 
-To output a GC correction weights tagged BAM file, set the `--output-bam` flag.
+The most basic call after downoading the 2bit version of the reference genome is as follows:
 
-It is recommended to set `--temporary-directory` to be located on SSD hardware.
-If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`.
+`python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
 
-All created files are saved to the temporary directory first before being moved to the output directory after successful
+OR:
+
+`gcparagon --bam <INPUT_BAM>`
+(available only if setup.py was run)
+
+This minimalistic setup uses the parent directory of the input BAM fle as output directory. The `-b`/`--bam` parameter is always 
+required.
+
+To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
+
+`gcparagon --bam <INPUT_BAM> --output-bam`
+
+It is recommended to set `--temporary-directory` to be located on SSD hardware:
+
+`gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
+
+If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`. All created files 
+are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
-Rich customization options are available. The `--preset 1` setup is recommended though.
+Rich customization options are available:
+To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
+
+`gcparagon --bam <INPUT_BAM> --output-bam --threads 24`
+
+To get a quick estimate of the GCbias, the user can set a lower preset
+
+`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1`
+
+The `--preset 2` setup is recommended though.
+
+### Full Commandline Description
 
 ```
-The following arguments are required: -b/--bam, -rtb/--two-bit-reference-genome
+The following argument is required: -b/--bam
 
 Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-p Integer] [-to]
                           [-rep Integer] [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File]
@@ -538,13 +566,14 @@ Processing options:
   -p Integer, --preset Integer
                         Optional parameter preset to use for GC bias computation. Must be an integer int the rangeof 0-3 (inclusive). A preset value of 0 leaves parameters at default if not defined
                         differently by the user (unchanged parameters will match preset 1). Other integer values from 1 to 3 define presets with increasing input data usage and required processing time
-                        (durations preset 1-3: 1-3 min, 5-10 min, and ~1h (depending on file size). Maximum across 4 samples and 2 iterations each computed using 12 cores and the profile_command.py
+                        (durations preset 1-3: 1-3 min, 5-10 min, and ~1h depending on file size. Maximum across 4 samples and 2 iterations each computed using 12 cores and the profile_command.py
                         script. Maximum memory consumption for any preset should stay below 4 GiB. If preset is not zero, any customized parameters conflicting with the preset will be ignored. A non-
                         zero preset will set the following parameters: number of simulations, the target number of processed fragments, minimum number of fragment attribute combination occurrences, and
                         the options for outlier detection and smoothing. Noise within the resulting correction weights is reduced when selecting a higher preset value. Preset 3 will attempt to process
-                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowedexclusion marked regions overlap (per default default ~1.7 Gb of reference
+                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowed exclusion marked regions overlap (per default default ~1.7 Gb of reference
                         are processed). NOTE: the percentage of total GC bias corrected fragments in the dataset for presets 1 vs. 3 increases only from 99.837% to 99.938% (average across 4 samples).
-                        Other fragment weights default to 1.0). The primary advantage of processing more fragments is the reduction of noise in computed weights. It is recommended to use a higher
+                        Other fragment weights default to 1.0). The primary advantage of processing more fragments is the reduction of noise in computed weights and a better reconstruction of the reference 
+                        fragment GC content distribution. It is recommended to use a higher
                         preset for a 'preprocess-once,analyze often' scenario and/or when a high bias is expected/observed (e.g. FastQC average GC percentage). Correction by preset 1, 2, and 3 was
                         found to yield 100.74%, 99.98%, and 99,91% of the raw fragment count respectively (average percentage across 4 samples). [ DEFAULT: 2 ]
   -to, --tag-only       Optional flag which makes the software switch to tag-only mode. A correction weights matrix must be specified in this case via the '--correction-weights' flag. A valid samtools

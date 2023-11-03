@@ -378,6 +378,7 @@ Computation may terminate if drive space and/or RAM size requirements are not me
 The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS operating system, using a Python3.10 conda 
 environment which can be installed using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
 Per default, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
+dependencies:
   - samtools=1.16
   - bedtools=2.30
   - python=3.10
@@ -398,6 +399,8 @@ Per default, the following dependencies will be installed into the conda env nam
   - memory_profiler
   - pybedtools
   - polars
+  - scikit-learn
+  - matplotlib
 
 You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
 

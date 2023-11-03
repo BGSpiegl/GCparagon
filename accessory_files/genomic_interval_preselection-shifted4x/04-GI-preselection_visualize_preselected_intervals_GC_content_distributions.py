@@ -6,7 +6,7 @@ import pandas as pd
 import plotly.express as px
 from typing import Union as OneOf, Dict, Tuple
 from pathlib import Path
-from GCparagon.correct_GC_bias import create_region_label
+from correct_GC_bias import create_region_label
 
 # DEFINITIONS
 # intervals (opaque -> 0.01; we have ~1,700 of these; use already available functions!)

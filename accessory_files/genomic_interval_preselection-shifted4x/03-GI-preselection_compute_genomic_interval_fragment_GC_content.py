@@ -8,7 +8,7 @@ from math import log10
 import multiprocessing as mp
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
-from GCparagon.correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
+from correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
     safe_gc_base_count_inference_thresh, gc_count_rejecting_n_containing, rhui
 
 # get root path

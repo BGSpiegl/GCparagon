@@ -8,7 +8,7 @@ from math import log10
 import multiprocessing as mp
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
-from GCparagon.correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
+from correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
     safe_gc_base_count_inference_thresh, gc_count_rejecting_n_containing, rhui
 
 # get root path
@@ -507,12 +507,12 @@ if __name__ == '__main__':
         else:
             raise ValueError("UNABLE TO PROCEED - path to either a table with fragment length distributions (FLDs) "
                              "nor a table to a consensus FLD was provided via the commandline.")
-    if reference_genome_fgcd_tables_samples_dir is not None and \
-            not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
-        print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
-        reference_genome_fgcd_tables_samples_path = None
-    else:
-        reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
+    if reference_genome_fgcd_tables_samples_dir is not None:
+        if not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
+            print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
+            reference_genome_fgcd_tables_samples_path = None
+        else:
+            reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
 
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():

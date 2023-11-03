@@ -289,7 +289,7 @@ Default outputs are:
 ![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 ## Optimization of Combining Results from Preselected Regions
-From v0.6.0 on, fragment attribute counts form preselected genomic intervals are combined using a linear combination 
+From v0.6.0 on, fragment attribute counts from preselected genomic intervals are combined using a linear combination 
 such that their simulated cfDNA fragment GC content distribution approximates the FGCD of the reference genome without 
 dropping information gathered from individual regions. The range of weights from which the linear combination of 
 genomic interval FGCDs is created is: [0.1, 10].

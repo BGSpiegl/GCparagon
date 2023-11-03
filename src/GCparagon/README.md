@@ -354,6 +354,7 @@ Per default, the following dependencies will be installed into the conda env nam
   - pybedtools
   - polars
   - scikit-learn
+  - matplotlib
 
 You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
 

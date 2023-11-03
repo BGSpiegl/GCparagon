@@ -10,7 +10,7 @@ from pandas import DataFrame as pd_DF
 from scipy.ndimage import gaussian_filter
 from typing import Optional
 # project imports
-from GCparagon.utilities.gc_logging import log
+from utilities.gc_logging import log
 
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
 USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainbow', 'plotly3', or 'blackbody'

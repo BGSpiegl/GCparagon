@@ -508,13 +508,12 @@ if __name__ == '__main__':
         else:
             raise ValueError("UNABLE TO PROCEED - path to either a table with fragment length distributions (FLDs) "
                              "nor a table to a consensus FLD was provided via the commandline.")
-    if reference_genome_fgcd_tables_samples_dir is not None and \
-            not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
-        print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
-        reference_genome_fgcd_tables_samples_path = None
-    else:
-        reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
-
+    if reference_genome_fgcd_tables_samples_dir is not None:
+        if not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
+            print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
+            reference_genome_fgcd_tables_samples_path = None
+        else:
+            reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():
         use_reference_fld, flength_range = load_table_with_flength_hdr(table_path=putative_ref_flength_dist_table)

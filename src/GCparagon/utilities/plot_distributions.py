@@ -21,7 +21,7 @@ if code_root not in sys.path:
     sys.path.append(str(code_root))
 
 
-from GCparagon.utilities.gc_logging import log, gib_cmd_logger
+from utilities.gc_logging import log, gib_cmd_logger
 
 
 def get_cmdline_args():

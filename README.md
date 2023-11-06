@@ -387,19 +387,47 @@ If required, a new EGA account can be created for free.
 ## Usage
 
 -------------------------------------------------------------------------------------------------------------------
-Run the GCparagon.py script using an appropriate Python3.10 interpreter.
+Run the GCparagon.py script with installed [dependencies](#software-dependencies) using an appropriate Python3.10+ 
+interpreter.
 
-The following parameters are required: `-b`/`--bam`, and `-tbr`/`--two-bit-reference-genome`
+### Examples
 
-To output a GC correction weights tagged BAM file, set the `--output-bam` flag.
+The most basic call after downoading the 2bit version of the reference genome is as follows:
 
-It is recommended to set `--temporary-directory` to be located on SSD hardware.
-If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`.
+`python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
 
-All created files are saved to the temporary directory first before being moved to the output directory after successful
+OR:
+
+`gcparagon --bam <INPUT_BAM>`
+(available only if setup.py was run)
+
+This minimalistic setup uses the parent directory of the input BAM fle as output directory. The `-b`/`--bam` parameter is always 
+required.
+
+To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
+
+`gcparagon --bam <INPUT_BAM> --output-bam`
+
+It is recommended to set `--temporary-directory` to be located on SSD hardware:
+
+`gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
+
+If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`. All created files 
+are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
-Rich customization options are available. The `--preset 1` setup is recommended though.
+Rich customization options are available:
+To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
+
+`gcparagon --bam <INPUT_BAM> --output-bam --threads 24`
+
+To get a quick estimate of the GCbias, the user can set a lower preset
+
+`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1`
+
+The `--preset 2` setup is recommended though.
+
+### Full Commandline Description
 
 ```
 The following arguments are required: -b/--bam, -rtb/--two-bit-reference-genome

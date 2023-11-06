@@ -401,8 +401,8 @@ OR:
 `gcparagon --bam <INPUT_BAM>`
 (available only if setup.py was run)
 
-This minimalistic setup uses the parent directory of the input BAM fle as output directory. The `-b`/`--bam` parameter is always 
-required.
+This minimalistic setup uses the parent directory of the input BAM fle as output directory.
+The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
 
 To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
 

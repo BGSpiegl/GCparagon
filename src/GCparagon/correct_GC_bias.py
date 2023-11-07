@@ -2546,7 +2546,7 @@ def read_gc_distribution(ref_table_path: OneOf[str, Path]):
 
 
 def infer_intervals_for_n_fragments(intervals: List[Tuple[str, int, int]], bam_path: OneOf[str, Path],
-                                    target_fragment_count: int, flength_range: range,
+                                    target_fragment_count: int, flength_range: range, temp_dir: OneOf[str, Path],
                                     estimate_from_n_intervals: int = 8, repetitions: int = 3):
     log(message=f"Inferring required number of genomic intervals to reach {target_fragment_count:,} processed "
                 f"fragments ..", log_level=logging.INFO, logger_name=LOGGER)
@@ -2566,7 +2566,7 @@ def infer_intervals_for_n_fragments(intervals: List[Tuple[str, int, int]], bam_p
                     continue  # draw again
                 random_intervals.append(random_interval)
                 not_drawn = False
-        assert len(set(random_intervals)) == estimate_from_n_intervals
+        assert len(random_intervals) == estimate_from_n_intervals
         with AlignmentFile(bam_path, 'rb') as f_aln:
             for chrom, start, end, *rest in random_intervals:
                 exclude_flags = np.uint32(3852)  # = 256 + 2048 + 512 + 1024 + 4 + 8
@@ -2598,7 +2598,12 @@ def infer_intervals_for_n_fragments(intervals: List[Tuple[str, int, int]], bam_p
                 for _aln in filtered_alignments:
                     n_frags += 1
         # estimated number of required GI to reach target_fragment_count:
-        use_n_intervals = math.ceil(target_fragment_count / n_frags * estimate_from_n_intervals) + 1
+        try:
+            use_n_intervals = math.ceil(target_fragment_count / n_frags * estimate_from_n_intervals) + 1
+        except ZeroDivisionError:
+            exit_message = (f"no alignments that are mapped in a proper pair found in the input BAM file. Are you sure "
+                            f"you try to process aligned, paired-end sequencing reads?")
+            try_clear_temp_dir_and_exit(tmp_dir=temp_dir, exit_code=9, message=exit_message)
         rep_results.append(use_n_intervals)
         n_frag_results.append(n_frags)
     # consolidate:
@@ -2758,12 +2763,13 @@ def reconstruct_distribution_nnls(target_distribution: np.array,
 
 def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, int]], reference_fgcd: np.array,
                                 interval_fgcds, bam_file: OneOf[str, Path], target_fragment_number: int,
+                                temporary_directrory: OneOf[str, Path],
                                 fragment_length_range: range, output_path: OneOf[str, Path], sample_name: str,
                                 show_figures: bool = False) -> Tuple[List[Tuple[float, Tuple[str, int, int]]], float]:
     # infer number of required intervals based on # fragments in 10 intervals
     inferred_number_of_required_intervals = infer_intervals_for_n_fragments(
         intervals=genomic_intervals_sorted, bam_path=bam_file, target_fragment_count=target_fragment_number,
-        flength_range=fragment_length_range, repetitions=3, estimate_from_n_intervals=8)
+        flength_range=fragment_length_range, repetitions=3, estimate_from_n_intervals=8, temp_dir=temporary_directrory)
     log(message=f"Will use {inferred_number_of_required_intervals:,} genomic intervals for GC bias computation.",
         log_level=logging.INFO, logger_name=LOGGER)
     # select genomic intervals
@@ -3102,7 +3108,7 @@ def main() -> int:
                     reference_fgcd=ref_gc_dist, bam_file=input_bam, target_fragment_number=process_n_fragments,
                     interval_fgcds=interval_gc_content_distributions, output_path=sample_out_dir_path,
                     fragment_length_range=range(lower_limit_fragment_length, upper_limit_fragment_length),
-                    show_figures=show_plots, sample_name=sample_id)
+                    show_figures=show_plots, sample_name=sample_id, temporary_directrory=sample_temp_dir)
                 # get intervals with weights from estimated reference genome fragment GC content reconstruction!
                 # -> linear combination of selected intervals GC content that best approximates the reference GC content
                 # following a typical cfDNA fragment length distribution (provided for blood plasma cfDNA, plasmaSeq

@@ -25,10 +25,10 @@ import multiprocessing.connection as mp_connection
 # partial imports
 from pathlib import Path
 from collections import deque
+from socket import gethostname
 from natsort import humansorted
 from pysam import AlignmentFile  # coordinates in pysam are always 0-based (following python convention)
-from scipy.optimize import nnls, minimize
-from scipy.stats import trim_mean
+from scipy.optimize import minimize
 from twobitreader import TwoBitFile, TwoBitSequence
 from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
@@ -2799,6 +2799,9 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
 def main() -> int:
     global LOGGER  # commandline logging only
 
+    # get name of machine
+    current_hostname = gethostname()
+
     cmd_args = get_cmdline_args()
     # input options
     input_bams = cmd_args.input_bams
@@ -3050,8 +3053,9 @@ def main() -> int:
                     intervals_for_processing_with_score=generally_processable_intervals_with_score)
                 log(message='GCparagon (GC-bias computation) Started.\n' +
                             f"|---------------------------------------------------------------------------------\n"
-                            f"|   Configuration for processing sample {sample_id} was:\n"
-                            f"|   ++++++++++++++++++++++++++++++++++++++++{'+' * len(sample_id)}\n" +
+                            f"|   Configuration for processing sample {sample_id} on {current_hostname} was:\n"
+                            f"|   +++++++++++++++++++++++++++++++++++++++++"
+                            f"{'+' * (len(sample_id) + len(current_hostname))}\n" +
                             (f'|   Using parameter preset {preset_number}\n'
                              if preset_number in (1, 2, 3) else '') +
                             f"|   Minimum fragment length: {lower_limit_fragment_length:,}bp\n"

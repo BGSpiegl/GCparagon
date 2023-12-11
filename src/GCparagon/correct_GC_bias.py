@@ -193,21 +193,21 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     processing_args = commandline_parser.add_argument_group('Processing options')
     postprocessing_args = commandline_parser.add_argument_group('Post-processing options')
     # input options
-    input_args.add_argument('-b', '--bam', dest='input_bams', nargs='+', required=True, metavar='List[File]',
+    input_args.add_argument('-b', '--bam', dest='input_bams', nargs='+', required=True, metavar='List[File]',type=Path,
                             help='Path to sorted BAM file for which the fragment length-dependent GC-content-based '
                                  "over-representation (= 'GC-bias') should be computed and/or corrected. WARNING: "
                                  "don't use unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's "
                                  "index file is not found on runtime, GCparagon tries to create it. The alignment "
                                  "algorithm used for creating the input BAM file MUST follow the SAM format "
                                  "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
-    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file',
+    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file',type=Path,
                             default=EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
                                  'file using the following command: '
                                  "'faToTwoBit <PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' "
                                  "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)", metavar='File')
-    input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file',
+    input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file',type=Path,
                             default=PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
                             help='Path to BED file containing predefined genomic intervals to process. These should '
                                  'have been selected based on minimal overlap with exclusion-masked regions of the '
@@ -218,7 +218,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "to create an optimized consolidated weight matrix using a weighted mean. The weights "
                                  "for each region are selected such that the reference GC content distribution in "
                                  f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS}' ]", metavar='File')
-    input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path', 
+    input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path', type=Path,
                             default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION,
                             help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
                                  "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
@@ -230,7 +230,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "optimize the combination of correction weight matrices from different genomic "
                                  "intervals to achieve a linear combination of these regions which resembles the "
                                  "reference GC content distribution defined here.", metavar='File')
-    input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
+    input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file', type=Path,
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
                                  'intersect-like behavior!). If the bad intervals library is left default, the bad '
@@ -239,11 +239,11 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  'the sample processing by excluding intervals with insufficient DoC form the '
                                  'beginning. Excluded intervals were observed to appear most frequently close to '
                                  'centromeres.', metavar='File')
-    input_args.add_argument('-cw', '--correction-weights', dest='correction_weights', metavar='File',
+    input_args.add_argument('-cw', '--correction-weights', dest='correction_weights', metavar='File', type=Path,
                             help="Optional input for --tag-only mode: a matrix file ('*_gc_weights.txt.gz') containing "
                                  "correction weights to be used in tag-only mode ('--tag-only' flag must be set) to "
                                  'create a new, GC-bias-corrected BAM file with weighted fragments (GC-tag).')
-    input_args.add_argument('-wm', '--weights-mask', dest='weights_mask', metavar='File',
+    input_args.add_argument('-wm', '--weights-mask', dest='weights_mask', metavar='File', type=Path,
                             help="Optional path to a weights matrix mask file. These are usually named '<SAMPLE_ID>_gc"
                                  "_bias_computation_mask.txt.gz'. If none is defined (default behaviour), either the "
                                  'currently create mask (when computing GC bias correction weights) or '

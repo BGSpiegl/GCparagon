@@ -78,7 +78,7 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 
 
 ### Installation
-Latest version is v0.6.0
+Latest version is v0.6.1
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
@@ -115,7 +115,7 @@ Activate the new environment:
 `conda activate GCparagon`
 
 Run the `setup.py` in combination with `pip` to make GCparagon directly executable from the 
-console afterwards:
+console afterward:
 
 `python setup.py bdist_wheel && python -m pip install --force-reinstall dist/*.whl`
 
@@ -129,6 +129,47 @@ simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output*
 To activate BAM output, use the `--output-bam` flag.
 Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
+
+To gain access to the four BAM files used in the publication, go to EGA, create an account and ask for access to dataset
+[EGAS00001006963].
+
+To recreate the **tagged** BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963],
+first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
+The reference genome used to create the 4 BAM files in plots can be downloaded using the 
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script:
+
+`bash src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`
+
+After the download has finished, you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
+**within the activated conda environment**:
+
+`bash driver_scripts/drv_compute_GC_presets.sh`
+
+You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
+50 minutes for each sample.
+
+#### Validation v0.6.0+
+To compute the validation results for the depth of coverage signals, one can either use the npz exported, normalized and
+averaged DoC values for each loci group, preset and sample (mean of 10th to 90th percentile of normalized cDoC values, 
+per base position) in the subdirectories of the 
+[coverage signals validation directory](validation/02_loci_overlay_central_coverages) and run the two plotting code 
+scripts for [TSS loci groups](validation/02-2_create_TSS_subplot_figure_from_extracted_cDoC.py) and 
+[TFBS loci groups](validation/02-3_create_TFBS_subplot_figure_from_extracted_cDoC.py)
+OR create these coverage *.npz files themselves using their own custom code 
+(extract from 110bp-210 bp fragments the central 61 bp fragment DoC signal for each locus and compute central 80% DoC mean 
+for each position in the window).
+To process Griffin output (bias matrices), one must run the scripts in the [validation directory](validation) in numerical 
+order (i.e. from [01-1_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py) to 
+[03-3_plot_per_fragment_GC_content_correction_fidelity.py](validation/03-3_plot_per_fragment_GC_content_correction_fidelity.py)).
+
+The full validation requires the GCparagon preset benchmark results to be available.
+To create the genome-wide correction fidelity plots, the transformed Griffin bias matrices and Griffin weights-tagged 
+BAM files must be available (compute matrices with 
+[01_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py)).
+All results created by these scrips are provided along with the code, except the Griffin correction weights-tagged BAM 
+files. These can be created with the [02-1_tag_BAMs_with_Griffin_result.py](validation/02-1_tag_BAMs_with_Griffin_result.py) script.
+Some of the validation template scripts must be completed with the appropriate directory and/or code paths before being 
+called (see "TODO" comments at the beginning of scripts).
 
 ### Contributors
 - Benjamin Spiegl ([BGSpiegl][github user])
@@ -430,7 +471,7 @@ The `--preset 2` setup is recommended though.
 ### Full Commandline Description
 
 ```
-The following arguments are required: -b/--bam, -rtb/--two-bit-reference-genome
+The following argument is required: -b/--bam
 
 Usage: correct_GC_bias.py [-h] -b File -rtb File [-c File] [-ec File] [-cw File] [-wm File] [-p Integer] [-to]
                           [-rep Integer] [-uf Integer] [-lf Integer] [-t Integer] [-rs Integer] [-sp File]
@@ -481,7 +522,7 @@ Output options:
   -o File, --out-dir File
                         Path to which output is moved from --temporary-directory after each processing step (GC-bias computation, BAM tagging). The directory will be created if it does not exist. Make
                         sure that it is empty if it exists, otherwise the whole directory will be deleted before writing to it in the GC-bias computation step! If none is provided, a new subdirectory
-                        named 'GC_bias_correction_GCparagonv0.6.0' will be created in the input BAM's parent directory and used as output directory. The output for each sample will be gathered in a
+                        named 'GC_bias_correction_GCparagonv0.6.1' will be created in the input BAM's parent directory and used as output directory. The output for each sample will be gathered in a
                         subdirectory of this --out-dir which will be named after the sample. The output directory may be located on slow hardware such as a USB drive or a network storage since
                         everything is stored in --temporary-directory first and moved after completion of all defined phases of the GC bias computation.
   -tmp File, --temporary-directory File
@@ -523,13 +564,14 @@ Processing options:
   -p Integer, --preset Integer
                         Optional parameter preset to use for GC bias computation. Must be an integer int the rangeof 0-3 (inclusive). A preset value of 0 leaves parameters at default if not defined
                         differently by the user (unchanged parameters will match preset 1). Other integer values from 1 to 3 define presets with increasing input data usage and required processing time
-                        (durations preset 1-3: 1-3 min, 5-10 min, and ~1h (depending on file size). Maximum across 4 samples and 2 iterations each computed using 12 cores and the profile_command.py
+                        (durations preset 1-3: 1-3 min, 5-10 min, and ~1h depending on file size. Maximum across 4 samples and 2 iterations each computed using 12 cores and the profile_command.py
                         script. Maximum memory consumption for any preset should stay below 4 GiB. If preset is not zero, any customized parameters conflicting with the preset will be ignored. A non-
                         zero preset will set the following parameters: number of simulations, the target number of processed fragments, minimum number of fragment attribute combination occurrences, and
                         the options for outlier detection and smoothing. Noise within the resulting correction weights is reduced when selecting a higher preset value. Preset 3 will attempt to process
-                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowedexclusion marked regions overlap (per default default ~1.7 Gb of reference
+                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowed exclusion marked regions overlap (per default default ~1.7 Gb of reference
                         are processed). NOTE: the percentage of total GC bias corrected fragments in the dataset for presets 1 vs. 3 increases only from 99.837% to 99.938% (average across 4 samples).
-                        Other fragment weights default to 1.0). The primary advantage of processing more fragments is the reduction of noise in computed weights. It is recommended to use a higher
+                        Other fragment weights default to 1.0). The primary advantage of processing more fragments is the reduction of noise in computed weights and a better reconstruction of the reference 
+                        fragment GC content distribution. It is recommended to use a higher
                         preset for a 'preprocess-once,analyze often' scenario and/or when a high bias is expected/observed (e.g. FastQC average GC percentage). Correction by preset 1, 2, and 3 was
                         found to yield 100.74%, 99.98%, and 99,91% of the raw fragment count respectively (average percentage across 4 samples). [ DEFAULT: 2 ]
   -to, --tag-only       Optional flag which makes the software switch to tag-only mode. A correction weights matrix must be specified in this case via the '--correction-weights' flag. A valid samtools

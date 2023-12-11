@@ -1,0 +1,30 @@
+name: GCparagon  # install with: mamba env create -f GCparagon_Ubuntu22_py3.10_env.yml; should also work with conda
+channels:
+  - bioconda
+  - conda-forge
+  - anaconda
+  - plotly  # encountered problem with the kaleido package from conda-forge channel chosen by mamba
+  - defaults
+dependencies:
+  - samtools=1.16
+  - bedtools=2.30
+  - python=3.10
+  - pip=22.3
+  - numpy=1.23
+  - pysam=0.19
+  - natsort=8.2
+  - py2bit=0.3
+  - cycler=0.11
+  - pandas=1.5
+  - scipy=1.9
+  - ucsc-fatotwobit=377
+  - twobitreader=3.1
+  - plotly_express=0.4
+  - python-kaleido=0.2
+  - psutil=5.9
+  - requests=2.28
+  - memory_profiler
+  - pybedtools
+  - polars
+  - scikit-learn
+  - matplotlib  # for memory profiling plots

@@ -34,14 +34,12 @@ from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 OneOf = Union
 
-# TODO: add hg19 compatibility and cmdline flag specifying hg19 instead of hg38;
-#                 increment MINOR_RELEASE number and reset patch number -> v0.6.0;
-#                 create new release and upload to zenodo
+# TODO: add hg19 compatibility and cmdline flag specifying hg19 instead of hg38
 
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 0
+PATCH_NUMBER = 1
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -192,22 +190,25 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     output_args = commandline_parser.add_argument_group('Output options')
     processing_args = commandline_parser.add_argument_group('Processing options')
     postprocessing_args = commandline_parser.add_argument_group('Post-processing options')
+    # versioning
+    commandline_parser.add_argument('--version', action='version',
+                                    version=f"version {MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}")
     # input options
-    input_args.add_argument('-b', '--bam', dest='input_bams', nargs='+', required=True, metavar='List[File]',
+    input_args.add_argument('-b', '--bam', dest='input_bams', nargs='+', required=True, metavar='List[File]', type=Path,
                             help='Path to sorted BAM file for which the fragment length-dependent GC-content-based '
                                  "over-representation (= 'GC-bias') should be computed and/or corrected. WARNING: "
                                  "don't use unaligned BAM files (uBAM) or multi-sample/run BAM files! If the BAM's "
                                  "index file is not found on runtime, GCparagon tries to create it. The alignment "
                                  "algorithm used for creating the input BAM file MUST follow the SAM format "
                                  "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
-    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file',
+    input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', type=Path,
                             default=EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
                                  'file using the following command: '
                                  "'faToTwoBit <PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' "
                                  "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)", metavar='File')
-    input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file',
+    input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file', type=Path,
                             default=PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
                             help='Path to BED file containing predefined genomic intervals to process. These should '
                                  'have been selected based on minimal overlap with exclusion-masked regions of the '
@@ -219,14 +220,14 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "for each region are selected such that the reference GC content distribution in "
                                  f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS}' ]", metavar='File')
     input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path', 
-                            default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION,
+                            default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION, type=Path,
                             help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
                                  "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
                                  "GC) as relative frequencies of these percentage bins which (summing up to 1). If a "
                                  "custom reference genome is used, this file should be created anew from the simulated "
                                  "genome-wide ideal fragment GC content as simulated assuming a fragment length "
                                  "distribution as the one stored in 'accessory_files/"
-                                 "reference_fragment_lenght_distribution.tsv'! The provided information is used to "
+                                 "reference_fragment_length_distribution.tsv'! The provided information is used to "
                                  "optimize the combination of correction weight matrices from different genomic "
                                  "intervals to achieve a linear combination of these regions which resembles the "
                                  "reference GC content distribution defined here.", metavar='File')
@@ -238,8 +239,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  'default library/BED file is used. The bad intervals library is intended to speed up '
                                  'the sample processing by excluding intervals with insufficient DoC form the '
                                  'beginning. Excluded intervals were observed to appear most frequently close to '
-                                 'centromeres.', metavar='File')
-    input_args.add_argument('-cw', '--correction-weights', dest='correction_weights', metavar='File',
+                                 'centromeres.', metavar='File', type=Path,)
+    input_args.add_argument('-cw', '--correction-weights', dest='correction_weights', metavar='File', type=Path,
                             help="Optional input for --tag-only mode: a matrix file ('*_gc_weights.txt.gz') containing "
                                  "correction weights to be used in tag-only mode ('--tag-only' flag must be set) to "
                                  'create a new, GC-bias-corrected BAM file with weighted fragments (GC-tag).')
@@ -260,7 +261,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'default if not defined differently by the user (unchanged parameters will match '
                                       'preset 1). Other integer values from 1 to 3 define presets with increasing '
                                       'input data usage and required processing time (durations preset 1-3: 1-3 min, '
-                                      '5-10 min, and ~1h (depending on file size). Maximum across 4 samples and 2 '
+                                      '5-10 min, and ~1h depending on file size. Maximum across 4 samples and 2 '
                                       'iterations each computed using 12 cores and the profile_command.py script. '
                                       'Maximum memory consumption for any preset should stay below 4 GiB. If preset is '
                                       'not zero, any customized parameters conflicting with the preset will be '
@@ -276,7 +277,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '
                                       'advantage of processing more fragments is the reduction of noise in computed '
-                                      "weights. It is recommended to use a higher preset for a 'preprocess-once,"
+                                      "weights and a better reconstruction of the reference fragment GC content "
+                                      "distribution. It is recommended to use a higher preset for a 'preprocess-once,"
                                       "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
                                       'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
                                       'yield 100.74%%, 99.98%%, and 99,91%% of the raw fragment count respectively '
@@ -331,7 +333,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       f"'{DEFAULT_SAMTOOLS_PATH}' (empty or None if path is not found). "
                                       "Code tested with samtools version 1.16.1 using htslib 1.16 "
                                       "[ PARAMETER REQUIRED IF DEFAULT VALUE IS EMPTY/NONE ]",
-                                 metavar='File')
+                                 type=Path, metavar='File')
     processing_args.add_argument('-nf', '--target-fragment-number', dest='process_n_fragments',
                                  default=DEFAULT_TARGET_NUMBER_FRAGMENTS_PROCESSED, type=int, metavar='Integer',
                                  help='(PRESET precedence if specified) GC-bias computation will stop after surpassing '
@@ -438,7 +440,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     output_args.add_argument('-v', '--verbose', action='store_true', dest='verbose',
                              help='This flag can be set to provide more output, especially information about fragments '
                                   'that fall outside of the defined fragment length window.')
-    output_args.add_argument('-o', '--out-dir', dest='output_directory', metavar='File',
+    output_args.add_argument('-o', '--out-dir', dest='output_directory', metavar='File', type=Path,
                              help='Path to which output is moved from --temporary-directory after each processing step '
                                   '(GC-bias computation, BAM tagging). The directory will be created if it does '
                                   'not exist. Make sure that it is empty if it exists, otherwise the whole directory '
@@ -451,7 +453,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'network storage since everything is stored in --temporary-directory first and moved '
                                   'after completion of all defined phases of the GC bias computation.')
     output_args.add_argument('-tmp', '--temporary-directory', dest='temporary_directory', metavar='File',
-                             default=DEFAULT_TEMPORARY_DIRECTORY,
+                             default=DEFAULT_TEMPORARY_DIRECTORY, type=Path,
                              help='Directory to which all files will be written as temporary files in a subdirectory '
                                   'named after the sample (sample id is extracted from the BAM file name) during '
                                   'processing. Directory will be created if non-existent. Subdirectory for the sample '
@@ -551,7 +553,8 @@ def silently_open_alignment_file(*args, **kwargs):
             os.dup2(std_err_saved, 2)  # load former stderr stream target
             yield f_aln  # yield because f_aln can be iterated over -> so a generator makes sense
     finally:
-        f_aln.close()
+        if not isinstance(f_aln, int):
+            f_aln.close()
 
 
 # GC-bias computation functions:
@@ -2194,7 +2197,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
     :param two_bit_genome_file:
     :param temporary_directory_sample:
     :param tag_name:
-    :param samtools_path:
+    :param samtools_path: Path
     :param output_unaligned:
     :return:
     """
@@ -2482,7 +2485,7 @@ def create_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str]
             sys.exit(2)
 
 
-def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: str, silent=True):
+def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str], silent=True):
     with AlignmentFile(bam_path, 'rb') as f_aln:
         try:
             f_aln.get_index_statistics()  # check_index(self) could also be used
@@ -2566,7 +2569,6 @@ def infer_intervals_for_n_fragments(intervals: List[Tuple[str, int, int]], bam_p
                     continue  # draw again
                 random_intervals.append(random_interval)
                 not_drawn = False
-        assert len(random_intervals) == estimate_from_n_intervals
         with AlignmentFile(bam_path, 'rb') as f_aln:
             for chrom, start, end, *rest in random_intervals:
                 exclude_flags = np.uint32(3852)  # = 256 + 2048 + 512 + 1024 + 4 + 8
@@ -3022,6 +3024,7 @@ def main() -> int:
                 set_new_log_paths(logfile_path=log_file,
                                   logger_name='GCparagon',  # a logger instance with this name MUST exist!
                                   verbose=verbose)
+            # now: print all gathered warning messages!
             if print_warnings:
                 for warning_message in print_warnings:
                     log(message=warning_message, log_level=logging.WARNING, logger_name=LOGGER)

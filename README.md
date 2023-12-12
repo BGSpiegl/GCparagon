@@ -78,12 +78,16 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 
 
 ### Installation
-Latest version is v0.6.1
+Latest version is v0.6.2
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
 software dependencies via the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file in the 
 [conda_env](conda_env) subdirectory by following the installation steps described below.
+
+NOTE: an issue was reported for Ubuntu 20 where the conda/mamba solvers could not create the environment by 
+directly using the YAML file.
+If you experience the same issue, it can possibly be solved manually installing dependencies one-by-one.
 
 The author recommends to use [mamba/micromamba][mamba install] for environment creation/resolving of dependencies.
 Mamba can be added to an existing [conda installation][conda install].
@@ -522,7 +526,7 @@ Output options:
   -o File, --out-dir File
                         Path to which output is moved from --temporary-directory after each processing step (GC-bias computation, BAM tagging). The directory will be created if it does not exist. Make
                         sure that it is empty if it exists, otherwise the whole directory will be deleted before writing to it in the GC-bias computation step! If none is provided, a new subdirectory
-                        named 'GC_bias_correction_GCparagonv0.6.1' will be created in the input BAM's parent directory and used as output directory. The output for each sample will be gathered in a
+                        named 'GC_bias_correction_GCparagonv0.6.2' will be created in the input BAM's parent directory and used as output directory. The output for each sample will be gathered in a
                         subdirectory of this --out-dir which will be named after the sample. The output directory may be located on slow hardware such as a USB drive or a network storage since
                         everything is stored in --temporary-directory first and moved after completion of all defined phases of the GC bias computation.
   -tmp File, --temporary-directory File

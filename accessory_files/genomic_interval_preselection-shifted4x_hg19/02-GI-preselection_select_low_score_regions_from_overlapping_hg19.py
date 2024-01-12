@@ -16,18 +16,19 @@ if CODE_ROOT_DIR not in sys.path:
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # info - all input regions within 1Mbp of the chromosome ends are removed
-genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg38.genome_file.tsv'  # <---- required input!
+genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg19.genome_file.tsv'  # <---- required input!
 # TODO: put here your shifted regions BED files containing exclusion list overlap
 # THE FOLLOWING VARIABLES SHOULD BE IDENTICAL TO THE ONES FROM THE "01-GI-preselection_....py" SCRIPT: -----------------
-CHUNK_SIZE = 10**6
-SHIFT_N_TIMES = 10  # you might want to select a higher number
-search_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x'
+INTERVAL_SIZE = 10**6
+SHIFT_N_TIMES = 4  # you might want to select a higher number
+search_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_hg19'
 output_path = search_path
+REF_BUILD = 'hg19'
 # ----------------------------------------------------------------------------------------------------------------------
 all_region_shifts_with_overlaps = list(search_path.glob(
-    f"*kbp_intervalOffset/{CHUNK_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv"))
+    f"*kbp_intervalOffset/{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv"))
 all_region_shifts_with_overlaps.extend(list(search_path.glob(
-    f"{CHUNK_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))
+    f"{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))
 # ^---- required input!
 # GCparagon: overlapping-exclusion-listed-bases, shifted up to 3 times by genomic_interval_size/4
 #            -> 4 files: 1x un-shifted + 3x shifted assertion: intervals of1 equal size!
@@ -40,7 +41,6 @@ chromosome_lengths = {}.fromkeys(map(lambda x: x[0], content))
 for chrom, length in content:
     chromosome_lengths[chrom] = int(length)
 
-REF_BUILD = 'hg38'
 CHROM_END_DISTANCE = 10**6  # regions within 1 Mbp from each chromosome end ware skipped
 REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
 # i : in total, there were 237 events where a selected region overlapped more than the selected threshold of 33% of
@@ -178,117 +178,3 @@ if __name__ == '__main__':
                 reg_buffer = []
     print(f"done writing {n_lines_written:,} lines (= {REGION_SIZE//10**6}Mbp regions) to BED file "
           f"'{output_file}'")
-
-
-# RESULT:
-# ----------------------------------------------------------------------------------------------------------
-#  i : in total, there were 262 events where a selected region overlapped more than the selected threshold of 20% of
-#      region size.
-# I am done selecting regions. These are the statistics (note: genome is represented 4 times, 4 shifts):
-#  i : chr1 selected regions: 135
-#               skipped regions: 1,100
-#  i : chr2 selected regions: 137
-#               skipped regions: 1,069
-#  i : chr3 selected regions: 116
-#               skipped regions: 878
-#  i : chr4 selected regions: 115
-#               skipped regions: 843
-#  i : chr5 selected regions: 106
-#               skipped regions: 803
-#  i : chr6 selected regions: 100
-#               skipped regions: 750
-#  i : chr7 selected regions: 91
-#               skipped regions: 704
-#  i : chr8 selected regions: 86
-#               skipped regions: 640
-#  i : chr9 selected regions: 67
-#               skipped regions: 598
-#  i : chr10 selected regions: 78
-#               skipped regions: 583
-#  i : chr11 selected regions: 80
-#               skipped regions: 591
-#  i : chr12 selected regions: 79
-#               skipped regions: 590
-#  i : chr13 selected regions: 59
-#               skipped regions: 498
-#  i : chr14 selected regions: 54
-#               skipped regions: 458
-#  i : chr15 selected regions: 44
-#               skipped regions: 429
-#  i : chr16 selected regions: 46
-#               skipped regions: 390
-#  i : chr17 selected regions: 44
-#               skipped regions: 360
-#  i : chr18 selected regions: 47
-#               skipped regions: 349
-#  i : chr19 selected regions: 34
-#               skipped regions: 249
-#  i : chr20 selected regions: 37
-#               skipped regions: 275
-#  i : chr21 selected regions: 19
-#               skipped regions: 189
-#  i : chr22 selected regions: 22
-#               skipped regions: 212
-#  i : chrX selected regions: 90
-#               skipped regions: 690
-#  i : chrY selected regions: 9
-#               skipped regions: 224
-# done writing 1,695 lines (= 1Mbp regions) to BED file '/benchmark_solutions/regions/hg38_top_lowest_BlacklistOverlap_1Mbp_regions_max25pcOverlap.bed'
-
-
-# 10x shifted regions:
-#  i : encountered 38 events for chrY where the selected region had a score above the threshold
-# ----------------------------------------------------------------------------------------------------------
-#  i : in total, there were 204 events where a selected region overlapped more than the selected threshold of 33% of region size.
-# I am done selecting regions. These are the statistics (note: genome is represented 10 times (i.e. original intervals 9x shifted):
-#  i : chr1 selected regions: 133
-#            skipped regions: 2,585
-#  i : chr2 selected regions: 138
-#            skipped regions: 2,520
-#  i : chr3 selected regions: 114
-#            skipped regions: 2,060
-#  i : chr4 selected regions: 117
-#            skipped regions: 1,986
-#  i : chr5 selected regions: 103
-#            skipped regions: 1,881
-#  i : chr6 selected regions: 98
-#            skipped regions: 1,770
-#  i : chr7 selected regions: 93
-#            skipped regions: 1,644
-#  i : chr8 selected regions: 84
-#            skipped regions: 1,493
-#  i : chr9 selected regions: 65
-#            skipped regions: 1,414
-#  i : chr10 selected regions: 75
-#             skipped regions: 1,377
-#  i : chr11 selected regions: 75
-#             skipped regions: 1,383
-#  i : chr12 selected regions: 78
-#             skipped regions: 1,372
-#  i : chr13 selected regions: 55
-#             skipped regions: 1,020
-#  i : chr14 selected regions: 50
-#             skipped regions: 1,088
-#  i : chr15 selected regions: 44
-#             skipped regions: 1,028
-#  i : chr16 selected regions: 45
-#             skipped regions: 914
-#  i : chr17 selected regions: 45
-#             skipped regions: 843
-#  i : chr18 selected regions: 41
-#             skipped regions: 809
-#  i : chr19 selected regions: 33
-#             skipped regions: 588
-#  i : chr20 selected regions: 34
-#             skipped regions: 646
-#  i : chr21 selected regions: 20
-#             skipped regions: 455
-#  i : chr22 selected regions: 19
-#             skipped regions: 411
-#  i : chrX selected regions: 89
-#            skipped regions: 1,612
-#  i : chrY selected regions: 11
-#            skipped regions: 553
-# done writing 1,659 lines (= 1Mbp regions) to BED file '/accessory_files/genomic_interval_preselection-shifted4x-shifted4x/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.bed'
-#
-# Process finished with exit code 0

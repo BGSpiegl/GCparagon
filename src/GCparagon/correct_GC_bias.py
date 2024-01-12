@@ -223,14 +223,14 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                             default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION, type=Path,
                             help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
                                  "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
-                                 "GC) as relative frequencies of these percentage bins which (summing up to 1). If a "
+                                 "GC) as relative frequencies of these percentage bins (summing up to 1). If a "
                                  "custom reference genome is used, this file should be created anew from the simulated "
                                  "genome-wide ideal fragment GC content as simulated assuming a fragment length "
                                  "distribution as the one stored in 'accessory_files/"
-                                 "reference_fragment_length_distribution.tsv'! The provided information is used to "
+                                 "plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'! The provided information is used to "
                                  "optimize the combination of correction weight matrices from different genomic "
                                  "intervals to achieve a linear combination of these regions which resembles the "
-                                 "reference GC content distribution defined here.", metavar='File')
+                                 "reference GC content distribution defined here.", metavar='File')  # TODO: add info how to create that file!
     input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
@@ -1454,7 +1454,7 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
     total_discarded_intervals = 0
     all_bad_intervals = {}
     bad_interval_weights = []
-    deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
+    _ = deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
     # if memory profiler is applied to code and processes are spawned rather than forked, we get a PicklingError her:
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
@@ -3115,7 +3115,7 @@ def main() -> int:
                 # get intervals with weights from estimated reference genome fragment GC content reconstruction!
                 # -> linear combination of selected intervals GC content that best approximates the reference GC content
                 # following a typical cfDNA fragment length distribution (provided for blood plasma cfDNA, plasmaSeq
-                # protocol in file: 'reference_fragment_length_distribution.tsv')
+                # protocol in file: 'plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv')
                 # NOW: compute GC bias!
                 ((correction_weights_matrix_path, correction_weights_matrix),
                  (mask_path, weights_mask)) = compute_gc_bias_parallel(

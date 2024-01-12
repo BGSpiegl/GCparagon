@@ -1,0 +1,18 @@
+regions added to ENCODE blacklist to be excluded during GC-bias computation:
+ (basis: ENCODE blacklisted regions (accessory_files/bad_regions/hg19/hg19-ENCODE_blacklist.v2.bed))
+ - telomeres (which are in general 10kb from each chromosome end; hg19_telomere.bed extracted from accessory_files/hg19/hg19.agp.gz)
+ - centromeres (hg19_centromeres.bed extracted from accessory_files/bad_regions/hg19/hg19.agp.gz)
+ - gaps caused by sequencing issues concerning heterochromatic DNA (hg19_heterochromatin.bed extracted from accessory_files/bad_regions/hg19/hg19.agp.gz)
+ - gaps in short chromosome arms (hg19_shortArms.bed extracted from accessory_files/bad_regions/hg19/hg19.agp.gz)
+ - UCSC gaps (hg19_gaps.bed; downloaded from UCSC table browser)
+ - all alternate contigs (hg19_ALT.bed; extracted from the reference's *.chrom.sizes file)
+ - PAR chrY (hg19_PAR_chrY.bed; info taken from https://genome-euro.ucsc.edu/cgi-bin/hgGateway?db=hg38&redirect=manual&source=genome.ucsc.edu; paragraph "Pseudoautosomal regions")
+ - GRC incident regions from UCSC genome browser (table browser) with issues that haven't been marked as resolved: track name="GRC Incident Database" description="This track shows locations in the human assembly where assembly problems have been noted or resolved, as reported by the Genome Reference Consortium (GRC)." (hg19_GRC_incident.bed)
+exclusion marked regions list creation commands:
+
+	cat hg19_ENCODE_blacklist.v2.bed hg19_telomere.bed hg19_ALT.bed hg19_centromeres.bed hg19_GRC_incident.bed hg19_heterochromatin.bed hg19_PAR_chrY.bed hg19_shortArms.bed hg19_gaps.bed| \
+	sort -k1,1 -k2,2n > hg19_GCcorrection_ExclusionList.sorted.bed && bedtools merge -o distinct -c 4 -i hg19_GCcorrection_ExclusionList.sorted.bed | \
+	sort -k1,1 -k2,2n > hg19_GCcorrection_ExclusionList.sorted.merged.bed && rm hg19_GCcorrection_ExclusionList.sorted.bed
+
+RESULT:	486,086,410 = 16.01% of hg19 (no chrY, chrM, only standard chromosome bases counted)
+hg19 standard chromosomes (without chrM and chrY) minus hg19_GCcorrection_ExclusionList.sorted.merged.bed has --effectiveGenomeSize 2,550,217,436

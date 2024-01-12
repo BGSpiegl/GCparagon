@@ -18,10 +18,13 @@ SHIFT_N_TIMES = 4
 CHUNK_POSITION_OFFSETS = tuple([CHUNK_SIZE // SHIFT_N_TIMES * shift_idx
                                 for shift_idx in range(SHIFT_N_TIMES)])
 
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+GENOME_BUILD = 'hg19'
 # PATH DEFINITIONS
-exclusion_list = CODE_ROOT_PATH / 'accessory_files/hg38_GCcorrection_ExclusionList.merged.sorted.bed'
-genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg38.genome_file.tsv'
-output_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x'
+exclusion_list = CODE_ROOT_PATH / 'accessory_files/hg19_GCcorrection_ExclusionList.sorted.merged.bed'
+genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg19.genome_file.tsv'
+output_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_hg19'
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 if not bedtools_path:
     print("ERROR - bedtools path not found. Cannot benchmark intersection times.")
@@ -137,14 +140,14 @@ if __name__ == '__main__':
         # interval up the genome
         std_intervals = get_stdchrom_intervals(genome_file=genome_file_path, interval_size=CHUNK_SIZE, offset=interval_offset)
         # write whole genome BED file
-        whole_genome_bed_path = pth_join(current_output_dir, f'hg38_{CHUNK_SIZE//1000}kbp_intervals.bed')
+        whole_genome_bed_path = pth_join(current_output_dir, f'{GENOME_BUILD}_{CHUNK_SIZE//1000}kbp_intervals.bed')
         with open(whole_genome_bed_path, 'wt') as f_whole_g:
             f_whole_g.writelines([f"{chrom}\t{start}\t{stop}\n" for chrom, start, stop in std_intervals])
         # compute overlap between each interval in whole genome BED and the merged, sorted exclusion list instance
         overlap_statistics = {}.fromkeys(multiples)
         for mult in multiples:
             out_overlap_bed = pth_join(current_output_dir,
-                                       f'hg38_{CHUNK_SIZE//1000}kbpStdChunks_gte{mult}kb_EML-overlap.bed')
+                                       f'{GENOME_BUILD}_{CHUNK_SIZE//1000}kbpStdChunks_gte{mult}kb_EML-overlap.bed')
             overlap_statistics[mult] = {'overlaps_bed_path': out_overlap_bed}
             intersect_bedtool = BedTool(mult_exclusion_list_beds[mult])
             wg_bedtool = BedTool(whole_genome_bed_path)

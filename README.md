@@ -41,7 +41,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
   - [Software License](#software-license)
 - [Result of GC Bias Correction](#result-of-gc-bias-correction)
 - [Output](#output)
-- [Performance](#performance)
+- [! Performance !](#performance)
 - [Hardware Requirements](#hardware-requirements)
 - [Software Dependencies](#software-dependencies)
 - [Required Files](#required-files)
@@ -61,7 +61,8 @@ in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was develo
 GCparagon takes an aligned BAM file as input and processes the alignments in predefined genomic intervals to estimate 
 GC bias in the sample.
 Important: the input BAM files must have been created using an alignment algorithm that conforms with the SAM format specification (e.g. [BWA MEM][bwa_mem]).
-GCparagon uses the observed template length (TLEN column in BAM) to estimate fragment length. (preferably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
+GCparagon uses the observed template length (TLEN column in BAM) to estimate fragment length.
+(Preferably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
 
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
 be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
@@ -101,7 +102,7 @@ repository:
 
 `git clone https://github.com/BGSpiegl/GCparagon`
 
-After making sure that conda is available on your system and up-to-date, move inside the cloned repository
+After making sure that conda is available on your system and up to date, move inside the cloned repository
 
 `cd GCparagon`
 
@@ -131,13 +132,14 @@ Default output created by GCparagon is described [here](#result-of-gc-bias-corre
 There are several options available to alter plotting behaviour or to keep intermediate data created during
 simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output**.
 To activate BAM output, use the `--output-bam` flag.
-Be mindful of setting the `--temporary-directory` to a reasonable path! (i.e. high IOPS hardware if available +
+Be mindful of setting the `--temporary-directory` to a reasonable path!
+(I.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
 
 To gain access to the four BAM files used in the publication, go to EGA, create an account and ask for access to dataset
 [EGAS00001006963].
 
-To recreate the **tagged** BAM files and matrix visualisations for the three presets and 4 samples from [EGAS00001006963],
+To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
 first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
 The reference genome used to create the 4 BAM files in plots can be downloaded using the 
 [EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script:
@@ -191,14 +193,14 @@ Intended for research use only.
 ## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using default parameter preset 2 (5-10 min) of 2 human cfDNA samples (paired-end WGS, 
+GC bias correction results using default parameter preset 2 (5–10 min) of two human cfDNA samples (paired-end WGS, 
 [EGAS00001006963]) are shown below.
 For each sample, the original fragment GC content distribution (= "FGCD", dotted colored lines), the GCparagon-corrected
 FGCD (solid colored lines), the correction achieved with the Griffin algorithm (grey dashed lines), and the simulated 
 FGCD across the entire analyzable genome (GRCh38, black lines) are displayed.
-The GC content of fragments was estimated either using the read sequence if template length is (shorter or) equal to the 
-read sequence length, or from slices of the reference genome using the leftmost alignment position and the template 
-length otherwise.
+The GC content of fragments was estimated either:
+ - by using the read sequence, if the template length is (shorter or) equal to the read sequence length,
+ - or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
 
 ![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/B01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
 
@@ -209,10 +211,11 @@ length otherwise.
 
 (P01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
 
-The maximum residual bias seems to depend on the initial intensity of GC bias and on the representativeness of the 
-combined FGCDs of preselected genomic intervals that were used for computing GC bias 
-(more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
-achieve a comparable number of processed fragments). With increasing preset number, the number of genomic intervals used
+The maximum residual bias seems to depend on the initial intensity of GC bias and on the representativeness of
+preselected genomic intervals that were used for computing GC bias.
+In general, more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
+achieve a comparable number of processed fragments.
+With increasing preset number, the number of genomic intervals used
 for GC bias computation also increases. This also allows for a better representation of the reference FGCD by linear 
 combination of weight matrices computed from individual preseleted genomic intervals.
 
@@ -225,8 +228,8 @@ unexpressed or lowly expressed genes should show an almost flat cDoC profile.
 
 Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
 unexpressed genes is shown below (fragment coverage in silico reduced to their central 61 bp).
-Original coverage before correctoin is shown as thin colored lines. cDoC of mono-nucleosomal fragments after GC bias 
-correction with GCparagon is shown as thick colored lines.
+Original coverage before correctoin is shown as thin-colored lines.
+cDoC of mono-nucleosomal fragments after GC bias correction with GCparagon is shown as thick-colored lines.
 
 For these plots, only mono-nucleosomal fragments with observed template length between 110-210bp were included to create 
 a surrogate signal to assess the average nucleosome positioning across combined regions (active genes: expected 
@@ -310,6 +313,24 @@ a naive combination of GC correction weights:
 ## Performance
 
 -------------------------------------------------------------------------------------------------------------------
+A benchmark of GCparagon, preset2 (v0.5.5) against the Griffin algorithm highlighted the superior computation speed of GCparagon:
+
+| Sample |    Griffin table output    | GCparagon table output | GCparagon tagged BAM output | 
+|:------:|:--------------------------:|:----------------------:|:---------------------------:|
+|        |          hh:mm:ss          |   hh:mm:ss; speedup    |      hh:mm:ss; speedup      |
+|  P01   |          11:54:20          | 0:04:58; ***143.8x***  |    0:23:03; ***31.0x***     |
+|  H01   |          06:51:43          |    0:05:14;  78.7x     |       0:20:09; 20.4x        |
+|  C01   |          05:13:52          |    0:04:32;  69.2x     |       0:17:09; 18.3x        |
+|  B01   |          04:51:39          |    0:04:43;  61.8x     |       0:15:32; 18.8x        |
+
+
+Concerning the time to output of the correction or bias table,
+**GCparagon was up to 144x but at least 62 times faster than Griffin**.
+When comparing Griffin table output time to duration of GCparagon bias computation and tagged BAM output, 
+GCparagon was up to 31x but at least 18x faster than Griffin.
+The update to GCparagon v0.6.0 resulted in increased FGCD correction and cDoC to Griffin results
+but also slightly increased the computation time compared to the v0.5.4 benchmark. 
+
 The GC bias computation time depends linearly on the portion of the input data which is processed.
 The average DoC of the visualized samples is between 10x and 30x.
 For preset 1 and preset 2, the duration of bias computation was found to be no longer than 3 and 16 minutes 
@@ -324,7 +345,7 @@ is shown in the figure below (from outdated v0.5.4).
 ![preset1_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_computation_time_preset1_vs_processed_fragments_cluster_683BAMs.png?raw=true)
 
 The amount of consumed memory is independent of the number of processed fragments (from outdated v0.5.4).
-In general, it depends on the DoC of a sample and the chosen rounds of simulations (i.e. the chosen parameter preset).
+In general, it depends on the DoC of a sample and the chosen rounds of simulations (i.e., the chosen parameter preset).
 The user can expect a memory usage between 4 and 9 GiB for default settings (12 cores).
 
 ![linregress_comp_time](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/benchmark_results/GCparagon_memory_consumption_presets_SSD-ref.png?raw=true)
@@ -337,21 +358,6 @@ Memory consumption over time can be visualized using the [profile_command.py](sr
 Writing of tagged BAM files also uses multiprocessing. This step usually takes longer than the bias 
 computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB BAM file took 25 minutes 
 (computing GC weights + writing tagged BAM file).
-
-A benchmark of GCparagon, preset2 (v0.5.5) against the Griffin algorithm showed superior computation speed:
-
-| Sample |    Griffin table output    | GCparagon table output | GCparagon tagged BAM output | 
-|:------:|:--------------------------:|:----------------------:|:---------------------------:|
-|        |          hh:mm:ss          |   hh:mm:ss; speedup    |      hh:mm:ss; speedup      |
-|  B01   |          04:51:39          |    00:04:43;  61.8x    |       00:15:32; 18.8x       |
-|  H01   |          06:51:43          |    00:05:14;  78.7x    |       00:20:09; 20.4x       |
-|  C01   |          05:13:52          |    00:04:32;  69.2x    |       00:17:09; 18.3x       |
-|  P01   |          11:54:20          |  00:04:58; **143.8x**  |     00:23:03; **31.0x**     |
-
-Concerning time to **output of correction or bias table was up to 144x but at least 62 times faster** than Griffin.
-When comparing Griffin table output time to duration of GCparagon bias computation and tagged BAM output, 
-GCparagon was up to 31x but at least 18x faster than Griffin. The update to v0.6.0 resulted in increased FGCD correction
-and cDoC to Griffin results but also slightly increased the computation time compared to the v0.5.4 benchmark. 
 
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
 directory before running GCparagon with `--output-bam`!
@@ -674,37 +680,67 @@ samples from [EGAS00001006963].
 -------------------------------------------------------------------------------------------------------------------
 The code uses up to 1,702 
 [preselected 1 Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed) of 
-hg38 reference genome for processing. Preselection was carried on the basis of a 
+hg38 reference genome for processing.
+Preselection was carried on the basis of an 
 [exclusion listed regions BED file](accessory_files/hg38_GCcorrection_ExclusionList.merged.sorted.bed) to:
-- reduce overlap of 1 Mb genomic intervals with regions found to be problematic for short read sequencing or sequence alignment
+- reduce the overlap of 1 Mb genomic intervals with regions found to be problematic for short read sequencing or sequence alignment
 - minimize inclusion of assembly gaps and errors
-- slightly optimize placement of intervals along the genome while ensuring preselection of only non-overlapping regions
+- slightly optimize the placement of intervals along the genome while ensuring preselection of only non-overlapping regions
 - enforce a threshold for maximum percentage of exclusion listed bases per genomic interval (33% max. overlap 
 implemented)
 
 Creation of the exclusion listed regions BED file, starting from the 
 [ENCODE exclusion listed regions v2 BED file](accessory_files/bad_regions/hg38-ENCODE_blacklist.v2.bed),
 is documented [here](accessory_files/GC_correction_exclusion_list_creation.info).
-The final exclusion list includes 429,045,481 reference positions (=14.7% of GRCh38).
+The hg19 version is documented [here](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
+The final GRCh38 exclusion list includes 429,045,481 reference positions (=14.7% of GRCh38).
 
-Currently, only a preselection of GRCh38 genomic 1 Mb regions is available.
-Preselection for GRCh37/hg19 currently has to be carried out by the user using their own exclusion list 
-and the scripts [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList.py](accessory_files/genomic_interval_preselection-shifted4x/01-GI-preselection_test_Mbp_intervals_against_ExclusionList.py) 
-(creation of equal-sized genomic intervals intersected with exclusion marked regions list), 
-[02-GI-preselection_select_low_scoring_regions_from_overlapping.py](accessory_files/genomic_interval_preselection-shifted4x/02-GI-preselection_select_low_scoring_regions_from_overlapping.py) 
-(selection of least-exclusion-list-overlapping regions), and 
-[03-GI-preselection_compute_genomic_interval_fragment_GC_content.py](accessory_files/genomic_interval_preselection-shifted4x/03-GI-preselection_compute_genomic_interval_fragment_GC_content.py)
-(computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI)).
-The diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
-[04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_visualize_preselected_intervals_GC_content_distributions.py)
+Currently, only a preselection of GRCh38 and hg19 genomic 1 Mb regions is available.
+Preselection for other genome builds currently has to be carried out by the user using their own exclusion list.
+The following files need to be created:
+ - *<GENOME_BUILD>.2bit*
+ - *<GENOME_BUILD>_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed*
+ - *<GENOME_BUILD>.genome_file.tsv*
+ - *<GENOME_BUILD>_reference_GC_content_distribution.tsv*
+ - optional: *<ISOLATION_PROTOCOL>_<SAMPLE_TYPE>_reference_fragment_length_distribution.tsv*
+(if the plasmaSeq ccfDNA reference fragment length distribution is inadequate)
+
+Once created,
+some of these files need to be passed to GCparagon via the following commandline parameters to take effect:
+ - `--reference-gc-content-distribution-table <path_to/GENOME_BUILD>_reference_GC_content_distribution.tsv`
+ - `--intervals-bed <path_to/GENOME_BUILD>_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed`
+ - `--two-bit-reference-genome <path_to/GENOME_BUILD>.2bit`
+
+These files can be created using the following code/scripts in ascending order:
+ - [reference genome build download instructions](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh)
+ - [Exclusion list creation info](accessory_files/GC_correction_exclusion_list_hg19_creation.info)
+ - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
+(creation of equal-sized genomic intervals, intersected with the exclusion marked regions list)
+ - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
+(selection of least-exclusion-list-overlapping regions)
+ - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
+(computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI))
+ - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
+(computing the genome-wide reference fragment GC content distribution = "reference FGCD" based on the reference 
+fragment length distribution).
+
+ - Optionally,
+the diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
+[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
-Size of preselected genomic intervals should be uniform and fit the application (i.e. larger genomic intervals for 
+The size of preselected genomic intervals should be uniform and fit the application (i.e., larger genomic intervals for 
 shallow sequenced WGS data). A tradeoff was made for GRCh38 by choosing 1 Mb genomic intervals.
+
+Not including assembly gaps might cause a significant performance hit because GCparagon would then try and repeatedly 
+fail to draw fragments from gapped regions containing only Ns unnecessarily.
+This can be prevented by including, for example, the UCSC gap track regions in the region exclusion.
+The gap track must match the genome build of interest!
+Gap tracks can be downloaded using the UCSC table browser [UCSC Table Browser][table browser].
 
 An IGV screenshot visualizing the distribution of 
 [hg38 preselected 1Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed)
-across the whole genome and two chromosomes is provided 
+across the whole genome, and additionally for two chromosomes, is provided 
 [here](accessory_files/genomic_interval_preselection-shifted4x/IGV_composite_preselected_intervals_hg38.png).
 
 
@@ -720,8 +756,21 @@ WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963] 
 Instructions for FastA reference genome sequence download can be found 
 [here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
 
-Code for genomic regions exclusion list creation and genomic interval preselection can be found in folder 
-[accessory_files](accessory_files).
+Code for genomic regions exclusion list creation can be found in 
+[GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
+Code for genomic interval preselection for a currently unsupported build can be found in folder 
+[accessory_files/genomic_interval_preselection-shifted4x_hg19](accessory_files/genomic_interval_preselection-shifted4x_hg19).
+Users successfully creating reference files for other builds are kindly asked to create a branch + merge request, where 
+they provide these resources (i.e., a URL to the 2bit or FastA reference sequence file,
+<GENOME_BUILD>.genome_file.tsv, 
+<GENOME_BUILD>_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed, 
+<GENOME_BUILD>_reference_GC_content_distribution.tsv,
+and optionally a different reference fragment length distribution file 
+<ISOLATION_PROTOCOL>_<SAMPLE_TYPE>_reference_fragment_length_distribution.tsv in case the plasmaSeq ccfDNA 
+reference is inadequate for the analyzed samples).
+
+Note: a separate fragment length distribution file is required for urine samples because of the higher
+fragmentation of cfDNA in urine samples (compared to blood plasma cfDNA).
 
 Results of the correction benchmark including the Griffin algorithm can be found in [validation](validation).
 
@@ -759,3 +808,4 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [EGAS00001006963]: https://ega-archive.org/studies/EGAS00001006963
 [genome browser]: https://genome.ucsc.edu/
 [encode_exclusion_listed_regions_url]: https://github.com/Boyle-Lab/Blacklist/
+[table browser]: https://genome.ucsc.edu/cgi-bin/hgTables

@@ -26,9 +26,9 @@ output_path = search_path
 REF_BUILD = 'hg19'
 # ----------------------------------------------------------------------------------------------------------------------
 all_region_shifts_with_overlaps = list(search_path.glob(
-    f"*kbp_intervalOffset/{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv"))
+    f"*kbp_intervalOffset/{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv"))  # 3x shifted regs.
 all_region_shifts_with_overlaps.extend(list(search_path.glob(
-    f"{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))
+    f"{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))  # non-shifted regions
 # ^---- required input!
 # GCparagon: overlapping-exclusion-listed-bases, shifted up to 3 times by genomic_interval_size/4
 #            -> 4 files: 1x un-shifted + 3x shifted assertion: intervals of1 equal size!

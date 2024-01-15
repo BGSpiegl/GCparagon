@@ -719,14 +719,16 @@ These files can be created using the following code/scripts in ascending order:
  - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
 (selection of least-exclusion-list-overlapping regions)
  - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
-(computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI))
- - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
+(computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI);
+also detects bad simulation intervals and writes them to a separate BED file 
+'<GENOME_BUILD>_genomic_intervals_failed_fragment_drawing.bed')
+ - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
 (computing the genome-wide reference fragment GC content distribution = "reference FGCD" based on the reference 
 fragment length distribution).
 
  - Optionally,
 the diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
-[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
+[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
 The size of preselected genomic intervals should be uniform and fit the application (i.e., larger genomic intervals for 

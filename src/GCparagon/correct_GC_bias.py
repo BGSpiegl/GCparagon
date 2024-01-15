@@ -603,7 +603,7 @@ def read_bad_genomic_intervals_bed_file(bed_path: str) -> BadIntervalsDict:
     return bad_intervals
 
 
-def create_region_label(chrm: str ,start: int, end: int):
+def create_region_label(chrm: str, start: int, end: int):
     return f"{chrm}_{start:,}-{end:,}"
 
 

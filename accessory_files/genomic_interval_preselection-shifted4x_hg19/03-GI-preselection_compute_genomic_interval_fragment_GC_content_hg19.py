@@ -1,6 +1,7 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+import math
 import random
 import numpy as np
 from pathlib import Path
@@ -8,19 +9,21 @@ from math import log10
 import multiprocessing as mp
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
-from correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
-    safe_gc_base_count_inference_thresh, gc_count_rejecting_n_containing, rhui
 
 # get root path
 REPO_ROOT_DIR = Path(__file__).parent.parent.parent
+
+# from previous script
+SHIFT_N_TIMES = 4  # you might want to select a higher number
 
 # table path definitions
 # the following two paths are expected to be right -> change otherwise!
 GENOME_BUILD = 'hg19'
 default_2bit_reference_genome_path = (REPO_ROOT_DIR /
                                       f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')  # <---- required input!
-default_predefined_genomic_regions = (REPO_ROOT_DIR /
-                                      f'accessory_files/{GENOME_BUILD}_GCcorrection_ExclusionList.sorted.merged.bed')
+default_predefined_genomic_regions = \
+    REPO_ROOT_DIR / (f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
+                     f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.bed')
 # ^------- OUTPUT TABLE PATH!
 default_output_directory = REPO_ROOT_DIR / 'accessory_files'
 # below not required if
@@ -36,10 +39,56 @@ sample_n_fragments_per_mbp_default = 1 * 10**6
 DEFAULT_FLOAT_PRECISION_DIGITS = round(log10(sample_n_fragments_per_mbp_default)) + 3  # 9 digits after the comma
 # ^--- the parameter above is only used if fractions are stored instead of counts (i.e., SAVE_COUNTS = False)
 # Only has an impact if SAVE_COUNTS == False
-default_parallel_processes = 24
+default_parallel_processes = 3  # 24
 exclude_n_bases_default = True
 # random numbers:
 RANDOM_SEED = random.randint(1, 999)
+DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3  # from correct_GC_bias.py
+
+# definitions of specific exceptions
+class OutOfGenomicBoundsError(Exception):
+    """
+    To be raised in conditions where a genomic locus (= chromosome/scaffold/contig + coordinate) does not exist in a
+    given reference genome build, whichever that may be.
+    """
+    pass
+
+
+# from correct_GC_bias.py
+def rhui(num: OneOf[int, float]):
+    """
+
+    :param num:
+    :return:
+    """
+    return int(math.floor(num + 0.5))
+
+
+# from correct_GC_bias.py
+def safe_gc_base_count_inference_thresh(f_seq, f_len, threshold=0.3):
+    """
+    Execution takes around 30-60 micro seconds
+    :param threshold:
+    :param f_seq:
+    :param f_len:
+    :return:
+    :raises: nothing but may lead to IndexError
+    """
+    n_count = f_seq.count('N')
+    if n_count / f_len >= threshold:  # too many N-bases compared to fragment length
+        return 99999999  # will lead to an IndexError
+    try:
+        return rhui(f_len / (f_len - n_count) * (f_seq.count('G') + f_seq.count('C')))
+    except ZeroDivisionError:  # if all bases returned are 'N's
+        return 99999999  # will lead to an IndexError
+
+
+# from correct_GC_bias.py
+def gc_count_rejecting_n_containing(f_seq):
+    n_count = f_seq.count('N')
+    if n_count:  # too many N-bases compared to fragment length
+        return 99999999  # will lead to an IndexError
+    return f_seq.count('G') + f_seq.count('C')
 
 
 def load_table_with_flength_hdr(table_path: OneOf[str, Path]) -> Tuple[np.array, range]:
@@ -345,6 +394,7 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
     # output FGCD results table
     output_table_path = (Path(output_path) /
                          f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed')
+    # i:                            ^--- ADAPT NAME IF PARAMETERS WERE CHANGED! (interval size and/or overlap threshold)
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_table_path, 'wt') as f_out:
         hdr = '\t'.join(['chromosome', 'start', 'end', 'exclusion_marked_bases'] +
@@ -353,13 +403,12 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
         f_out.writelines(['\t'.join(list(map(
             lambda t: (str(t) if t != interval_result[-1] else  # unpack GC content counts list
                        ('\t'.join(list(map(lambda p: (str(p if save_counts else round(p/sum(t), ndigits=precision))),
-                                           t))))
-                       ),
-            interval_result))) + '\n' for interval_result in interval_results])
+                                           t)))
+                        )), interval_result))) + '\n' for interval_result in interval_results])
     # output bad intervals exclusion list if -> use a sample yield of 0 such that the interval will always be rejected
     # independent of the sample yield
     if there_were_bad_intervals:
-        bad_intervals_bed_path = output_table_path.parent / (f"genomic_intervals_failed_fragment_drawing"
+        bad_intervals_bed_path = output_table_path.parent / (f"{GENOME_BUILD}_genomic_intervals_failed_fragment_drawing"
                                                              f"{'-counts' if save_counts else '-f_rel'}.bed")
         bad_intervals_bed_path.parent.mkdir(parents=True, exist_ok=True)
         with open(bad_intervals_bed_path, 'wt') as f_bad:  # always re-write
@@ -378,8 +427,8 @@ def get_cmd_args():
                                     help='Path to a table containing (equal sized) genomic intervals '
                                          'which are intended to be used for GC bias correction later. This table '
                                          "should follow the output format of GCparagon utility scripts "
-                                         "'01-GI-preselection_test_Mbp_intervals_against_ExclusionList.py' and "
-                                         "'02-GI-preselection_select_low_score_regions_from_overlapping.py'.",
+                                         "'01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py' and "
+                                         "'02-GI-preselection_select_low_score_regions_from_overlapping_hg19.py'.",
                                     default=default_predefined_genomic_regions, metavar='File')
     # EITHER: SAMPLE-FragLenDist (avg. from multiple samples):
     commandline_parser.add_argument('-fldt', '--fragment-length-distributions-table',
@@ -494,7 +543,6 @@ if __name__ == '__main__':
     fragment_n_content_threshold = cmd_args.n_cont_max
     fragment_lengths_table_path = cmd_args.samples_flengths_table_path
     putative_ref_flength_dist_table = cmd_args.putative_ref_flength_dist_table
-    reference_genome_fgcd_tables_samples_dir = cmd_args.created_ref_fgcd_from_genomewide_sample_fgcd_tables
     use_average_across_these_samples = cmd_args.sample_subset
     fragments_per_mbp_sampled = cmd_args.fragments_per_mbp_sampled
     float_precision = cmd_args.float_precision
@@ -507,13 +555,6 @@ if __name__ == '__main__':
         else:
             raise ValueError("UNABLE TO PROCEED - path to either a table with fragment length distributions (FLDs) "
                              "nor a table to a consensus FLD was provided via the commandline.")
-    if reference_genome_fgcd_tables_samples_dir is not None:
-        if not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
-            print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
-            reference_genome_fgcd_tables_samples_path = None
-        else:
-            reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
-
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():
         use_reference_fld, flength_range = load_table_with_flength_hdr(table_path=putative_ref_flength_dist_table)
@@ -521,24 +562,12 @@ if __name__ == '__main__':
         use_reference_fld, flength_range = get_ref_flength_rel_frequencies(
             corrected_fraglengths_table_path=fragment_lengths_table_path,
             normalize_sample_counts=True, output_table=True, output_dir=output_directory)
-    # 2) OPTIONAL: create reference FGCD
-    # (from validation code! -> re-align validation BAMs to your reference genome or use your samples & their FGCDs!)
-    if reference_genome_fgcd_tables_samples_path is not None:
-        reference_genome_fgcd_tables_samples = gather_tsvs(tsvs_path=reference_genome_fgcd_tables_samples_path,
-                                                           reduce_to_samples=use_average_across_these_samples)
-        if reference_genome_fgcd_tables_samples:
-            _ref_fgcd = load_expected_fgcds_and_average(tables_dict=reference_genome_fgcd_tables_samples,
-                                                        output_table=True, output_dir=output_directory,
-                                                        genome_build_label=reference_genome_path.stem.split('.')[0])
-        else:
-            print(f"WARNING - no TSV files found in directory '{reference_genome_fgcd_tables_samples_dir}'. No "
-                  f"consensus reference FGCD table will be output!")
-    # 3) read predefined genomic regions
+    # 2) read predefined genomic regions
     predefined_genomic_regions = load_predefined_genomic_regions(
         genomic_regions_table=predefined_genomic_regions_path)
     print(f"INSANITY CHECK - read {len(predefined_genomic_regions):,} lines from BED file "
           f"'{predefined_genomic_regions_path}'")
-    # 4) simulate fragment GC content distribution (= FGCD) in genomic intervals using multiprocessing
+    # 3) simulate fragment GC content distribution (= FGCD) in genomic intervals using multiprocessing
     simulate_expected_fgcd_for_intervals(genomic_intervals=predefined_genomic_regions,
                                          processes=parallel_processes,
                                          reference_genome=reference_genome_path,

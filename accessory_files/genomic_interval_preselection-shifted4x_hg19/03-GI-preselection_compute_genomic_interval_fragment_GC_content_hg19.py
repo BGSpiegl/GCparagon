@@ -10,28 +10,32 @@ import multiprocessing as mp
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
 
-# get root path
+# get the root path
 REPO_ROOT_DIR = Path(__file__).parent.parent.parent
 
-# from previous script
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!!!
+INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
 SHIFT_N_TIMES = 4  # you might want to select a higher number
+GENOME_BUILD = 'hg19'
+REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # table path definitions
-# the following two paths are expected to be right -> change otherwise!
-GENOME_BUILD = 'hg19'
 default_2bit_reference_genome_path = (REPO_ROOT_DIR /
                                       f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')  # <---- required input!
 default_predefined_genomic_regions = \
     REPO_ROOT_DIR / (f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
-                     f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.bed')
+                     f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE//10**6}Mbp_intervals_'
+                     f'{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.bed')
 # ^------- OUTPUT TABLE PATH!
 default_output_directory = REPO_ROOT_DIR / 'accessory_files'
-# below not required if
-default_putative_ref_flength_dist_table = REPO_ROOT_DIR / 'accessory_files/plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
+# below not required if ccfDNA from a blood plasma sample and the isolation protocol 'plasmaSeq' was used to
+# create the library where the reads of the input BAM file originate from
+default_putative_ref_flength_dist_table = \
+    REPO_ROOT_DIR / 'accessory_files/plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
+# WARNING: you MUST create a REFERENCE FRAGMENT LENGTH DISTRIBUTION ---^ from your input samples OTHERWISE!
 SAVE_COUNTS = True  # saves relative frequency otherwise
-
-# sample definitions
-# use_average_across_these_samples = ('B01', 'H01', 'P01')
 
 # analysis setup
 sample_n_fragments_per_mbp_default = 1 * 10**6
@@ -353,7 +357,7 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
     regions_per_process = len(genomic_intervals) // processes
     intervals_for_processes = []
     for list_idx in range(processes):
-        if list_idx == processes - 1:  # last list consumes the rest
+        if list_idx == processes - 1:  # the last list consumes the rest
             intervals_for_processes.append(genomic_intervals[regions_per_process * list_idx:])  # until end
         else:
             intervals_for_processes.append(genomic_intervals[regions_per_process * list_idx:

@@ -1,8 +1,7 @@
 #!/usr/bin/env python3
 
 from typing import List, Tuple, Dict, Union
-from os.path import join as pth_join, sep as pth_sep
-from os import makedirs as os_mkdirs
+from os.path import join as pth_join
 from shutil import which as sh_which
 from sys import exit as sys_exit
 from pybedtools import BedTool
@@ -13,18 +12,20 @@ CODE_ROOT_PATH = Path(__file__).parent.parent.parent
 
 bedtools_path = sh_which('bedtools')
 
-CHUNK_SIZE = 1000000  # 1 Mb
-SHIFT_N_TIMES = 4
-CHUNK_POSITION_OFFSETS = tuple([CHUNK_SIZE // SHIFT_N_TIMES * shift_idx
-                                for shift_idx in range(SHIFT_N_TIMES)])
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS!
+CHUNK_SIZE = 1000000  # 1 Mb
+SHIFT_N_TIMES = 4
 GENOME_BUILD = 'hg19'
 # PATH DEFINITIONS
-exclusion_list = CODE_ROOT_PATH / 'accessory_files/hg19_GCcorrection_ExclusionList.sorted.merged.bed'
-genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg19.genome_file.tsv'
-output_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_hg19'
+exclusion_list = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}_GCcorrection_ExclusionList.sorted.merged.bed'
+genome_file_path = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}.genome_file.tsv'
+output_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}'
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+CHUNK_POSITION_OFFSETS = tuple([CHUNK_SIZE // SHIFT_N_TIMES * shift_idx
+                                for shift_idx in range(SHIFT_N_TIMES)])
 
 if not bedtools_path:
     print("ERROR - bedtools path not found. Cannot benchmark intersection times.")

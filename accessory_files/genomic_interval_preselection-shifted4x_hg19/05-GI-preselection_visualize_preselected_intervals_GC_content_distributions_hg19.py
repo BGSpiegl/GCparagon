@@ -9,22 +9,28 @@ from pathlib import Path
 # from correct_GC_bias import create_region_label
 
 # DEFINITIONS
-# intervals (opaque -> 0.01; we have ~1,700 of these; use already available functions!)
+# intervals (opaque -> 0.01; we have ~1,700 of these for hg38; use already available functions!)
 
 SOURCE_CODE_PATH = Path(__file__).parent.parent.parent
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!!!
 GENOME_BUILD = 'hg19'
+INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
+SHIFT_N_TIMES = 4  # you might want to select a higher number
+REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
 genomic_interval_fgcd = (SOURCE_CODE_PATH /
                          f'accessory_files/'
-                         f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed')
-# ^----- this must be computed using 03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py
+                         f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE}Mbp_intervals_'
+                         f'{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.FGCD.bed')
+#                           ^----- compute with 03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py
 reference_fgcd = SOURCE_CODE_PATH / f'accessory_files/{GENOME_BUILD}_reference_GC_content_distribution.tsv'
-# ^----- this must be computed using 04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py
+#                           ^----- compute with 04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py
 
 output_directory = (SOURCE_CODE_PATH /
                     f'accessory_files/'
-                    f'genomic_interval_preselection-shifted4x/{GENOME_BUILD}_FGCD_intervals_vs_reference')
+                    f'genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
+                    f'{GENOME_BUILD}_FGCD_intervals_vs_reference')
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 

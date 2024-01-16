@@ -11,41 +11,46 @@ from collections import defaultdict, deque
 from twobitreader import TwoBitFile
 from typing import Tuple, Dict, Union as OneOf, List
 
-SOURCE_CODE_ROOT_PATH = Path(__file__).parent.parent.parent  # ../src/GCparagon
-SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
-
 mp.set_start_method('spawn', force=True)  # for safety reasons, don't fork (don't screw up file handles)
+
+SOURCE_CODE_ROOT_PATH = Path(__file__).parent.parent.parent  # ../src/GCparagon
+
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!!!
+GENOME_BUILD = 'hg19'
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # GENOME BUILD FILE DEFINITIONS - set according to your target genome build!
 # ----------------------------------------------------------------------------------------------------------------------
-GENOME_BUILD = 'hg19'
-two_bit_ref_genome = (SOURCE_CODE_ROOT_PATH /
-                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')
+two_bit_ref_genome = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit'
+# ^--- needs to be downloaded using the EXECUTE_reference_download.sh script or a commented-out command inside
 if not two_bit_ref_genome.is_file():
     raise FileNotFoundError(f"required 2bit reference file not found at: '{two_bit_ref_genome}'")
-# ^--- needs to be downloaded using the EXECUTE_reference_download.sh script or a commented-out command inside
-ref_genome_chrom_sizes = (SOURCE_CODE_ROOT_PATH /
-                          f'src/GCparagon/2bit_reference/{GENOME_BUILD}.chrom.sizes')
-draw_n_fragments = 500*10**6  # five hundred million
-n_processes = 4  #24  # if 24, actually 1 used per std-chrom -> chr1 will take the longest
+ref_genome_chrom_sizes = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.chrom.sizes'
+# ANALYSIS PERFORMANCE DEFINITIONS
+draw_n_fragments = 500*10**6  # draw five hundred million fragments in total; the more, the merrier
+n_processes = 23  # if 23, actually 1 used per std-chrom (without chrY which is too small)
+# -> chr1 will take the longest; increasing above n_chromosomes has no effect
 
 SCRIPT_ROOT_PATH = Path(__file__).parent
 
-out_path = SCRIPT_ROOT_PATH.parent.parent  # ../GCparagon/accessory_files
+out_path = SCRIPT_ROOT_PATH.parent  # ../GCparagon/accessory_files
 # !!!!!
 # READ THE FOLLOWING
 # !!!!!
 # CURRENT ASSAY: PlasmaSeq
 # CURRENT SAMPLE TYPE: blood plasma
 # SEQUENCING TECHNOLOGY: Illumina (paired-end short reads)
-# WARNING: if your sample type and/or wet lab procedure (and/or the sequencing technology) differes (significantly),
-#          it is STRONGLY recommended to recompute the fragment length distribution percentages! (20-800bp fragments)
-# WARNING: GCparagon was designed for untargeted, PAIRED-END sequencing read data of ccfDNA from plasma samples!
+# WARNING: if your sample type and/or wet lab procedure (and/or the sequencing technology) differs (significantly),
+#          it is STRONGLY recommended to recompute the fragment length distribution percentages! (20-800 bp fragments)
+# WARNING: GCparagon was initially designed for untargeted, PAIRED-END sequencing read data of ccfDNA from plasma
+#          samples! You must adapt the reference files accordingly, if any of these circumstances differ for your
+#          experiment! In that case, please see the README.md for more information on which files need to be changed.
 # ----------------------------------------------------------------------------------------------------------------------
 observed_fragments_tsv_file = SCRIPT_ROOT_PATH.parent / 'plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
 # ^--- USE THIS REFERENCE DISTRIBUTION ONLY FOR cfDNA from PLASMA and PlasmaSeq library prep!
 # IF YOU USE ANOTHER WET LAB PROCEDURE AND/OR ANALYTE, CREATE THIS REFERENCE DISTRIBUTION YOURSELF FROM AT LEAST 4
-# SAMPLES WITH MATCHING WET LAB PROCEDURE AND IDENTICAL ANALYTE TYPE (urin, CSF, sputum, etc.) !!!!!!!!!!!!!!!!!!!!!!!!!
+# SAMPLES WITH MATCHING WET LAB PROCEDURE AND IDENTICAL ANALYTE TYPE (urine, CSF, sputum, etc.) !!!!!!!!!!!!!!!!!!!!!!!!
 # ----------------------------------------------------------------------------------------------------------------------
 
 
@@ -116,14 +121,14 @@ def compute_sampling_numbers_per_chrom(chrom_sizes_path: Path, target_frags_per_
                 continue
             total_size += int(size)
             relevant_chrom_sizes[chrom] = int(size)
-    # compute number of fragments per chromosomes
+    # compute the number of reqired fragments per chromosomes
     for chrm, size in relevant_chrom_sizes.items():
         for frag_len, n_samples in target_frags_per_flen.items():
             relevant_chrom_samples[chrm].update({frag_len: int(round(n_samples * size / total_size, ndigits=0))})
-    print("Checking target fragment samples balance now (max +-1% of total observed fragment countn allowed)..")
-    assert sum(target_frags_per_flen.values())*0.99 < \
+    print("Checking target fragment samples balance now (max +-0.1% of total observed fragment count allowed)..")
+    assert sum(target_frags_per_flen.values())*0.999 < \
            sum([sum(chrom_samples.values()) for chrom, chrom_samples in relevant_chrom_samples.items()]) < \
-           sum(target_frags_per_flen.values())*1.01  # within +-1% deviation of target value
+           sum(target_frags_per_flen.values())*1.001  # within +-1% deviation of target value
     return relevant_chrom_samples, relevant_chrom_sizes
 
 

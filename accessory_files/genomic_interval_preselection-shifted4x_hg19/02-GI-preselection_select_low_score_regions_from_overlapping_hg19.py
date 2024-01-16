@@ -6,33 +6,25 @@ from typing import Tuple, List
 
 # path definitions (relative imports):
 CODE_ROOT_PATH = pathlib.Path(__file__).parent.parent.parent
-CODE_ROOT_DIR = str(CODE_ROOT_PATH)
-
-# add src path to PYTHONPATH variable (= current parent dir):
-if CODE_ROOT_DIR not in sys.path:
-    print("| INFO - adding GCparagon_dev software parent directory to Python module search path "
-          f"variable: {CODE_ROOT_DIR}")
-    sys.path.append(CODE_ROOT_DIR)
 
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
-# info - all input regions within 1Mbp of the chromosome ends are removed
-genome_file_path = CODE_ROOT_PATH / 'accessory_files/hg19.genome_file.tsv'  # <---- required input!
-# TODO: put here your shifted regions BED files containing exclusion list overlap
-# THE FOLLOWING VARIABLES SHOULD BE IDENTICAL TO THE ONES FROM THE "01-GI-preselection_....py" SCRIPT: -----------------
-INTERVAL_SIZE = 10**6
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!
+INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
 SHIFT_N_TIMES = 4  # you might want to select a higher number
-search_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_hg19'
-output_path = search_path
-REF_BUILD = 'hg19'
+GENOME_BUILD = 'hg19'
+REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
 # ----------------------------------------------------------------------------------------------------------------------
+# info - all input regions within 1Mbp of the chromosome ends are removed
+genome_file_path = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}.genome_file.tsv'  # <---- required input!
+search_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}'
+output_path = search_path
 all_region_shifts_with_overlaps = list(search_path.glob(
     f"*kbp_intervalOffset/{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv"))  # 3x shifted regs.
 all_region_shifts_with_overlaps.extend(list(search_path.glob(
     f"{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))  # non-shifted regions
 # ^---- required input!
 # GCparagon: overlapping-exclusion-listed-bases, shifted up to 3 times by genomic_interval_size/4
-#            -> 4 files: 1x un-shifted + 3x shifted assertion: intervals of1 equal size!
-REGION_SIZE = 10**6  # 1Mbp -> change according to input BED files!
+#            -> 4 files: 1x unshifted + 3x shifted assertion: intervals of equal size!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 with open(genome_file_path, 'rt') as f_genome:
@@ -160,7 +152,7 @@ if __name__ == '__main__':
         print(f" i : {chrom} selected regions: {len(chosen_regions[chrom]):,}\n"
               f"     {' '*len(chrom)}  skipped regions: {len(skip_these_regions[chrom]):,}")
     # write output:
-    output_file = output_path / f'{REF_BUILD}_minimalExclusionListOverlap_{CHROM_END_DISTANCE//10**6}Mbp_intervals_' \
+    output_file = output_path / f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE//10**6}Mbp_intervals_' \
         f'{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.bed'
     reg_buffer = []
     n_lines_written = 0
@@ -176,5 +168,5 @@ if __name__ == '__main__':
                 f_chosen_regs.writelines(reg_buffer)
                 n_lines_written += len(reg_buffer)
                 reg_buffer = []
-    print(f"done writing {n_lines_written:,} lines (= {REGION_SIZE//10**6}Mbp regions) to BED file "
+    print(f"done writing {n_lines_written:,} lines (= {INTERVAL_SIZE//10**6}Mbp regions) to BED file "
           f"'{output_file}'")

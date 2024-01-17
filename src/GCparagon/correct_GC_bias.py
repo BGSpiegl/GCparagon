@@ -272,7 +272,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'reduced when selecting a higher '
                                       'preset value. Preset 3 will attempt to process all genomic intervals (target '
                                       'number of fragments set to 100B) within the limits of the maximum allowed'
-                                      'exclusion marked regions overlap (per default default ~1.7 Gb of reference are '
+                                      'exclusion marked regions overlap (per default default ~2.7 Gb of reference are '
                                       'processed). NOTE: the percentage of total GC bias corrected fragments in the '
                                       'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '

@@ -578,7 +578,7 @@ Processing options:
                         script. Maximum memory consumption for any preset should stay below 4 GiB. If preset is not zero, any customized parameters conflicting with the preset will be ignored. A non-
                         zero preset will set the following parameters: number of simulations, the target number of processed fragments, minimum number of fragment attribute combination occurrences, and
                         the options for outlier detection and smoothing. Noise within the resulting correction weights is reduced when selecting a higher preset value. Preset 3 will attempt to process
-                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowed exclusion marked regions overlap (per default default ~1.7 Gb of reference
+                        all genomic intervals (target number of fragments set to 100B) within the limits of the maximum allowed exclusion marked regions overlap (per default default ~2.7 Gb of reference
                         are processed). NOTE: the percentage of total GC bias corrected fragments in the dataset for presets 1 vs. 3 increases only from 99.837% to 99.938% (average across 4 samples).
                         Other fragment weights default to 1.0). The primary advantage of processing more fragments is the reduction of noise in computed weights and a better reconstruction of the reference 
                         fragment GC content distribution. It is recommended to use a higher
@@ -693,7 +693,7 @@ Creation of the exclusion listed regions BED file, starting from the
 [ENCODE exclusion listed regions v2 BED file](accessory_files/bad_regions/hg38-ENCODE_blacklist.v2.bed),
 is documented [here](accessory_files/GC_correction_exclusion_list_creation.info).
 The hg19 version is documented [here](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
-The final GRCh38 exclusion list includes 429,045,481 reference positions (=14.7% of GRCh38).
+The final GRCh38 exclusion list includes 385,022,382 reference positions (=12.68% of GRCh38).
 
 Currently, only a preselection of GRCh38 and hg19 genomic 1 Mb regions is available.
 Preselection for other genome builds currently has to be carried out by the user using their own exclusion list.

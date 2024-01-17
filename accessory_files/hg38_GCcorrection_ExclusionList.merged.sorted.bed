@@ -1,0 +1,1189 @@
+chr1	0	792500	HG-2296_Category_Gap_Status_Under_Review,HG-2297_Category_Gap_Status_Under_Review,HG-452_Category_Gap_Status_Stalled,High Signal Region,contiggap,telomere
+chr1	2625356	2791270	HG-2298_Category_Gap_Status_Under_Review,scaffoldgap
+chr1	12954385	13004384	contiggap,scaffoldgap
+chr1	16799164	16849163	scaffoldgap
+chr1	25268473	25454126	HG-2010_Category_Variation_Status_Under_Review,HG-2054_Category_Variation_Status_Under_Review
+chr1	29551998	29552233	Ngap
+chr1	29552234	29553835	scaffoldgap
+chr1	29553836	29555235	Ngap
+chr1	33141477	33204170	HG-2097_Category_Variation_Status_Under_Review
+chr1	46884750	47006671	HG-1364_Category_Variation_Status_Awaiting_External_Info
+chr1	59831143	59958770	HG-1365_Category_Variation_Status_Awaiting_External_Info
+chr1	86959753	87131991	HG-2101_Category_Unknown_Status_Awaiting_External_Info
+chr1	91386300	91388400	Low Mappability
+chr1	103594400	103761430	HG-879_Category_Clone_Problem_Status_Awaiting_Exptl_Data,High Signal Region
+chr1	113794912	113936531	HG-2504_Category_Variation_Status_Under_Review
+chr1	120906271	121079961	HG-2506_Category_Missing_sequence_Status_Under_Review
+chr1	121605200	124938900	High Signal Region,centromere,contiggap
+chr1	124977945	124978326	scaffoldgap
+chr1	125013061	125013223	scaffoldgap
+chr1	125026049	125026071	scaffoldgap
+chr1	125029105	125029169	scaffoldgap
+chr1	125067600	125086000	High Signal Region
+chr1	125103214	125103233	scaffoldgap
+chr1	125130200	143562200	High Signal Region,heterochromatin,scaffoldgap
+chr1	155174183	155305245	HG-1681_Category_Clone_Problem_Status_Awaiting_Elec_Data
+chr1	161423100	161472400	High Signal Region
+chr1	168348600	168349900	High Signal Region
+chr1	205972383	206004358	Ngap
+chr1	207467528	207715143	HG-2056_Category_Variation_Status_Under_Review
+chr1	223535420	223638013	HG-2299_Category_Gap_Status_Awaiting_Elec_Data,contiggap
+chr1	224010800	224017000	High Signal Region
+chr1	228558365	228608364	contiggap,scaffoldgap
+chr1	236713000	236715600	Low Mappability
+chr1	248932700	248956422	High Signal Region,telomere
+chr10	0	45700	Low Mappability,telomere
+chr10	27398187	27414347	HG-2597_Category_Variation_Status_Open
+chr10	38481300	38596500	High Signal Region,scaffoldgap
+chr10	38781896	42322500	HG-549_Category_Gap_Status_Awaiting_Exptl_Data,HG-551_Category_Gap_Status_Awaiting_Exptl_Data,High Signal Region,centromere,contiggap,scaffoldgap
+chr10	46853170	47145966	HG-2020_Category_Unknown_Status_Open
+chr10	47739149	47780368	HG-2331_Category_Clone_Problem_Status_Open
+chr10	47780369	47870368	scaffoldgap
+chr10	81206226	81287765	HG-2192_Category_Clone_Problem_Status_Under_Review
+chr10	83155662	83232965	HG-2436_Category_Variation_Status_Under_Review
+chr10	86472925	86604273	HG-2079_Category_Clone_Problem_Status_Under_Review
+chr10	91432806	91565244	HG-2548_Category_Variation_Status_Open
+chr10	101673303	101875145	HG-2078_Category_Clone_Problem_Status_Under_Review
+chr10	124121201	124121502	scaffoldgap
+chr10	126946300	126954579	Low Mappability,Ngap
+chr10	131597031	131597130	scaffoldgap
+chr10	132288546	132419318	HG-2462_Category_Clone_Problem_Status_Open
+chr10	133625800	133797422	HG-1449_Category_Gap_Status_Awaiting_Exptl_Data,HG-190_Category_Missing_sequence_Status_Awaiting_Exptl_Data,High Signal Region,scaffoldgap,telomere
+chr10_ML143355v1_fix	0	41219	HG-2331_Category_Clone_Problem_Status_Open
+chr11	0	356450	HG-1702_Category_Gap_Status_Stalled,HG-2549_Category_Unknown_Status_Under_Review,Low Mappability,contiggap,telomere
+chr11	518900	520700	Low Mappability
+chr11	584400	586500	High Signal Region
+chr11	964100	966000	Low Mappability
+chr11	1015700	1019300	High Signal Region
+chr11	1091000	1098200	Low Mappability
+chr11	1150312	1154760	Ngap
+chr11	3652800	3655600	High Signal Region
+chr11	10506900	10511100	High Signal Region
+chr11	28206300	28236700	High Signal Region
+chr11	30834078	30977299	HG-2113_Category_Unknown_Status_Awaiting_Elec_Data
+chr11	48828795	49016146	HG-2369_Category_Missing_sequence_Status_Awaiting_External_Info
+chr11	50099251	50488392	HG-2500_Category_Variation_Status_Under_Review
+chr11	50700815	54680987	HG-1492_Category_Gap_Status_Stalled,High Signal Region,centromere,contiggap,heterochromatin
+chr11	55919154	55979394	HG-2518_Category_Variation_Status_Under_Review
+chr11	61084500	61130400	High Signal Region
+chr11	61327812	61537384	HG-956_Category_Variation_Status_Awaiting_External_Info
+chr11	61949766	62116633	HG-2550_Category_Unknown_Status_Open
+chr11	64715725	64822611	HG-2495_Category_Variation_Status_Awaiting_External_Info
+chr11	70370400	70372400	High Signal Region
+chr11	70955697	71055696	contiggap,scaffoldgap
+chr11	73509800	73511700	High Signal Region
+chr11	77885600	77887600	High Signal Region
+chr11	87975332	87976922	Ngap
+chr11	87978203	88002896	contiggap
+chr11	88003835	88005210	Ngap
+chr11	93417500	93427700	High Signal Region
+chr11	94232700	94240400	High Signal Region
+chr11	96566179	96566364	scaffoldgap
+chr11	103408700	103410600	High Signal Region
+chr11	116710952	116888286	HG-2411_Category_Clone_Problem_Status_Under_Review
+chr11	121175000	121187000	High Signal Region
+chr11	131679500	131681500	High Signal Region
+chr11	135075600	135086622	High Signal Region,telomere
+chr11_KI270721v1_random	0	100315	nonstd
+chr12	0	77800	High Signal Region,telomere
+chr12	371800	422400	High Signal Region
+chr12	2254900	2257000	High Signal Region
+chr12	2519800	2540500	Low Mappability
+chr12	5928900	5933000	Low Mappability
+chr12	6798415	6805595	Ngap
+chr12	6805851	6825166	Ngap
+chr12	6825535	6828686	Ngap
+chr12	6829027	6847726	Ngap
+chr12	6848226	6854762	Ngap
+chr12	6855244	6919818	Ngap
+chr12	6920198	6971047	Ngap
+chr12	7083651	7084650	contiggap
+chr12	20550500	20552400	Low Mappability
+chr12	20768400	20770300	High Signal Region
+chr12	29790400	29834600	High Signal Region
+chr12	34703760	37269100	High Signal Region,Ngap,centromere,contiggap,scaffoldgap
+chr12	37333223	37333242	scaffoldgap
+chr12	37334748	37334767	scaffoldgap
+chr12	37379852	37380460	scaffoldgap
+chr12	37460033	37460128	scaffoldgap
+chr12	40461421	40561522	HG-2457_Category_Variation_Status_Stalled,HG-675_Category_Unknown_Status_Continuing_Investigation
+chr12	41362700	41364600	High Signal Region
+chr12	61471100	61473000	High Signal Region
+chr12	66473900	66475800	High Signal Region
+chr12	101147000	101155000	High Signal Region
+chr12	113079600	113081500	High Signal Region
+chr12	122083731	122092717	HG-1401_Category_GRC_Housekeeping_Status_Awaiting_External_Info
+chr12	124430500	124440300	High Signal Region
+chr12	124905900	124941800	High Signal Region
+chr12	130386400	130394100	High Signal Region
+chr12	131475300	131478600	High Signal Region
+chr12	131576000	131589700	High Signal Region
+chr12	132223300	132243400	High Signal Region,contiggap
+chr12	132430944	132518000	HG-2574_Category_Clone_Problem_Status_Under_Review,High Signal Region
+chr12	133249000	133275309	High Signal Region,telomere
+chr12_KN538370v1_fix	25997	34983	HG-1401_Category_GRC_Housekeeping_Status_Awaiting_External_Info
+chr13	1	10000	telomere
+chr13	10001	16022537	centromere,parmgap
+chr13	16022538	18171400	High Signal Region,centromere,contiggap,heterochromatin
+chr13	18211000	18216100	High Signal Region
+chr13	18358107	18408106	contiggap
+chr13	18447860	18607043	HG-1514_Category_Gap_Status_Awaiting_Exptl_Data
+chr13	32231912	32398469	HG-2497_Category_Unknown_Status_Awaiting_External_Info
+chr13	57140500	57172500	High Signal Region
+chr13	86202980	86252979	contiggap
+chr13	109423200	109425200	High Signal Region
+chr13	111703856	111753855	scaffoldgap
+chr13	111793442	111843441	contiggap
+chr13	113673021	113723020	contiggap
+chr13	113964616	113970538	Ngap
+chr13	113984942	113986932	Ngap
+chr13	114353300	114364328	Low Mappability,telomere
+chr13_KN538372v1_fix	6	189739	HG-156_Category_Missing_sequence_Status_Awaiting_Elec_Data
+chr14	0	19797318	HG-1060_Category_Path_Problem_Status_Awaiting_Elec_Data,HG-1544_Category_Gap_Status_Awaiting_Exptl_Data,HG-1545_Category_Gap_Status_Continuing_Investigation,High Signal Region,centromere,contiggap,parmgap,scaffoldgap,telomere
+chr14	22114872	22321586	HG-2507_Category_Clone_Problem_Status_Under_Review
+chr14	23033300	23098600	High Signal Region
+chr14	26629300	26634900	High Signal Region
+chr14	31793800	31798100	High Signal Region
+chr14	32483400	32486000	High Signal Region
+chr14	34537100	34562600	High Signal Region
+chr14	35947200	35950000	High Signal Region
+chr14	37351000	37356700	High Signal Region
+chr14	44025100	44027200	High Signal Region
+chr14	44705100	44709900	High Signal Region
+chr14	45477100	45482500	High Signal Region
+chr14	46865300	46866500	High Signal Region
+chr14	54235600	54240000	High Signal Region
+chr14	57112100	57118100	High Signal Region
+chr14	68693769	68873883	HG-2071_Category_Clone_Problem_Status_Awaiting_Elec_Data,HG-2301_Category_Variation_Status_Awaiting_Elec_Data
+chr14	74711700	74729000	High Signal Region
+chr14	86074000	86076000	High Signal Region
+chr14	86593300	86595200	High Signal Region
+chr14	88443700	88458100	High Signal Region
+chr14	100525900	100527800	High Signal Region
+chr14	101267600	101272200	High Signal Region
+chr14	101674400	101676400	High Signal Region
+chr14	103846804	103934844	HG-2356_Category_Unknown_Status_Under_Review
+chr14	104288100	104290200	High Signal Region
+chr14	105171720	105336833	HG-2562_Category_Unknown_Status_Open,High Signal Region
+chr14	105568500	105583900	High Signal Region
+chr14	105616500	105618600	High Signal Region
+chr14	105669168	106881350	HG-2332_Category_Variation_Status_Under_Review,HG-2360_Category_Variation_Status_Open,HG-2385_Category_Variation_Status_Under_Review,HG-2386_Category_Variation_Status_Under_Review,HG-2490_Category_Clone_Problem_Status_Under_Review,HG-3_Category_Path_Problem_Status_Awaiting_Exptl_Data,High Signal Region
+chr14	106883719	107033718	contiggap
+chr14	107033719	107043718	telomere
+chr14_GL000009v2_random	0	201709	HG-1645_Category_Localization_Problem_Status_Stalled,nonstd
+chr14_GL000194v1_random	0	191469	HG-1285_Category_Localization_Problem_Status_Stalled,nonstd
+chr14_GL000225v1_random	0	211173	HG-1106_Category_Localization_Problem_Status_Stalled,nonstd
+chr14_KI270722v1_random	0	194050	HG-1658_Category_Localization_Problem_Status_Stalled,nonstd
+chr14_KI270723v1_random	0	38115	HG-1960_Category_Localization_Problem_Status_Under_Review,nonstd
+chr14_KI270724v1_random	0	39555	HG-1959_Category_Localization_Problem_Status_Under_Review,nonstd
+chr14_KI270725v1_random	0	172810	HG-1958_Category_Localization_Problem_Status_Under_Review,nonstd
+chr14_KI270726v1_random	0	43739	HG-1957_Category_Localization_Problem_Status_Under_Review,nonstd
+chr14_KI270846v1_alt	136937	1351393	HG-1957_Category_Localization_Problem_Status_Under_Review,HG-2332_Category_Variation_Status_Under_Review,HG-2360_Category_Variation_Status_Open,HG-2385_Category_Variation_Status_Under_Review,HG-2386_Category_Variation_Status_Under_Review,HG-2490_Category_Clone_Problem_Status_Under_Review,HG-3_Category_Path_Problem_Status_Awaiting_Exptl_Data
+chr14_ML143367v1_fix	110343	293240	HG-1283_Category_Localization_Problem_Status_Stalled
+chr15	0	17035000	High Signal Region,parmgap,telomere
+chr15	17049136	17049334	scaffoldgap
+chr15	17058500	19790100	High Signal Region,centromere,contiggap,scaffoldgap
+chr15	20005600	22606300	High Signal Region,contiggap,scaffoldgap
+chr15	23125400	23357400	High Signal Region,contiggap
+chr15	25757700	25759100	Low Mappability
+chr15	26891346	26893316	Ngap
+chr15	27341706	27344191	Ngap
+chr15	27344586	27351873	Ngap
+chr15	28304900	28683400	High Signal Region
+chr15	28914298	28917240	Ngap
+chr15	30066300	30627500	High Signal Region
+chr15	30844100	30859900	High Signal Region
+chr15	32153700	32626200	High Signal Region
+chr15	54925700	54932200	High Signal Region
+chr15	56311200	56314600	High Signal Region
+chr15	72635200	72687100	High Signal Region
+chr15	74068100	74102000	High Signal Region
+chr15	75254100	75299800	High Signal Region
+chr15	77667044	77764477	HG-2467_Category_Unknown_Status_Awaiting_External_Info,High Signal Region
+chr15	82321000	82374600	High Signal Region
+chr15	82421200	82541700	High Signal Region
+chr15	84270067	84320066	scaffoldgap
+chr15	84405300	84524700	High Signal Region
+chr15	98001431	98006987	Ngap
+chr15	101752300	101764800	Low Mappability
+chr15	101892700	101991189	High Signal Region,telomere
+chr15_KI270727v1_random	0	448247	nonstd
+chr15_KI270905v1_alt	325987	486808	scaffoldgap
+chr15_KI270905v1_alt	1080196	1192195	scaffoldgap
+chr15_KI270905v1_alt	2755705	2783079	scaffoldgap
+chr15_KI270905v1_alt	4593907	4697716	contiggap,scaffoldgap
+chr16	1	10000	telomere
+chr16	139444	182092	HG-2586_Category_Variation_Status_Open
+chr16	1132866	1316751	HG-2268_Category_Clone_Problem_Status_Under_Review
+chr16	2091100	2277411	HG-609_Category_Clone_Problem_Status_Continuing_Investigation
+chr16	4125846	4299636	HG-2347_Category_Variation_Status_Awaiting_Elec_Data
+chr16	8590683	8591818	Ngap
+chr16	11232828	11364002	HG-2059_Category_Variation_Status_Awaiting_External_Info
+chr16	13463887	13579051	Ngap
+chr16	13657686	13734301	Ngap
+chr16	13734302	13832206	Ngap
+chr16	18214026	18625646	HG-1946_Category_Gap_Status_Stalled,contiggap
+chr16	21176309	22760988	HG-2425_Category_Unknown_Status_Under_Review,HG-960_Category_Clone_Problem_Status_Awaiting_External_Info
+chr16	29430800	29566900	Low Mappability
+chr16	32285193	33585107	HG-1587_Category_Path_Problem_Status_Under_Review,HG-2302_Category_Gap_Status_Stalled,HG-2303_Category_Gap_Status_Stalled,scaffoldgap
+chr16	34057508	46474682	HG-1460_Category_Gap_Status_Stalled,HG-517_Category_Gap_Status_Continuing_Investigation,HG-519_Category_Gap_Status_Continuing_Investigation,High Signal Region,Low Mappability,Ngap,centromere,contiggap,heterochromatin,scaffoldgap
+chr16	88355778	88360445	Ngap
+chr16	88372321	88372975	Ngap
+chr16	88986310	89130142	HG-994_Category_Unknown_Status_Awaiting_External_Info
+chr16	90100500	90338345	HG-522_Category_Gap_Status_Continuing_Investigation,Low Mappability,contiggap,telomere
+chr16_KI270728v1_random	0	1872758	nonstd,scaffoldgap
+chr16_KI270853v1_alt	1856405	2160247	HG-1946_Category_Gap_Status_Stalled
+chr16_KV880768v1_fix	0	1927115	HG-2425_Category_Unknown_Status_Under_Review,HG-960_Category_Clone_Problem_Status_Awaiting_External_Info
+chr17	0	150207	HG-2283_Category_Gap_Status_Open,High Signal Region,contiggap,telomere
+chr17	294900	317900	High Signal Region
+chr17	448189	510900	High Signal Region,contiggap,scaffoldgap
+chr17	1061500	1066100	High Signal Region
+chr17	1307700	1312000	Low Mappability
+chr17	3154890	3268627	HG-176_Category_Variation_Status_Awaiting_Exptl_Data
+chr17	19025700	19237400	High Signal Region
+chr17	21754599	22179923	HG-2284_Category_Gap_Status_Awaiting_Exptl_Data,High Signal Region,contiggap,scaffoldgap
+chr17	22372166	22549994	HG-2312_Category_Path_Problem_Status_Under_Review,High Signal Region
+chr17	22674787	27114538	HG-1052_Category_Gap_Status_Open,HG-1589_Category_Localization_Problem_Status_Under_Review,High Signal Region,centromere,contiggap,scaffoldgap
+chr17	36360237	36566142	HG-2051_Category_Variation_Status_Under_Review
+chr17	43196178	43329548	HG-2426_Category_Unknown_Status_Under_Review,High Signal Region
+chr17	45511500	45641300	Low Mappability
+chr17	46205073	46289348	HG-2287_Category_Gap_Status_Open
+chr17	53104900	53107300	High Signal Region
+chr17	81612261	81742019	HG-2528_Category_GRC_Housekeeping_Status_Under_Review
+chr17	81742543	81792542	contiggap
+chr17	81795694	81796281	Ngap
+chr17	81796282	81797727	scaffoldgap
+chr17	81798718	81799133	scaffoldgap
+chr17	83247442	83257441	telomere
+chr17_GL000205v2_random	0	185590	nonstd
+chr17_GL000258v2_alt	1254384	1364364	HG-2287_Category_Gap_Status_Open,scaffoldgap
+chr17_GL383563v3_alt	0	126529	HG-2283_Category_Gap_Status_Open
+chr17_KI270729v1_random	0	280838	nonstd,scaffoldgap
+chr17_KI270730v1_random	0	112550	nonstd,scaffoldgap
+chr17_KI270857v1_alt	595141	801046	HG-2051_Category_Variation_Status_Under_Review
+chr17_KI270908v1_alt	907175	1004244	HG-2287_Category_Gap_Status_Open
+chr18	0	64600	High Signal Region,telomere
+chr18	105200	113200	High Signal Region
+chr18	971000	976500	High Signal Region
+chr18	2841300	2861500	High Signal Region
+chr18	3003156	3120497	HG-2212_Category_Clone_Problem_Status_Awaiting_External_Info
+chr18	14989964	15161379	HG-2501_Category_Variation_Status_Open
+chr18	15367200	20940300	High Signal Region,centromere,contiggap,scaffoldgap
+chr18	36161582	36345191	HG-2481_Category_Variation_Status_Awaiting_External_Info
+chr18	46961600	47146196	HG-13_Category_Path_Problem_Status_Awaiting_Exptl_Data,High Signal Region,contiggap,scaffoldgap
+chr18	47852300	47854300	Low Mappability
+chr18	52791800	52793800	High Signal Region
+chr18	54394431	54708112	HG-67_Category_Gap_Status_Continuing_Investigation,scaffoldgap
+chr18	67433287	67480583	HG-1572_Category_Gap_Status_Reopened
+chr18	74615900	74618633	High Signal Region,Ngap
+chr18	76966200	76968500	High Signal Region
+chr18	78436900	78438700	Low Mappability
+chr18	79013800	79040300	High Signal Region
+chr18	79617800	79621500	High Signal Region
+chr18	80071138	80373285	HG-512_Category_Gap_Status_Continuing_Investigation,High Signal Region,contiggap,telomere
+chr18_GL383571v1_alt	9565	126310	HG-1572_Category_Gap_Status_Reopened,contiggap,scaffoldgap
+chr19	0	271200	HG-1050_Category_Gap_Status_Awaiting_Elec_Data,High Signal Region,contiggap,telomere
+chr19	7019100	7061300	High Signal Region
+chr19	7449400	7452000	High Signal Region
+chr19	8104699	8352198	HG-9_Category_Path_Problem_Status_Awaiting_Exptl_Data
+chr19	8740100	8800500	High Signal Region
+chr19	21544944	22120849	HG-2406_Category_Variation_Status_Awaiting_Exptl_Data,HG-972_Category_Variation_Status_Awaiting_External_Info
+chr19	23998161	24111739	HG-2359_Category_Unknown_Status_Awaiting_External_Info
+chr19	24330100	27274500	High Signal Region,centromere,contiggap,heterochromatin,scaffoldgap
+chr19	27337600	27427400	High Signal Region
+chr19	34386800	34393500	High Signal Region
+chr19	34860600	34866200	High Signal Region
+chr19	35328073	35346956	Ngap
+chr19	35347506	35353580	Ngap
+chr19	35353975	35360296	Ngap
+chr19	35800030	35836774	Ngap
+chr19	36267900	36313700	High Signal Region
+chr19	37264900	37304300	High Signal Region
+chr19	44393300	44416700	High Signal Region
+chr19	47903000	47959700	High Signal Region
+chr19	50090500	50140400	High Signal Region
+chr19	58538700	58617616	High Signal Region,telomere
+chr19_GL949746v1_alt	309794	314793	scaffoldgap
+chr19_GL949746v1_alt	700653	800652	scaffoldgap
+chr19_GL949747v2_alt	195633	256632	scaffoldgap
+chr19_GL949747v2_alt	394096	399095	scaffoldgap
+chr19_GL949748v2_alt	195633	720632	scaffoldgap
+chr19_GL949748v2_alt	761615	811614	scaffoldgap
+chr19_GL949748v2_alt	845241	877240	scaffoldgap
+chr19_GL949749v2_alt	195633	807632	scaffoldgap
+chr19_GL949749v2_alt	860778	904777	scaffoldgap
+chr19_GL949750v2_alt	195633	819632	scaffoldgap
+chr19_GL949750v2_alt	855327	879326	scaffoldgap
+chr19_GL949751v2_alt	195633	705632	scaffoldgap
+chr19_GL949751v2_alt	789620	815619	scaffoldgap
+chr19_GL949752v1_alt	253363	258362	scaffoldgap
+chr19_GL949753v2_alt	195633	213632	scaffoldgap
+chr19_GL949753v2_alt	361079	363078	scaffoldgap
+chr19_GL949753v2_alt	509416	609415	scaffoldgap
+chr1_GL383519v1_alt	40345	110268	HG-1681_Category_Clone_Problem_Status_Awaiting_Elec_Data
+chr1_KI270706v1_random	0	175055	HG-1643_Category_Localization_Problem_Status_Stalled,nonstd
+chr1_KI270707v1_random	0	32032	HG-1644_Category_Localization_Problem_Status_Stalled,nonstd
+chr1_KI270708v1_random	0	127681	nonstd
+chr1_KI270709v1_random	0	66859	nonstd
+chr1_KI270710v1_random	0	40176	HG-1936_Category_Localization_Problem_Status_Stalled,nonstd
+chr1_KI270711v1_random	0	42210	HG-1938_Category_Localization_Problem_Status_Stalled,HG-2595_Category_Gap_Status_Open,nonstd
+chr1_KI270712v1_random	0	176043	HG-1937_Category_Localization_Problem_Status_Stalled,nonstd
+chr1_KI270713v1_random	0	40744	nonstd
+chr1_KI270714v1_random	0	41716	nonstd
+chr1_KI270762v1_alt	176546	354444	HG-2298_Category_Gap_Status_Under_Review,scaffoldgap
+chr1_KI270763v1_alt	1803	78346	HG-452_Category_Gap_Status_Stalled
+chr2	1	10000	telomere
+chr2	1221700	1223900	High Signal Region
+chr2	1594700	1605200	High Signal Region
+chr2	3179600	3182100	High Signal Region
+chr2	4643800	4648800	High Signal Region
+chr2	4971199	4978655	Ngap
+chr2	8099462	8160383	Ngap
+chr2	8160608	8272287	Ngap
+chr2	10952800	10955000	High Signal Region
+chr2	13718700	13737700	High Signal Region
+chr2	16145120	16146119	contiggap
+chr2	21903500	21906400	High Signal Region
+chr2	32865900	32869900	High Signal Region
+chr2	32915300	32918400	High Signal Region
+chr2	33766500	33768400	High Signal Region
+chr2	36183000	36184500	High Signal Region
+chr2	45638872	45645353	Ngap
+chr2	45645897	45704442	Ngap
+chr2	49228700	49230700	High Signal Region
+chr2	64359300	64377000	High Signal Region
+chr2	86655300	86661100	High Signal Region
+chr2	86900700	87078100	Low Mappability
+chr2	87119300	87189800	Low Mappability
+chr2	87217000	171498047	HG-1585_Category_Missing_sequence_Status_Awaiting_Exptl_Data,HG-2271_Category_Gap_Status_Awaiting_Elec_Data,HG-2272_Category_Gap_Status_Awaiting_Exptl_Data,HG-2273_Category_Gap_Status_Awaiting_Exptl_Data,HG-2274_Category_Gap_Status_Awaiting_Elec_Data,HG-2330_Category_Path_Problem_Status_Awaiting_Exptl_Data,HG-2384_Category_Path_Problem_Status_Awaiting_Exptl_Data,HG-25_Category_Path_Problem_Status_Awaiting_Exptl_Data,High Signal Region,Low Mappability,centromere,contiggap,heterochromatin,scaffoldgap
+chr2	181274800	181276800	High Signal Region
+chr2	226108500	226110400	High Signal Region
+chr2	234889800	234894400	High Signal Region
+chr2	238893338	238903659	Ngap
+chr2	238903660	238904047	scaffoldgap
+chr2	238904048	238910282	Ngap
+chr2	239642200	239645600	High Signal Region
+chr2	240308100	240310300	High Signal Region
+chr2	241589300	241591800	High Signal Region
+chr2	242005900	242011100	High Signal Region
+chr2	242110100	242193529	High Signal Region,telomere
+chr20	0	67900	High Signal Region,contiggap,scaffoldgap,telomere
+chr20	81359	83302	HG-503_Category_Gap_Status_Continuing_Investigation
+chr20	4437577	4529641	HG-2076_Category_Clone_Problem_Status_Awaiting_Elec_Data
+chr20	17553746	17719645	HG-1348_Category_Missing_sequence_Status_Stalled
+chr20	26253212	31246000	HG-1493_Category_Gap_Status_Continuing_Investigation,HG-1526_Category_Gap_Status_Continuing_Investigation,HG-1573_Category_Missing_sequence_Status_Awaiting_Elec_Data,HG-2305_Category_Gap_Status_Continuing_Investigation,HG-2306_Category_Gap_Status_Continuing_Investigation,High Signal Region,Ngap,centromere,contiggap,scaffoldgap
+chr20	44011434	44163542	HG-2226_Category_Clone_Problem_Status_Under_Review
+chr20	47893800	47900200	High Signal Region
+chr20	56463687	56557708	HG-2530_Category_Clone_Problem_Status_Open
+chr20	62235675	62376631	HG-2399_Category_Missing_sequence_Status_Under_Review
+chr20	64274842	64334167	HG-508_Category_Gap_Status_Continuing_Investigation
+chr20	64334168	64434167	contiggap
+chr20	64434168	64444167	telomere
+chr21	0	18566748	HG-1093_Category_GRC_Housekeeping_Status_Stalled,HG-1094_Category_Gap_Status_Stalled,HG-1095_Category_Gap_Status_Stalled,HG-1096_Category_Gap_Status_Stalled,HG-1461_Category_Variation_Status_Awaiting_Exptl_Data,HG-1517_Category_Gap_Status_Continuing_Investigation,HG-1613_Category_Gap_Status_Stalled,HG-1700_Category_Gap_Status_Stalled,HG-1947_Category_Gap_Status_Under_Review,HG-2262_Category_Path_Problem_Status_Reopened,HG-2535_Category_Path_Problem_Status_Open,HG-2536_Category_Unknown_Status_Open,HG-2540_Category_Path_Problem_Status_Open,HG-2543_Category_GRC_Housekeeping_Status_Open,High Signal Region,Ngap,centromere,contiggap,false_duplication,heterochromatin,parmgap,telomere
+chr21	25974622	26023859	HG-2064_Category_Clone_Problem_Status_Under_Review
+chr21	31752766	31872214	HG-2026_Category_Clone_Problem_Status_Awaiting_Elec_Data
+chr21	41584293	41584392	scaffoldgap
+chr21	41772799	41834160	HG-690_Category_Path_Problem_Status_Continuing_Investigation
+chr21	42938565	43188034	HG-2223_Category_Clone_Problem_Status_Under_Review,HG-2544_Category_Clone_Problem_Status_Open
+chr21	43196669	43280900	HG-501_Category_Gap_Status_Reopened,High Signal Region,scaffoldgap
+chr21	46682700	46709983	High Signal Region,telomere
+chr21_ML143377v1_fix	330659	492750	HG-1101_Category_Localization_Problem_Status_Stalled
+chr22	1	10000	telomere
+chr22	10001	50818468	HG-1484_Category_Gap_Status_Awaiting_Exptl_Data,HG-1574_Category_Unknown_Status_Awaiting_Exptl_Data,HG-1889_Category_Path_Problem_Status_Under_Review,HG-2053_Category_Variation_Status_Open,HG-2166_Category_Clone_Problem_Status_Under_Review,HG-2168_Category_Clone_Problem_Status_Under_Review,HG-2410_Category_Path_Problem_Status_Open,HG-2505_Category_Variation_Status_Open,HG-2516_Category_Clone_Problem_Status_Open,HG-2519_Category_Clone_Problem_Status_Open,HG-2596_Category_Clone_Problem_Status_Open,HG-981_Category_Gap_Status_Awaiting_Exptl_Data,High Signal Region,Ngap,centromere,contiggap,parmgap,scaffoldgap,telomere
+chr22_KI270731v1_random	0	150754	HG-1972_Category_Localization_Problem_Status_Open,nonstd
+chr22_KI270732v1_random	0	41543	HG-1971_Category_Localization_Problem_Status_Open,nonstd
+chr22_KI270733v1_random	0	179772	HG-1970_Category_Localization_Problem_Status_Open,nonstd
+chr22_KI270734v1_random	0	165049	nonstd
+chr22_KI270735v1_random	0	42811	HG-1968_Category_Localization_Problem_Status_Open,nonstd
+chr22_KI270736v1_random	0	181919	nonstd,scaffoldgap
+chr22_KI270737v1_random	0	103837	nonstd,scaffoldgap
+chr22_KI270738v1_random	0	99374	nonstd,scaffoldgap
+chr22_KI270739v1_random	0	73984	nonstd,scaffoldgap
+chr22_KI270878v1_alt	117029	133201	HG-2410_Category_Path_Problem_Status_Open
+chr22_KI270879v1_alt	204646	304135	HG-2053_Category_Variation_Status_Open
+chr22_ML143378v1_fix	23235	66980	HG-1484_Category_Gap_Status_Awaiting_Exptl_Data
+chr22_ML143378v1_fix	250302	359473	HG-1963_Category_Localization_Problem_Status_Stalled,HG-1971_Category_Localization_Problem_Status_Open
+chr22_ML143380v1_fix	293924	412368	HG-1970_Category_Localization_Problem_Status_Open
+chr2_KI270715v1_random	0	161471	HG-1677_Category_Localization_Problem_Status_Awaiting_Exptl_Data,nonstd
+chr2_KI270716v1_random	0	153799	HG-1679_Category_Localization_Problem_Status_Awaiting_Exptl_Data,nonstd
+chr2_KI270772v1_alt	0	133041	HG-2273_Category_Gap_Status_Awaiting_Exptl_Data,HG-2384_Category_Path_Problem_Status_Awaiting_Exptl_Data
+chr2_KI270894v1_alt	0	214158	HG-2273_Category_Gap_Status_Awaiting_Exptl_Data,HG-2384_Category_Path_Problem_Status_Awaiting_Exptl_Data,HG-25_Category_Path_Problem_Status_Awaiting_Exptl_Data
+chr2_KQ031384v1_fix	267313	481236	HG-1585_Category_Missing_sequence_Status_Awaiting_Exptl_Data
+chr3	0	11600	High Signal Region,telomere
+chr3	3895200	3896700	High Signal Region
+chr3	4916700	4922500	High Signal Region
+chr3	14091000	14092500	High Signal Region
+chr3	15187200	15207800	High Signal Region
+chr3	15592100	15603300	High Signal Region
+chr3	16176800	16179200	High Signal Region
+chr3	16679700	16682500	High Signal Region
+chr3	19499700	19504000	High Signal Region
+chr3	19624000	19627100	High Signal Region
+chr3	21983200	21988100	High Signal Region
+chr3	24053500	24054900	High Signal Region
+chr3	26384800	26404100	High Signal Region
+chr3	29993900	29999900	High Signal Region
+chr3	36987500	36995000	High Signal Region
+chr3	38083400	38085400	High Signal Region
+chr3	38406100	38430900	High Signal Region
+chr3	38494150	38663107	HG-1516_Category_Variation_Status_Under_Review
+chr3	39366700	39386000	High Signal Region
+chr3	40219400	40240500	High Signal Region
+chr3	44474646	44660336	HG-2583_Category_Clone_Problem_Status_Open
+chr3	49671000	49696700	High Signal Region
+chr3	50230153	50256768	Ngap
+chr3	50256769	50265397	Ngap
+chr3	50265398	50301732	Ngap
+chr3	51457800	51462000	High Signal Region
+chr3	57326800	57328500	High Signal Region
+chr3	65124100	65126100	High Signal Region
+chr3	65510000	65513900	High Signal Region
+chr3	65697400	65699300	High Signal Region
+chr3	66273800	66275200	High Signal Region
+chr3	68076400	68077800	High Signal Region
+chr3	69047300	69053600	High Signal Region
+chr3	69475300	69479700	High Signal Region
+chr3	75568796	75754600	HG-153_Category_Missing_sequence_Status_Stalled,HG-154_Category_Unknown_Status_Under_Review,High Signal Region
+chr3	78948800	78950500	High Signal Region
+chr3	80876000	80894000	High Signal Region
+chr3	89345600	89370500	High Signal Region
+chr3	90156400	90175500	High Signal Region
+chr3	90455400	91297100	High Signal Region,centromere,contiggap,scaffoldgap
+chr3	91345079	91345173	scaffoldgap
+chr3	91364132	91364151	scaffoldgap
+chr3	91438799	91438818	scaffoldgap
+chr3	91516200	93749200	High Signal Region,centromere,contiggap
+chr3	96616300	96619300	High Signal Region
+chr3	97905100	97923200	High Signal Region
+chr3	101674800	101698400	High Signal Region
+chr3	103224300	103236500	High Signal Region
+chr3	106665700	106669700	High Signal Region
+chr3	106975900	106979600	High Signal Region
+chr3	108751100	108755100	High Signal Region
+chr3	111019500	111024600	High Signal Region
+chr3	121933800	121936400	High Signal Region
+chr3	122414300	122417500	High Signal Region
+chr3	122735500	122796600	High Signal Region
+chr3	122837000	122838700	High Signal Region
+chr3	133177100	133179800	High Signal Region
+chr3	133551500	133579500	High Signal Region
+chr3	135437200	135439100	High Signal Region
+chr3	136954600	136969200	High Signal Region
+chr3	137168400	137169900	High Signal Region
+chr3	138575800	138595900	High Signal Region
+chr3	139190800	139194700	High Signal Region
+chr3	145181945	145349949	HG-2081_Category_Variation_Status_Under_Review
+chr3	153236200	153241300	High Signal Region
+chr3	155544100	155546700	High Signal Region
+chr3	156279000	156283500	High Signal Region
+chr3	157080800	157093400	High Signal Region
+chr3	158511300	158513100	High Signal Region
+chr3	160941200	160948700	High Signal Region
+chr3	161001900	161014100	High Signal Region
+chr3	165573100	165591000	High Signal Region
+chr3	166228200	166232400	High Signal Region
+chr3	168012100	168016800	High Signal Region
+chr3	170567000	170569900	High Signal Region
+chr3	170864300	170881400	High Signal Region
+chr3	171626600	171637700	High Signal Region
+chr3	174829200	174831800	High Signal Region
+chr3	176828700	176833000	High Signal Region
+chr3	177660600	177664000	High Signal Region
+chr3	178926800	178941300	High Signal Region
+chr3	183016900	183019100	High Signal Region
+chr3	183955400	183958700	High Signal Region
+chr3	187893900	187896100	High Signal Region
+chr3	192739300	192742700	High Signal Region
+chr3	194323600	194334900	High Signal Region,Ngap
+chr3	195477900	195507300	High Signal Region
+chr3	195616000	195750100	High Signal Region
+chr3	195764373	195827492	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open,High Signal Region
+chr3	195914100	196028300	High Signal Region
+chr3	196249400	196251900	High Signal Region
+chr3	196897800	196899800	High Signal Region
+chr3	197030600	197035800	High Signal Region
+chr3	197383400	197428800	High Signal Region
+chr3	197454700	197460800	High Signal Region
+chr3	197598400	197680900	High Signal Region
+chr3	198047548	198295559	HG-1045_Category_Gap_Status_Under_Review,HG-1288_Category_Missing_sequence_Status_Under_Review,High Signal Region,contiggap,telomere
+chr3_GL000221v1_random	0	155397	HG-1103_Category_Localization_Problem_Status_Under_Review,nonstd
+chr3_KI270779v1_alt	134870	205312	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270784v1_alt	0	184404	HG-1045_Category_Gap_Status_Under_Review,HG-1288_Category_Missing_sequence_Status_Under_Review
+chr3_KI270895v1_alt	0	139788	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270924v1_alt	0	143432	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270934v1_alt	0	140350	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270935v1_alt	134870	197351	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270936v1_alt	0	141062	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KI270937v1_alt	0	142499	HG-199_Category_Variation_Status_Awaiting_External_Info,HG-2382_Category_Clone_Problem_Status_Open
+chr3_KN196475v1_fix	0	185690	HG-2583_Category_Clone_Problem_Status_Open
+chr4	0	69200	High Signal Region,telomere
+chr4	554100	556500	High Signal Region
+chr4	1372671	1421766	HG-1198_Category_Variation_Status_Under_Review
+chr4	1427000	1468900	High Signal Region,Ngap,scaffoldgap
+chr4	1472981	1493091	Ngap
+chr4	3071241	3269621	HG-2422_Category_Variation_Status_Under_Review
+chr4	6002700	6005700	High Signal Region
+chr4	7863000	7865000	High Signal Region
+chr4	8797478	8816477	contiggap
+chr4	9102550	9454195	HG-1300_Category_Gap_Status_Stalled,High Signal Region,scaffoldgap
+chr4	31819296	31832569	contiggap
+chr4	31835776	31835795	scaffoldgap
+chr4	32833017	32839016	contiggap
+chr4	36998838	37158135	HG-1368_Category_GRC_Housekeeping_Status_Open
+chr4	40291700	40318200	High Signal Region
+chr4	49077200	51816100	HG-2153_Category_Gap_Status_Awaiting_Exptl_Data,High Signal Region,centromere,contiggap
+chr4	55327200	55329200	High Signal Region
+chr4	58868405	58875245	Ngap
+chr4	58878794	58921381	contiggap
+chr4	58921382	58930436	Ngap
+chr4	77994000	78009600	High Signal Region
+chr4	87769301	87954925	HG-2545_Category_Variation_Status_Under_Review
+chr4	119274400	119301700	High Signal Region
+chr4	144101560	144285075	HG-2514_Category_Variation_Status_Open
+chr4	146285100	146305300	High Signal Region
+chr4	162420500	162422400	High Signal Region
+chr4	166554300	166581300	Low Mappability
+chr4	181238800	181242300	Low Mappability
+chr4	189232500	189236300	High Signal Region
+chr4	189834900	189849700	High Signal Region
+chr4	189877500	190023700	High Signal Region
+chr4	190041017	190214555	High Signal Region,Ngap,scaffoldgap,telomere
+chr4_GL000008v2_random	0	209708	nonstd
+chr4_KI270786v1_alt	2331	36560	HG-2012_Category_Localization_Problem_Status_Stalled
+chr4_KI270896v1_alt	2331	36560	HG-2012_Category_Localization_Problem_Status_Stalled
+chr4_KI270925v1_alt	316393	351736	HG-2012_Category_Localization_Problem_Status_Stalled
+chr4_ML143345v1_fix	55096	341066	HG-1804_Category_Localization_Problem_Status_Stalled,HG-2153_Category_Gap_Status_Awaiting_Exptl_Data,HG-790_Category_Localization_Problem_Status_Stalled
+chr5	0	44100	High Signal Region,telomere
+chr5	548300	564100	High Signal Region
+chr5	647600	651700	High Signal Region
+chr5	1326100	1334600	High Signal Region
+chr5	2144600	2147800	High Signal Region
+chr5	2489800	2491700	High Signal Region
+chr5	3322100	3325100	High Signal Region
+chr5	6967700	6971700	High Signal Region
+chr5	17380540	17776145	HG-781_Category_Gap_Status_Stalled,High Signal Region,scaffoldgap
+chr5	21477600	21497600	High Signal Region
+chr5	25381400	25384300	High Signal Region
+chr5	34079259	34335790	HG-18_Category_Variation_Status_Awaiting_Exptl_Data,High Signal Region
+chr5	45522900	45525200	High Signal Region
+chr5	45743000	45744800	High Signal Region
+chr5	46405540	50165300	High Signal Region,Ngap,centromere,contiggap,scaffoldgap
+chr5	60759700	60762500	High Signal Region
+chr5	63320900	63335500	High Signal Region
+chr5	69448336	71359500	HG-2380_Category_GRC_Housekeeping_Status_Open,High Signal Region
+chr5	71850000	71852800	High Signal Region
+chr5	74685400	74712400	High Signal Region
+chr5	78452400	78457600	High Signal Region
+chr5	78848400	78872800	High Signal Region
+chr5	80649100	80653100	High Signal Region
+chr5	85641800	85662700	High Signal Region
+chr5	93947500	93948900	High Signal Region
+chr5	94567100	94570400	High Signal Region
+chr5	100045500	100076300	High Signal Region
+chr5	106425500	106429500	High Signal Region
+chr5	109259500	109265400	High Signal Region
+chr5	111302100	111308300	High Signal Region
+chr5	114156700	114158300	High Signal Region
+chr5	119904000	119905600	High Signal Region
+chr5	123760300	123762200	High Signal Region
+chr5	134922500	134929400	High Signal Region
+chr5	139005500	139011600	High Signal Region
+chr5	139452660	139453659	contiggap
+chr5	146610000	146615500	High Signal Region
+chr5	153071100	153077000	High Signal Region
+chr5	155760325	155761324	contiggap
+chr5	156658300	156665400	High Signal Region
+chr5	157700921	157847717	HG-2165_Category_Unknown_Status_Awaiting_Elec_Data
+chr5	161606000	161611700	High Signal Region
+chr5	171083900	171090200	High Signal Region
+chr5	175904500	176118000	High Signal Region
+chr5	176590700	176593000	High Signal Region
+chr5	177636700	177684700	High Signal Region
+chr5	177960500	177981400	High Signal Region
+chr5	178584600	178586600	High Signal Region
+chr5	181172600	181538259	High Signal Region,contiggap,telomere
+chr5_GL000208v1_random	0	92689	HG-646_Category_Localization_Problem_Status_Awaiting_External_Info,nonstd
+chr5_GL339449v2_alt	272217	602685	HG-2380_Category_GRC_Housekeeping_Status_Open
+chr5_GL339449v2_alt	1138693	1238692	scaffoldgap
+chr5_KI270897v1_alt	391808	441807	scaffoldgap
+chr6	1	10000	telomere
+chr6	10001	146701	HG-671_Category_Gap_Status_Stalled,contiggap
+chr6	256500	382800	High Signal Region
+chr6	861500	864200	High Signal Region
+chr6	1052800	1054800	High Signal Region
+chr6	25927503	25948156	Ngap
+chr6	25948469	25986415	Ngap
+chr6	25986972	26140434	Ngap
+chr6	26140520	26141058	Ngap
+chr6	26669200	26832300	High Signal Region
+chr6	28510119	33483652	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1496_Category_Gap_Status_Stalled,HG-1512_Category_Gap_Status_Stalled,HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,HG-2600_Category_Path_Problem_Status_Open,HG-2601_Category_Path_Problem_Status_Open,HG-2602_Category_Variation_Status_Open,HG-2603_Category_Path_Problem_Status_Open,HG-2604_Category_Path_Problem_Status_Open,HG-2605_Category_Path_Problem_Status_Open
+chr6	33484600	33486400	High Signal Region
+chr6	34070600	34074000	High Signal Region
+chr6	38262000	38301600	High Signal Region
+chr6	39455800	39460500	High Signal Region
+chr6	44043600	44080000	High Signal Region
+chr6	44180600	44182900	High Signal Region
+chr6	47405474	47547079	HG-2127_Category_Clone_Problem_Status_Under_Review
+chr6	51874900	51901300	High Signal Region
+chr6	54961900	54967400	High Signal Region
+chr6	58354366	61123604	HG-1652_Category_Gap_Status_Continuing_Investigation,High Signal Region,centromere,contiggap
+chr6	61321800	61493000	High Signal Region,scaffoldgap
+chr6	61573200	61575100	Low Mappability
+chr6	61661900	61673400	High Signal Region
+chr6	79816836	79931745	HG-2129_Category_Clone_Problem_Status_Under_Review
+chr6	95020791	95070790	scaffoldgap
+chr6	103709000	103715100	High Signal Region
+chr6	106695377	106856632	HG-2546_Category_Unknown_Status_Open
+chr6	115254900	115256800	High Signal Region
+chr6	143799900	143801800	High Signal Region
+chr6	156035300	156040100	High Signal Region
+chr6	157293629	157324800	HG-1481_Category_Clone_Problem_Status_Awaiting_Exptl_Data,High Signal Region
+chr6	160518283	160650034	HG-1482_Category_Clone_Problem_Status_Awaiting_Exptl_Data,High Signal Region
+chr6	167360168	167432447	HG-2524_Category_Clone_Problem_Status_Open
+chr6	167529882	167544592	Ngap
+chr6	167583537	167591393	Ngap
+chr6	167591394	167641393	contiggap,scaffoldgap
+chr6	169923262	169924552	Ngap
+chr6	170145300	170147200	High Signal Region
+chr6	170376900	170401000	High Signal Region
+chr6	170465400	170468400	High Signal Region
+chr6	170730290	170745979	HG-672_Category_Gap_Status_Stalled
+chr6	170745980	170795979	contiggap
+chr6	170795980	170805979	telomere
+chr6_GL000250v2_alt	202214	246466	scaffoldgap
+chr6_GL000250v2_alt	321481	350864	scaffoldgap
+chr6_GL000250v2_alt	442981	530578	scaffoldgap
+chr6_GL000250v2_alt	583168	687359	scaffoldgap
+chr6_GL000250v2_alt	938842	957964	scaffoldgap
+chr6_GL000250v2_alt	964447	1023823	scaffoldgap
+chr6_GL000250v2_alt	1092706	1224018	HG-1496_Category_Gap_Status_Stalled
+chr6_GL000250v2_alt	1224019	1248612	scaffoldgap
+chr6_GL000250v2_alt	1358036	1367781	scaffoldgap
+chr6_GL000250v2_alt	1391293	1394223	scaffoldgap
+chr6_GL000250v2_alt	1501666	1606256	scaffoldgap
+chr6_GL000250v2_alt	1632634	1649073	scaffoldgap
+chr6_GL000250v2_alt	1786681	1836433	scaffoldgap
+chr6_GL000250v2_alt	1883896	1987766	scaffoldgap
+chr6_GL000250v2_alt	2060007	2214564	scaffoldgap
+chr6_GL000250v2_alt	2219087	2304253	scaffoldgap
+chr6_GL000250v2_alt	2410059	2811318	scaffoldgap
+chr6_GL000250v2_alt	2871764	2908515	scaffoldgap
+chr6_GL000250v2_alt	2944742	3087566	scaffoldgap
+chr6_GL000250v2_alt	3173058	3186564	scaffoldgap
+chr6_GL000250v2_alt	3230408	3529591	HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000250v2_alt	3541151	3644185	scaffoldgap
+chr6_GL000250v2_alt	3688752	3692404	scaffoldgap
+chr6_GL000250v2_alt	3746708	3786278	scaffoldgap
+chr6_GL000250v2_alt	3812955	3816276	scaffoldgap
+chr6_GL000250v2_alt	3840451	4375820	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000250v2_alt	4440114	4647969	scaffoldgap
+chr6_GL000251v2_alt	0	4795265	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1496_Category_Gap_Status_Stalled,HG-1512_Category_Gap_Status_Stalled,HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,HG-2600_Category_Path_Problem_Status_Open,HG-2601_Category_Path_Problem_Status_Open,HG-2602_Category_Variation_Status_Open,HG-2603_Category_Path_Problem_Status_Open,HG-2604_Category_Path_Problem_Status_Open,HG-2605_Category_Path_Problem_Status_Open
+chr6_GL000252v2_alt	132471	240375	scaffoldgap
+chr6_GL000252v2_alt	616873	634795	scaffoldgap
+chr6_GL000252v2_alt	1089907	1238191	HG-1496_Category_Gap_Status_Stalled
+chr6_GL000252v2_alt	1332277	1338534	scaffoldgap
+chr6_GL000252v2_alt	1831106	1831615	scaffoldgap
+chr6_GL000252v2_alt	2111711	2114228	scaffoldgap
+chr6_GL000252v2_alt	2600673	2718030	scaffoldgap
+chr6_GL000252v2_alt	3151508	3559244	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1512_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000252v2_alt	3730802	3767029	scaffoldgap
+chr6_GL000252v2_alt	3917397	4314671	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000252v2_alt	4348542	4371209	scaffoldgap
+chr6_GL000253v2_alt	140233	178623	scaffoldgap
+chr6_GL000253v2_alt	1089581	1243385	HG-1496_Category_Gap_Status_Stalled
+chr6_GL000253v2_alt	1383193	1433192	scaffoldgap
+chr6_GL000253v2_alt	2041801	2050501	scaffoldgap
+chr6_GL000253v2_alt	2246594	2271406	scaffoldgap
+chr6_GL000253v2_alt	2306672	2318990	scaffoldgap
+chr6_GL000253v2_alt	2511433	2535342	scaffoldgap
+chr6_GL000253v2_alt	2766387	2805333	scaffoldgap
+chr6_GL000253v2_alt	2915477	2923936	scaffoldgap
+chr6_GL000253v2_alt	3056488	3145833	scaffoldgap
+chr6_GL000253v2_alt	3168652	3622779	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1512_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000253v2_alt	3889473	3920721	scaffoldgap
+chr6_GL000253v2_alt	4096155	4490837	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000254v2_alt	129557	132458	scaffoldgap
+chr6_GL000254v2_alt	173845	181172	scaffoldgap
+chr6_GL000254v2_alt	223549	277147	scaffoldgap
+chr6_GL000254v2_alt	378404	398830	scaffoldgap
+chr6_GL000254v2_alt	486006	554836	scaffoldgap
+chr6_GL000254v2_alt	671015	680003	scaffoldgap
+chr6_GL000254v2_alt	988666	1003711	scaffoldgap
+chr6_GL000254v2_alt	1090565	1326707	HG-1496_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000254v2_alt	1557368	1721114	scaffoldgap
+chr6_GL000254v2_alt	1810185	1832521	scaffoldgap
+chr6_GL000254v2_alt	2085615	2183573	scaffoldgap
+chr6_GL000254v2_alt	2236240	2246413	scaffoldgap
+chr6_GL000254v2_alt	2295266	2300062	scaffoldgap
+chr6_GL000254v2_alt	2706867	2806318	scaffoldgap
+chr6_GL000254v2_alt	2941992	2953414	scaffoldgap
+chr6_GL000254v2_alt	3148914	3183134	scaffoldgap
+chr6_GL000254v2_alt	3245809	3659875	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1512_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000254v2_alt	3893710	3924264	scaffoldgap
+chr6_GL000254v2_alt	3972044	4370205	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000254v2_alt	4416588	4588668	scaffoldgap
+chr6_GL000255v2_alt	516305	675614	scaffoldgap
+chr6_GL000255v2_alt	1089860	1237636	HG-1496_Category_Gap_Status_Stalled
+chr6_GL000255v2_alt	2675319	2726468	scaffoldgap
+chr6_GL000255v2_alt	3017581	3044011	scaffoldgap
+chr6_GL000255v2_alt	3159709	3541160	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1512_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000255v2_alt	3872132	4265772	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000256v2_alt	862503	941944	scaffoldgap
+chr6_GL000256v2_alt	1133125	1280471	HG-1496_Category_Gap_Status_Stalled
+chr6_GL000256v2_alt	1728420	1745110	scaffoldgap
+chr6_GL000256v2_alt	1837335	1839594	scaffoldgap
+chr6_GL000256v2_alt	1984264	1998526	scaffoldgap
+chr6_GL000256v2_alt	2053438	2088117	scaffoldgap
+chr6_GL000256v2_alt	2102177	2114577	scaffoldgap
+chr6_GL000256v2_alt	2139194	2303720	scaffoldgap
+chr6_GL000256v2_alt	2411950	2461895	scaffoldgap
+chr6_GL000256v2_alt	3040887	3055668	scaffoldgap
+chr6_GL000256v2_alt	3094271	3155401	scaffoldgap
+chr6_GL000256v2_alt	3191899	3634046	HG-1367_Category_Variation_Status_Awaiting_External_Info,HG-1512_Category_Gap_Status_Stalled,HG-2379_Category_GRC_Housekeeping_Status_Under_Review,scaffoldgap
+chr6_GL000256v2_alt	4076583	4520123	HG-2017_Category_Gap_Status_Stalled,HG-2018_Category_Gap_Status_Stalled,HG-2019_Category_Gap_Status_Stalled,scaffoldgap
+chr6_GL000256v2_alt	4581113	4610920	scaffoldgap
+chr6_GL000256v2_alt	4640509	4662258	scaffoldgap
+chr6_GL000256v2_alt	4724212	4775069	scaffoldgap
+chr6_GL000256v2_alt	4784501	4836751	scaffoldgap
+chr6_KQ031387v1_fix	0	196318	HG-1652_Category_Gap_Status_Continuing_Investigation
+chr7	0	49600	High Signal Region,telomere
+chr7	224500	241300	High Signal Region,scaffoldgap
+chr7	904700	907100	Low Mappability
+chr7	1271400	1273500	High Signal Region
+chr7	45251000	45253000	High Signal Region
+chr7	50331036	50342933	Ngap
+chr7	56369500	56375600	High Signal Region
+chr7	57485300	57497800	High Signal Region
+chr7	57611600	57637700	Low Mappability
+chr7	58031800	60997400	High Signal Region,centromere,contiggap
+chr7	61017800	61100599	HG-1051_Category_Gap_Status_Under_Review,High Signal Region,scaffoldgap
+chr7	61102900	61725200	Low Mappability,centromere,contiggap
+chr7	61747297	62126056	HG-2286_Category_Gap_Status_Under_Review,scaffoldgap
+chr7	62265700	62409500	High Signal Region
+chr7	62430000	62520600	High Signal Region,heterochromatin
+chr7	65488000	65496500	High Signal Region
+chr7	76500981	76722751	HG-2314_Category_Variation_Status_Open
+chr7	99695608	99819186	HG-1370_Category_Variation_Status_Open
+chr7	100659190	101230227	HG-2313_Category_Path_Problem_Status_Under_Review,High Signal Region
+chr7	102432000	102831664	HG-6_Category_Variation_Status_Awaiting_Exptl_Data,High Signal Region
+chr7	130514683	130559014	Ngap
+chr7	139694632	139704578	Ngap
+chr7	139839934	139983503	HG-1371_Category_Variation_Status_Under_Review
+chr7	142665100	142668500	High Signal Region
+chr7	143650805	143700804	scaffoldgap
+chr7	144180800	144377300	Low Mappability
+chr7	145996400	146018600	High Signal Region
+chr7	149744705	149871066	HG-184_Category_Variation_Status_Awaiting_Elec_Data
+chr7	152375800	152435100	High Signal Region
+chr7	158131400	158156200	High Signal Region
+chr7	158594300	158596200	High Signal Region
+chr7	158893100	158918100	High Signal Region
+chr7	159334900	159345973	High Signal Region,telomere
+chr7_KI270809v1_alt	0	209586	HG-2314_Category_Variation_Status_Open
+chr8	1	10000	telomere
+chr8	10001	100196	HG-1048_Category_Gap_Status_Under_Review,contiggap
+chr8	1280784	1586904	HG-4_Category_Variation_Status_Continuing_Investigation
+chr8	6604730	13171905	HG-2498_Category_Variation_Status_Open,High Signal Region,contiggap
+chr8	43236700	43262600	High Signal Region
+chr8	43937900	45969600	High Signal Region,centromere,contiggap
+chr8	46829400	46832000	High Signal Region
+chr8	47218414	47223824	Ngap
+chr8	56054645	56278510	HG-1002_Category_Variation_Status_Under_Review
+chr8	57204900	57216100	High Signal Region
+chr8	59168700	59170400	High Signal Region
+chr8	67584500	67592700	High Signal Region
+chr8	69688400	69691100	High Signal Region
+chr8	71406700	71412400	High Signal Region
+chr8	75444100	75448200	High Signal Region
+chr8	81841500	81851900	High Signal Region
+chr8	85531912	85882323	HG-1318_Category_Gap_Status_Stalled,High Signal Region,contiggap
+chr8	88685900	88691700	High Signal Region
+chr8	96171200	96173100	High Signal Region
+chr8	99494900	99496800	High Signal Region
+chr8	105789200	105793800	High Signal Region
+chr8	141333446	141461079	HG-2589_Category_GRC_Housekeeping_Status_Open
+chr8	141491400	141493500	High Signal Region
+chr8	141871100	141875200	High Signal Region
+chr8	143641400	143670500	High Signal Region
+chr8	144124800	144137600	High Signal Region
+chr8	145078637	145128636	contiggap
+chr8	145128637	145138636	telomere
+chr8_KI270811v1_alt	0	292436	HG-4_Category_Variation_Status_Continuing_Investigation
+chr8_KI270819v1_alt	0	133535	HG-2589_Category_GRC_Housekeeping_Status_Open
+chr8_KZ208915v1_fix	0	6367528	HG-2498_Category_Variation_Status_Open
+chr9	1	10000	telomere
+chr9	319900	322400	High Signal Region
+chr9	33656600	33660000	High Signal Region
+chr9	35912600	35915300	High Signal Region
+chr9	38756303	63548000	HG-1683_Category_Localization_Problem_Status_Awaiting_Elec_Data,HG-2522_Category_Clone_Problem_Status_Open,HG-2575_Category_Gap_Status_Open,HG-589_Category_Gap_Status_Awaiting_Exptl_Data,HG-602_Category_Gap_Status_Awaiting_Exptl_Data,HG-908_Category_Missing_sequence_Status_Under_Review,High Signal Region,Low Mappability,centromere,contiggap,heterochromatin,scaffoldgap
+chr9	63761400	64027300	High Signal Region,contiggap
+chr9	64135000	68515931	HG-1340_Category_Path_Problem_Status_Open,HG-1503_Category_Path_Problem_Status_Under_Review,HG-608_Category_Gap_Status_Continuing_Investigation,High Signal Region,contiggap,scaffoldgap
+chr9	70037200	70039600	High Signal Region
+chr9	70684147	70832880	HG-1689_Category_Variation_Status_Under_Review
+chr9	76174300	76176200	High Signal Region
+chr9	83222900	83226900	High Signal Region
+chr9	85071600	85075100	High Signal Region
+chr9	85164800	85166100	High Signal Region
+chr9	108502000	108506600	High Signal Region
+chr9	123855312	124032767	HG-2547_Category_Unknown_Status_Open
+chr9	125790667	125858860	HG-2159_Category_Clone_Problem_Status_Under_Review
+chr9	130344717	130345798	Ngap
+chr9	134164500	134185536	High Signal Region,scaffoldgap
+chr9	136307479	136309095	Ngap
+chr9	137326800	137330600	High Signal Region
+chr9	137715200	137722200	Low Mappability
+chr9	137841200	137846800	Low Mappability
+chr9	138104407	138394717	HG-619_Category_Gap_Status_Continuing_Investigation,High Signal Region,contiggap,telomere
+chr9_KI270717v1_random	0	40062	HG-1976_Category_Localization_Problem_Status_Open,nonstd
+chr9_KI270718v1_random	0	38054	HG-1975_Category_Localization_Problem_Status_Open,nonstd
+chr9_KI270719v1_random	0	176845	HG-1974_Category_Localization_Problem_Status_Open,nonstd
+chr9_KI270720v1_random	0	39050	HG-1973_Category_Localization_Problem_Status_Open,nonstd
+chrUn_GL000195v1	0	182896	HG-1283_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000213v1	0	164239	HG-789_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000214v1	0	137718	HG-790_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000216v2	0	176608	HG-792_Category_Localization_Problem_Status_Stalled,nonstd,scaffoldgap
+chrUn_GL000218v1	0	161147	HG-630_Category_Localization_Problem_Status_Under_Review,nonstd
+chrUn_GL000219v1	0	179198	HG-1100_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000220v1	0	161802	HG-1101_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000224v1	0	179693	HG-1105_Category_Localization_Problem_Status_Stalled,HG-1646_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_GL000226v1	0	15008	HG-1108_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270302v1	0	2273	nonstd
+chrUn_KI270303v1	0	1941	nonstd
+chrUn_KI270304v1	0	2164	nonstd
+chrUn_KI270305v1	0	1471	nonstd
+chrUn_KI270310v1	0	1200	nonstd
+chrUn_KI270311v1	0	12398	nonstd,scaffoldgap
+chrUn_KI270312v1	0	997	nonstd
+chrUn_KI270315v1	0	2275	nonstd
+chrUn_KI270316v1	0	1443	nonstd
+chrUn_KI270317v1	0	37689	nonstd,scaffoldgap
+chrUn_KI270320v1	0	4415	nonstd
+chrUn_KI270322v1	0	21475	nonstd,scaffoldgap
+chrUn_KI270329v1	0	1039	nonstd
+chrUn_KI270330v1	0	1651	nonstd
+chrUn_KI270333v1	0	2698	nonstd
+chrUn_KI270334v1	0	1367	nonstd
+chrUn_KI270335v1	0	1047	nonstd
+chrUn_KI270336v1	0	1025	nonstd
+chrUn_KI270337v1	0	1120	nonstd
+chrUn_KI270338v1	0	1427	nonstd
+chrUn_KI270340v1	0	1427	nonstd
+chrUn_KI270362v1	0	3529	nonstd
+chrUn_KI270363v1	0	1802	nonstd
+chrUn_KI270364v1	0	2854	nonstd
+chrUn_KI270366v1	0	8319	nonstd
+chrUn_KI270371v1	0	2804	nonstd
+chrUn_KI270372v1	0	1649	nonstd
+chrUn_KI270373v1	0	1450	nonstd
+chrUn_KI270374v1	0	2655	nonstd
+chrUn_KI270375v1	0	2377	nonstd
+chrUn_KI270376v1	0	1135	nonstd
+chrUn_KI270378v1	0	1047	nonstd
+chrUn_KI270379v1	0	1044	nonstd
+chrUn_KI270381v1	0	1929	nonstd
+chrUn_KI270382v1	0	4214	nonstd
+chrUn_KI270383v1	0	1749	nonstd
+chrUn_KI270384v1	0	1657	nonstd
+chrUn_KI270385v1	0	989	nonstd
+chrUn_KI270386v1	0	1787	nonstd
+chrUn_KI270387v1	0	1536	nonstd
+chrUn_KI270388v1	0	1215	nonstd
+chrUn_KI270389v1	0	1297	nonstd
+chrUn_KI270390v1	0	2386	nonstd
+chrUn_KI270391v1	0	1483	nonstd
+chrUn_KI270392v1	0	970	nonstd
+chrUn_KI270393v1	0	1307	nonstd
+chrUn_KI270394v1	0	969	nonstd
+chrUn_KI270395v1	0	1142	nonstd
+chrUn_KI270396v1	0	1879	nonstd
+chrUn_KI270411v1	0	2645	nonstd
+chrUn_KI270412v1	0	1178	nonstd
+chrUn_KI270414v1	0	2488	nonstd
+chrUn_KI270417v1	0	2042	nonstd
+chrUn_KI270418v1	0	2144	nonstd
+chrUn_KI270419v1	0	1028	nonstd
+chrUn_KI270420v1	0	2320	nonstd
+chrUn_KI270422v1	0	1444	nonstd
+chrUn_KI270423v1	0	980	nonstd
+chrUn_KI270424v1	0	2139	nonstd
+chrUn_KI270425v1	0	1883	nonstd
+chrUn_KI270429v1	0	1360	nonstd
+chrUn_KI270435v1	0	92982	nonstd,scaffoldgap
+chrUn_KI270438v1	0	112504	nonstd,scaffoldgap
+chrUn_KI270442v1	0	392060	nonstd,scaffoldgap
+chrUn_KI270448v1	0	7991	nonstd
+chrUn_KI270465v1	0	1773	nonstd
+chrUn_KI270466v1	0	1232	nonstd
+chrUn_KI270467v1	0	3919	nonstd
+chrUn_KI270468v1	0	4054	nonstd
+chrUn_KI270507v1	0	5352	nonstd
+chrUn_KI270508v1	0	1950	nonstd
+chrUn_KI270509v1	0	2317	nonstd
+chrUn_KI270510v1	0	2414	nonstd
+chrUn_KI270511v1	0	8126	nonstd
+chrUn_KI270512v1	0	22688	nonstd
+chrUn_KI270515v1	0	6360	nonstd
+chrUn_KI270516v1	0	1299	nonstd
+chrUn_KI270517v1	0	3252	nonstd
+chrUn_KI270518v1	0	2185	nonstd
+chrUn_KI270519v1	0	138125	nonstd,scaffoldgap
+chrUn_KI270521v1	0	7641	nonstd
+chrUn_KI270522v1	0	5673	nonstd
+chrUn_KI270528v1	0	2982	nonstd
+chrUn_KI270529v1	0	1898	nonstd
+chrUn_KI270530v1	0	2167	nonstd
+chrUn_KI270538v1	0	91308	nonstd,scaffoldgap
+chrUn_KI270539v1	0	992	nonstd
+chrUn_KI270544v1	0	1201	nonstd
+chrUn_KI270548v1	0	1598	nonstd
+chrUn_KI270579v1	0	31032	nonstd
+chrUn_KI270580v1	0	1552	nonstd
+chrUn_KI270581v1	0	7045	nonstd
+chrUn_KI270582v1	0	6503	nonstd
+chrUn_KI270583v1	0	1399	nonstd
+chrUn_KI270584v1	0	4512	nonstd
+chrUn_KI270587v1	0	2968	nonstd
+chrUn_KI270588v1	0	6157	nonstd
+chrUn_KI270589v1	0	44473	nonstd,scaffoldgap
+chrUn_KI270590v1	0	4684	nonstd
+chrUn_KI270591v1	0	5795	nonstd
+chrUn_KI270593v1	0	3040	nonstd
+chrUn_KI270741v1	0	157431	nonstd,scaffoldgap
+chrUn_KI270742v1	0	186739	HG-1642_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270743v1	0	210658	HG-1801_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270744v1	0	168472	HG-1804_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270745v1	0	41891	HG-1965_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270746v1	0	66486	HG-1963_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270747v1	0	198734	nonstd
+chrUn_KI270748v1	0	93321	HG-1912_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270749v1	0	158759	HG-1914_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270750v1	0	148850	HG-1964_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270751v1	0	150742	HG-1918_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270752v1	0	27744	nonstd
+chrUn_KI270753v1	0	62944	HG-1966_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270754v1	0	40191	HG-2011_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270755v1	0	36723	HG-2012_Category_Localization_Problem_Status_Stalled,nonstd
+chrUn_KI270756v1	0	79589	nonstd,scaffoldgap
+chrUn_KI270757v1	0	71250	nonstd,scaffoldgap
+chrX	0	329300	HG-1961_Category_GRC_Housekeeping_Status_Under_Review,HG-479_Category_Gap_Status_Awaiting_Exptl_Data,High Signal Region,scaffoldgap,telomere
+chrX	362400	388500	High Signal Region
+chrX	456500	531800	High Signal Region
+chrX	723800	739500	High Signal Region
+chrX	864500	930400	High Signal Region
+chrX	1049100	1054300	High Signal Region
+chrX	1085100	1175500	High Signal Region
+chrX	1200600	1209400	High Signal Region
+chrX	1249200	1269000	High Signal Region
+chrX	1289500	1298900	High Signal Region
+chrX	1365300	1458700	High Signal Region
+chrX	1480900	1492800	High Signal Region
+chrX	1816200	1820600	High Signal Region
+chrX	1949346	2132994	contiggap
+chrX	2137389	2137488	scaffoldgap
+chrX	2223900	2521900	High Signal Region
+chrX	2580600	2751300	High Signal Region
+chrX	3966700	3968700	High Signal Region
+chrX	5481200	5486100	High Signal Region
+chrX	6933400	6938700	High Signal Region
+chrX	7587600	7591800	High Signal Region
+chrX	9403600	9415100	High Signal Region
+chrX	10770635	10856884	High Signal Region,Ngap
+chrX	10857164	10907170	Ngap
+chrX	10966600	10976800	High Signal Region
+chrX	11026170	11086594	Ngap
+chrX	11218800	11221100	Low Mappability
+chrX	11840900	11848000	High Signal Region
+chrX	14085100	14109500	High Signal Region
+chrX	14286500	14289300	High Signal Region
+chrX	14818937	14842480	Ngap
+chrX	15415538	15416086	Ngap
+chrX	15416417	15420614	Ngap
+chrX	16361200	16366000	High Signal Region
+chrX	16498100	16503400	High Signal Region
+chrX	19940200	19946300	High Signal Region
+chrX	21340600	21345700	High Signal Region
+chrX	21832681	21861581	Ngap
+chrX	21861970	21866709	Ngap
+chrX	21866710	21878902	Ngap
+chrX	21879257	21891892	Ngap
+chrX	21912353	21928862	Ngap
+chrX	21928863	21958510	Ngap
+chrX	21958511	21996351	Ngap
+chrX	21996352	22007698	Ngap
+chrX	22007699	22011529	Ngap
+chrX	22011530	22020982	Ngap
+chrX	25773300	25776000	High Signal Region
+chrX	26176400	26181400	High Signal Region
+chrX	30767800	30772600	High Signal Region
+chrX	31077600	31082600	High Signal Region
+chrX	31511400	31535800	High Signal Region
+chrX	34416800	34425900	High Signal Region
+chrX	36465200	36471200	High Signal Region
+chrX	37099263	37285837	contiggap
+chrX	37628400	37633500	High Signal Region
+chrX	42872300	42910700	High Signal Region
+chrX	49298271	49623500	HG-140_Category_Gap_Status_Awaiting_Exptl_Data,HG-197_Category_Gap_Status_Awaiting_Exptl_Data,HG-274_Category_Missing_sequence_Status_Awaiting_Exptl_Data,High Signal Region,contiggap,scaffoldgap
+chrX	50019400	50033700	High Signal Region
+chrX	50056700	50066100	High Signal Region
+chrX	50228965	50278964	contiggap
+chrX	51202300	51268100	High Signal Region
+chrX	51427500	51432400	High Signal Region
+chrX	52175000	52228100	High Signal Region
+chrX	52442800	52538100	High Signal Region
+chrX	53761700	53789500	High Signal Region
+chrX	55180400	55184500	High Signal Region
+chrX	56754900	56781100	Low Mappability
+chrX	57712300	57719700	High Signal Region
+chrX	58467900	62522800	High Signal Region,centromere,contiggap
+chrX	63129600	63290600	Low Mappability
+chrX	67311800	67323800	High Signal Region
+chrX	67626800	67632300	High Signal Region
+chrX	68217300	68230200	High Signal Region
+chrX	70600000	70603800	High Signal Region
+chrX	70640600	70645000	High Signal Region
+chrX	70963600	70964900	High Signal Region
+chrX	71978800	71980500	High Signal Region
+chrX	72489400	72490800	High Signal Region
+chrX	72743200	73035800	High Signal Region
+chrX	73381000	73387000	High Signal Region
+chrX	73887000	73891300	High Signal Region
+chrX	74660000	74718100	High Signal Region
+chrX	74789000	74794000	High Signal Region
+chrX	74952200	74995200	High Signal Region
+chrX	78802400	78804500	High Signal Region
+chrX	79765500	79789600	High Signal Region
+chrX	80534100	80537000	High Signal Region
+chrX	82849700	82859300	Low Mappability
+chrX	83752100	83756900	High Signal Region
+chrX	86046600	86076600	High Signal Region
+chrX	86395500	86398100	High Signal Region
+chrX	86970000	86975600	High Signal Region
+chrX	87220500	87222100	High Signal Region
+chrX	89060200	89062700	High Signal Region
+chrX	89202500	89208400	High Signal Region
+chrX	91332900	91336600	High Signal Region
+chrX	93618000	93633400	High Signal Region
+chrX	94863600	94868300	High Signal Region
+chrX	97509600	97515000	High Signal Region
+chrX	100135800	100141000	High Signal Region
+chrX	100257100	100261600	High Signal Region
+chrX	101471700	101474900	High Signal Region
+chrX	102188700	102489200	High Signal Region
+chrX	103851800	103897800	High Signal Region
+chrX	106755500	106769400	High Signal Region
+chrX	106813900	106830900	High Signal Region
+chrX	107515800	107517200	High Signal Region
+chrX	109034800	109069100	High Signal Region
+chrX	109114900	109119400	High Signal Region
+chrX	109520800	109525700	High Signal Region
+chrX	109985900	109987300	High Signal Region
+chrX	110816700	110833400	High Signal Region
+chrX	111416100	111418000	High Signal Region
+chrX	113141700	113143600	High Signal Region
+chrX	114281199	114331198	contiggap
+chrX	114701600	114724300	High Signal Region
+chrX	115651876	115889600	HG-698_Category_Path_Problem_Status_Stalled,HG-968_Category_Path_Problem_Status_Stalled,High Signal Region,contiggap,scaffoldgap
+chrX	116551130	116601844	HG-1508_Category_Gap_Status_Awaiting_Elec_Data,High Signal Region,contiggap
+chrX	117874100	117880000	High Signal Region
+chrX	118009000	118037800	High Signal Region
+chrX	118070900	118072700	High Signal Region
+chrX	120879382	120929381	scaffoldgap
+chrX	121263700	121268100	High Signal Region
+chrX	121299200	121300600	High Signal Region
+chrX	122528400	122550000	High Signal Region
+chrX	124005269	124123403	HG-2588_Category_Clone_Problem_Status_Under_Review
+chrX	124584300	124588400	High Signal Region
+chrX	125927600	125937100	High Signal Region
+chrX	126463700	126474200	High Signal Region
+chrX	127116700	127122600	High Signal Region
+chrX	127362200	127368300	High Signal Region
+chrX	128785000	128788700	High Signal Region
+chrX	129337600	129357900	High Signal Region
+chrX	129388400	129408400	High Signal Region
+chrX	130567700	130572000	High Signal Region
+chrX	131152200	131157400	High Signal Region
+chrX	131378300	131383300	High Signal Region
+chrX	131664300	131670000	High Signal Region
+chrX	132284600	132320400	High Signal Region
+chrX	133108600	133116500	High Signal Region
+chrX	135718600	135888700	High Signal Region
+chrX	137074700	137079100	High Signal Region
+chrX	137436600	137439300	High Signal Region
+chrX	138300600	138302200	High Signal Region
+chrX	139437600	139446800	High Signal Region
+chrX	139621500	139622800	High Signal Region
+chrX	140722400	140726100	High Signal Region
+chrX	141000400	141108300	High Signal Region
+chrX	142478000	142483800	High Signal Region
+chrX	142892300	142911600	High Signal Region
+chrX	143352000	143356500	High Signal Region
+chrX	144404500	144475900	Low Mappability,contiggap
+chrX	147281700	147287100	High Signal Region
+chrX	147653800	147659900	High Signal Region
+chrX	148123500	148129000	High Signal Region
+chrX	148181737	148192974	Ngap
+chrX	148193556	148205135	Ngap
+chrX	148205420	148210629	Ngap
+chrX	148347100	148378700	High Signal Region
+chrX	149437900	149441900	High Signal Region
+chrX	149479316	149843545	HG-2552_Category_Unknown_Status_Open
+chrX	150024800	150026200	High Signal Region
+chrX	151097849	151098081	Ngap
+chrX	151098662	151161934	Ngap
+chrX	152173800	152175100	High Signal Region
+chrX	152819338	152864830	Ngap
+chrX	152865173	152904683	Ngap
+chrX	152905070	152909442	Ngap
+chrX	152909824	152911403	Ngap
+chrX	152911609	152926438	Ngap
+chrX	152926996	152996707	Ngap
+chrX	152997070	153004526	Ngap
+chrX	153251200	153316400	High Signal Region
+chrX	153397264	153404032	Ngap
+chrX	153404180	153441945	Ngap
+chrX	153442285	153476279	Ngap
+chrX	153476672	153562751	Ngap
+chrX	153632602	153636231	Ngap
+chrX	153636781	153648552	Ngap
+chrX	153648938	153650381	Ngap
+chrX	153650658	153657120	Ngap
+chrX	153657502	153659504	Ngap
+chrX	153659799	153685283	Ngap
+chrX	153685580	153733384	Ngap
+chrX	153733762	153760670	Ngap
+chrX	153761039	153772875	Ngap
+chrX	153773221	153774046	Ngap
+chrX	153774332	153821076	Ngap
+chrX	153821405	153864383	Ngap
+chrX	153864384	153868877	Ngap
+chrX	153869242	153884117	Ngap
+chrX	153884260	153920971	Ngap
+chrX	153921225	153925650	Ngap
+chrX	153925990	153928513	Ngap
+chrX	153928848	153942738	Ngap
+chrX	153942808	153946937	Ngap
+chrX	153947276	154068494	HG-2423_Category_Variation_Status_Open,Ngap
+chrX	154870000	154890200	High Signal Region
+chrX	154938900	154945100	High Signal Region
+chrX	155299600	155305100	High Signal Region
+chrX	155454000	155522000	High Signal Region
+chrX	155700400	155727500	High Signal Region
+chrX	155983500	156040895	High Signal Region,telomere
+chrY	1	2781479	HG-1961_Category_GRC_Housekeeping_Status_Under_Review,PARchrY,contiggap,scaffoldgap,telomere
+chrY	4343800	4345800	High Signal Region
+chrY	9046915	9055174	scaffoldgap
+chrY	9057609	9107608	contiggap
+chrY	9111869	9112715	scaffoldgap
+chrY	9114320	9116371	scaffoldgap
+chrY	9403714	9453713	contiggap
+chrY	10246200	11335300	HG-1136_Category_Missing_sequence_Status_Awaiting_Exptl_Data,HG-1533_Category_Gap_Status_Awaiting_Elec_Data,High Signal Region,Ngap,centromere,contiggap,scaffoldgap
+chrY	11387387	11837394	HG-1534_Category_Gap_Status_Awaiting_Elec_Data,High Signal Region,contiggap,scaffoldgap
+chrY	20157583	20318701	HG-1281_Category_Gap_Status_Awaiting_Elec_Data,HG-2013_Category_GRC_Housekeeping_Status_Stalled,scaffoldgap
+chrY	20986298	21150977	HG-2269_Category_Clone_Problem_Status_Awaiting_Exptl_Data
+chrY	21739543	21741441	scaffoldgap
+chrY	21747864	21748371	scaffoldgap
+chrY	21750014	21750314	scaffoldgap
+chrY	21755476	21789281	Ngap
+chrY	21789282	21805281	contiggap
+chrY	26637300	57227415	HG-2281_Category_Gap_Status_Awaiting_Elec_Data,HG-2295_Category_Gap_Status_Awaiting_Elec_Data,High Signal Region,PARchrY,contiggap,heterochromatin,telomere
+chrY_KI270740v1_random	0	37239	nonstd

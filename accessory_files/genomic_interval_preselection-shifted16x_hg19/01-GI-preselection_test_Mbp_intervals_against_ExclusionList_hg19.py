@@ -25,7 +25,7 @@ if FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE not in multiples:
     raise ValueError(f"FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE must be from multiples!")
 SORTED_LOWERCASE_STD_CHROMOSOMES = humansorted([f'chr{i}' for i in range(1, 23, 1)] + ['chrx'])  # only include these
 # PATH DEFINITIONS
-exclusion_list = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}_GCcorrection_ExclusionList.sorted.merged.bed'
+exclusion_list = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}_GCcorrection_ExclusionList.merged.sorted.bed'
 genome_file_path = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}.genome_file.tsv'
 output_path = CODE_ROOT_PATH / f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}'
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
@@ -133,14 +133,15 @@ if __name__ == '__main__':
         if num_multiples[k] is None:
             num_multiples[k] = 0
     for mult in multiples:  # [ DONE ]
-        print(f"number of exclusion listed regions larger or equal than {mult}kb: {num_multiples[mult]:,}")
+        print(f"number of exclusion listed regions larger than or equal to {mult}kb: {num_multiples[mult]:,}")
     # write filtered exclusion lists
     original_exclusion_list_path = Path(exclusion_list)
     output_path.mkdir(parents=True, exist_ok=True)
     for mult, sublist_lines in sub_exclusion_lists.items():
         if mult:  # not the original list -> greate new BED file
-            mult_thresh_excl_list_path = output_path / (f'{original_exclusion_list_path.stem}.'
-                                                        f'min{EXCLUSION_REGION_SIZE_BASE_THRESHOLD}bpRegions.bed')
+            mult_thresh_excl_list_path = (output_path /
+                                          f'{original_exclusion_list_path.stem}.'
+                                          f'min{EXCLUSION_REGION_SIZE_BASE_THRESHOLD * mult // 1000}kbRegions.bed')
             with open(mult_thresh_excl_list_path, 'wt') as f_thresh_excl:
                 f_thresh_excl.writelines(sublist_lines)
             mult_exclusion_list_beds[mult] = str(mult_thresh_excl_list_path)

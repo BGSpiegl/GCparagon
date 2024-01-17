@@ -1,46 +1,101 @@
 #!/usr/bin/env python3
 import argparse
 import sys
+import math
 import random
 import numpy as np
 from pathlib import Path
 from math import log10
 import multiprocessing as mp
+from natsort import humansorted
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
-from correct_GC_bias import OutOfGenomicBoundsError, DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD, \
-    safe_gc_base_count_inference_thresh, gc_count_rejecting_n_containing, rhui
 
-# get root path
+# get the root path
 REPO_ROOT_DIR = Path(__file__).parent.parent.parent
 
-# table path definitions
-fragment_lengths_pre_post_preset2_correction_v055 = \
-    REPO_ROOT_DIR / ("development/optimized_weight-matrices-combining_using_GC_content_representativeness/"
-                     "fragment_length_originalVScorrected/"
-                     "GCPARAGON-STATISTICS_allSamples_fragment_length_14-08-2023.tsv")
-# the following two paths are expected to be right -> change otherwise!
-default_hg38_2bit_reference_genome_path = REPO_ROOT_DIR / 'src/GCparagon/2bit_reference/hg38.analysisSet.2bit'
-default_hg38_predefined_genomic_regions = REPO_ROOT_DIR / \
-                                          'accessory_files/' \
-                                          'hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed'
-# ^------- OUTPUT TABLE PATH!
-default_output_directory = REPO_ROOT_DIR / 'accessory_files'
-default_putative_ref_flength_dist_table = default_output_directory / 'reference_fragment_length_distribution.tsv'
-SAVE_COUNTS = True  # saves relative frequency otherwise
-
-# sample definitions
-# use_average_across_these_samples = ('B01', 'H01', 'P01')
-
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+# ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!!!
+INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
+SHIFT_N_TIMES = 16  # you might want to select a higher number
+GENOME_BUILD = 'hg19'
+REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
+SORTED_LOWERCASE_STD_CHROMOSOMES = humansorted([f'chr{i}' for i in range(1, 23, 1)] + ['chrx'])  # only include these
 # analysis setup
 sample_n_fragments_per_mbp_default = 1 * 10**6
 # OUTPUT PRECISION
 DEFAULT_FLOAT_PRECISION_DIGITS = round(log10(sample_n_fragments_per_mbp_default)) + 3  # 9 digits after the comma
+# ^--- the parameter above is only used if fractions are stored instead of counts (i.e., SAVE_COUNTS = False)
 # Only has an impact if SAVE_COUNTS == False
-default_parallel_processes = 24
+default_parallel_processes = 32
 exclude_n_bases_default = True
 # random numbers:
 RANDOM_SEED = random.randint(1, 999)
+DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3  # from correct_GC_bias.py
+SAVE_COUNTS = True  # saves relative frequency otherwise
+# PATH DEFINITIONS
+# below not required if ccfDNA from a blood plasma sample and the isolation protocol 'plasmaSeq' was used to
+# create the library where the reads of the input BAM file originate from
+default_putative_ref_flength_dist_table = \
+    REPO_ROOT_DIR / 'accessory_files/plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
+# WARNING: you MUST create a REFERENCE FRAGMENT LENGTH DISTRIBUTION ---^ from your input samples OTHERWISE!
+# !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
+
+# table path definitions
+default_2bit_reference_genome_path = (REPO_ROOT_DIR /
+                                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')  # <---- required input!
+default_predefined_genomic_regions = \
+    REPO_ROOT_DIR / (f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
+                     f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE//10**6}Mbp_intervals_'
+                     f'{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.bed')
+# ^------- OUTPUT TABLE PATH!
+default_output_directory = REPO_ROOT_DIR / 'accessory_files'
+
+
+# definitions of specific exceptions
+class OutOfGenomicBoundsError(Exception):
+    """
+    To be raised in conditions where a genomic locus (= chromosome/scaffold/contig + coordinate) does not exist in a
+    given reference genome build, whichever that may be.
+    """
+    pass
+
+
+# from correct_GC_bias.py
+def rhui(num: OneOf[int, float]):
+    """
+
+    :param num:
+    :return:
+    """
+    return int(math.floor(num + 0.5))
+
+
+# from correct_GC_bias.py
+def safe_gc_base_count_inference_thresh(f_seq, f_len, threshold=0.3):
+    """
+    Execution takes around 30-60 micro seconds
+    :param threshold:
+    :param f_seq:
+    :param f_len:
+    :return:
+    :raises: nothing but may lead to IndexError
+    """
+    n_count = f_seq.count('N')
+    if n_count / f_len >= threshold:  # too many N-bases compared to fragment length
+        return 99999999  # will lead to an IndexError
+    try:
+        return rhui(f_len / (f_len - n_count) * (f_seq.count('G') + f_seq.count('C')))
+    except ZeroDivisionError:  # if all bases returned are 'N's
+        return 99999999  # will lead to an IndexError
+
+
+# from correct_GC_bias.py
+def gc_count_rejecting_n_containing(f_seq):
+    n_count = f_seq.count('N')
+    if n_count:  # too many N-bases compared to fragment length
+        return 99999999  # will lead to an IndexError
+    return f_seq.count('G') + f_seq.count('C')
 
 
 def load_table_with_flength_hdr(table_path: OneOf[str, Path]) -> Tuple[np.array, range]:
@@ -143,7 +198,7 @@ def get_ref_flength_rel_frequencies(corrected_fraglengths_table_path: Path, norm
     if output_table:
         # output reference table
         output_dir.mkdir(exist_ok=True, parents=True)
-        reference_flength_dist_path = output_dir / 'reference_fragment_length_distribution.tsv'
+        reference_flength_dist_path = output_dir / 'plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
         reference_flength_dist_path.parent.mkdir(parents=True, exist_ok=True)
         with open(reference_flength_dist_path, 'wt') as f_ref_fgcd:
             hdr = '\t'.join([str(length) for length in range(min_flength, max_flength + 1)]) + '\n'
@@ -156,6 +211,8 @@ def load_predefined_genomic_regions(genomic_regions_table: OneOf[str, Path]) -> 
     with open(genomic_regions_table, 'rt') as f_reg:
         for line in f_reg.readlines():
             chrom, start, end, overlap, *_ = line.strip().split('\t')
+            if chrom.lower() not in SORTED_LOWERCASE_STD_CHROMOSOMES:
+                continue
             genomic_intervals.append((chrom, int(start), int(end), int(overlap)))
     return genomic_intervals
 
@@ -167,13 +224,13 @@ def simulate_fgcd_worker(genomic_intervals: List[Tuple[str, int, int, int]], two
                          frag_n_cont_thresh=DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD):
     """
     Simulate the fragment GC content distribution (FGCD) based on a reference fragment length distribution (FLD) using a
-    target amount of simulated fragments.
+    target number of simulated fragments.
     :param genomic_intervals: list of genomic intervals + their exclusion list overlap
-    :param two_bit_reference_path: path to reference genome sequence in 2bit format (NOT FASTA!)
+    :param two_bit_reference_path: the path to a reference genome sequence file in 2bit format (NOT FASTA!)
     :param fragment_length_range: shortest and longest fragment length in bp; must match with received fld data!
-    :param sample_n_per_mb: target amount of simulated fragments per interval Mega base
+    :param sample_n_per_mb: target number of simulated fragments per interval Mega base
     :param parent_connection: multiprocessing.Pipe connection; the parent process waits until this process has finished
-                              an then receives all data put on the pipe by all child processes.
+                              and then receives all data put on the pipe by all child processes.
     :param fld: reference fragment length distribution which is used to draw fragments from the 2bit reference sequence
     :param random_seed: (might be useless)
     :param strict_n_ref_bases_handling: whether to reject all N-base(s) containing drawn fragment sequence;
@@ -305,7 +362,7 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
     regions_per_process = len(genomic_intervals) // processes
     intervals_for_processes = []
     for list_idx in range(processes):
-        if list_idx == processes - 1:  # last list consumes the rest
+        if list_idx == processes - 1:  # the last list consumes the rest
             intervals_for_processes.append(genomic_intervals[regions_per_process * list_idx:])  # until end
         else:
             intervals_for_processes.append(genomic_intervals[regions_per_process * list_idx:
@@ -344,24 +401,23 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
     for sim_proc in worker_processes:
         sim_proc.close()
     # output FGCD results table
-    output_table_path = Path(output_path) / 'hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed'
+    output_table_path = (Path(output_path) /
+                         f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.FGCD.bed')
+    # i: ^--- ADAPT NAME IF PARAMETERS WERE CHANGED! (interval size and/or overlap threshold)
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_table_path, 'wt') as f_out:
         hdr = '\t'.join(['chromosome', 'start', 'end', 'exclusion_marked_bases'] +
                         [str(gc_pc) for gc_pc in range(0, 101, 1)]) + '\n'
         f_out.write(hdr)
-        f_out.writelines(['\t'.join(list(map(lambda t:
-                                             (str(t)
-                                              if t != interval_result[-1] else  # unpack GC content counts list
-                                              ('\t'.join(list(map(lambda p: (
-                                                  str(p if save_counts else round(p/sum(t),
-                                                                                  ndigits=precision))),
-                                                                  t))))), interval_result))) + '\n'
-                          for interval_result in interval_results])
+        f_out.writelines(['\t'.join(list(map(
+            lambda t: (str(t) if t != interval_result[-1] else  # unpack GC content counts list
+                       ('\t'.join(list(map(lambda p: (str(p if save_counts else round(p/sum(t), ndigits=precision))),
+                                           t)))
+                        )), interval_result))) + '\n' for interval_result in interval_results])
     # output bad intervals exclusion list if -> use a sample yield of 0 such that the interval will always be rejected
     # independent of the sample yield
     if there_were_bad_intervals:
-        bad_intervals_bed_path = output_table_path.parent / (f"genomic_intervals_failed_fragment_drawing"
+        bad_intervals_bed_path = output_table_path.parent / (f"{GENOME_BUILD}_genomic_intervals_failed_fragment_drawing"
                                                              f"{'-counts' if save_counts else '-f_rel'}.bed")
         bad_intervals_bed_path.parent.mkdir(parents=True, exist_ok=True)
         with open(bad_intervals_bed_path, 'wt') as f_bad:  # always re-write
@@ -380,50 +436,52 @@ def get_cmd_args():
                                     help='Path to a table containing (equal sized) genomic intervals '
                                          'which are intended to be used for GC bias correction later. This table '
                                          "should follow the output format of GCparagon utility scripts "
-                                         "'01-GI-preselection_test_Mbp_intervals_against_ExclusionList.py' and "
-                                         "'02-GI-preselection_select_low_score_regions_from_overlapping.py'.",
-                                    default=default_hg38_predefined_genomic_regions, metavar='File')
-    # FLD, EITHER (avg. from multiple samples):
+                                         "'01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py' and "
+                                         "'02-GI-preselection_select_low_score_regions_from_overlapping_hg19.py'.",
+                                    default=default_predefined_genomic_regions, metavar='File')
+    # EITHER: SAMPLE-FragLenDist (avg. from multiple samples):
     commandline_parser.add_argument('-fldt', '--fragment-length-distributions-table',
                                     dest='samples_flengths_table_path',
                                     help='If the -rfldt is not available yet, this input is required. Contains '
                                          'fragment length distributions for multiple samples. A subset of samples '
-                                         'included in the averaging process can be defined via --samples-subset.',
-                                    default=fragment_lengths_pre_post_preset2_correction_v055, metavar='File')
-    # FLD, OR (reference distribution already present):
+                                         'included in the averaging process can be defined via --samples-subset. '
+                                         'Initially, the fragment length distributions of the GCparagon validation '
+                                         'samples were used. Use a --reference-fragment-length-distribution-table '
+                                         'instead if you have one created already for your the specific combination of '
+                                         'your experiment conditions.',
+                                    metavar='File')
+    # OR: REFERENCE FragLenDist
+    # (reference distribution for plasmaSeq ccfDNA data from blood plasma samples already present):
     commandline_parser.add_argument('-rfldt', '--reference-fragment-length-distribution-table',
                                     dest='putative_ref_flength_dist_table',
-                                    help='If the -fldt has already been used to compute a -rfldt, the path to the '
-                                         '-rfldt table can be used to skip the averaging step. Contains a theoretical '
-                                         'fragment length distributions matching a specific application like cfDNA '
-                                         'from blood plasma samples extracted with a specific protocol etc.',
+                                    help='If the --fragment-length-distributions-table (above) has already been used '
+                                         'to compute a --reference-fragment-length-distribution-table, the path to '
+                                         'this --reference-fragment-length-distribution-table can be used to skip the '
+                                         'averaging step. The TSV contains a theoretical fragment length distributions '
+                                         'matching specific experiment conditions like: cfDNA isolated from a blood '
+                                         'plasma sample; cfDNA isolated and sequencing library prepared following '
+                                         'specific protocols; DNA sequenced with a specific technology, etc.',
                                     default=default_putative_ref_flength_dist_table, metavar='File')
     commandline_parser.add_argument('-o', '--output-dir', dest='output_directory', default=default_output_directory,
                                     help='Path to which the resulting table(s) will be written. If does not exist, '
                                          f'it will be created. [ DEFAULT: {default_output_directory}]',
                                     metavar='Directory')
     commandline_parser.add_argument('-ss', '--samples-subset', dest='sample_subset',
-                                    help='This can be used to define a list of samples. Any input will be reduced to '
-                                         'data associated with these sample identifiers.', nargs='+',
+                                    help='This can be used to select a subset of samples from the '
+                                         '--fragment-length-distributions-table. Any input will be reduced to '
+                                         'data associated with these sample identifiers. Has no effect in the default '
+                                         'case where the --reference-fragment-length-distribution-table for plasmaSeq '
+                                         '(paired-end) sequenced ccfDNA from blood plasma samples is used.', nargs='+',
                                     metavar='List[String]')
     # OTHER (OPTIONAL) PATH DEFINITIONS
-    commandline_parser.add_argument('-sftd', '--samples-fgcd-tables-dir',
-                                    dest='create_ref_fgcd_from_genomewide_sample_fgcd_tables',
-                                    help='Optional input: a directory containing tables which containing genome-wide '
-                                         'simulated FGCDs of a sample from which a reference distribution summing up '
-                                         'to 1 will be computed. The samples should be homogeneous with respect to '
-                                         'sample prep protocols (wet lab procedure) and tissue of origin (e.g. '
-                                         'blood plasma). The created reference table is used by GCparagon but not by '
-                                         'any other part of this code.',
-                                    metavar='File')
     commandline_parser.add_argument('-rtb', '--two-bit-reference-genome', dest='ref_genome_path',
                                     help='Path to 2bit version of the reference genome FastA file which was used for '
                                          'read alignment of the input BAM file. If only a FastA version is available, '
                                          "one can create the file using the following command: 'faToTwoBit "
                                          "<PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' "
                                          "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)"
-                                         f"[ DEFAULT: {default_hg38_2bit_reference_genome_path} ]",
-                                    default=default_hg38_2bit_reference_genome_path, metavar='File')
+                                         f"[ DEFAULT: {default_2bit_reference_genome_path} ]",
+                                    default=default_2bit_reference_genome_path, metavar='File')
     # FURTHER ANALYSIS PARAMETERS:
     commandline_parser.add_argument('-p', '--processes', dest='n_parallel', type=int,
                                     help='Number of parallel processes used for simultaneous simulation of '
@@ -494,7 +552,6 @@ if __name__ == '__main__':
     fragment_n_content_threshold = cmd_args.n_cont_max
     fragment_lengths_table_path = cmd_args.samples_flengths_table_path
     putative_ref_flength_dist_table = cmd_args.putative_ref_flength_dist_table
-    reference_genome_fgcd_tables_samples_dir = cmd_args.create_ref_fgcd_from_genomewide_sample_fgcd_tables
     use_average_across_these_samples = cmd_args.sample_subset
     fragments_per_mbp_sampled = cmd_args.fragments_per_mbp_sampled
     float_precision = cmd_args.float_precision
@@ -507,13 +564,6 @@ if __name__ == '__main__':
         else:
             raise ValueError("UNABLE TO PROCEED - path to either a table with fragment length distributions (FLDs) "
                              "nor a table to a consensus FLD was provided via the commandline.")
-    if reference_genome_fgcd_tables_samples_dir is not None:
-        if not Path(reference_genome_fgcd_tables_samples_dir).is_dir():
-            print(f"WARNING - specified FGCDs table does not exist! Won't compute consensus reference FGCD!")
-            reference_genome_fgcd_tables_samples_path = None
-        else:
-            reference_genome_fgcd_tables_samples_path = Path(reference_genome_fgcd_tables_samples_dir)
-
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():
         use_reference_fld, flength_range = load_table_with_flength_hdr(table_path=putative_ref_flength_dist_table)
@@ -521,23 +571,12 @@ if __name__ == '__main__':
         use_reference_fld, flength_range = get_ref_flength_rel_frequencies(
             corrected_fraglengths_table_path=fragment_lengths_table_path,
             normalize_sample_counts=True, output_table=True, output_dir=output_directory)
-    # 2) OPTIONAL: create reference FGCD
-    if reference_genome_fgcd_tables_samples_path is not None:
-        reference_genome_fgcd_tables_samples = gather_tsvs(tsvs_path=reference_genome_fgcd_tables_samples_path,
-                                                           reduce_to_samples=use_average_across_these_samples)
-        if reference_genome_fgcd_tables_samples:
-            _ref_fgcd = load_expected_fgcds_and_average(tables_dict=reference_genome_fgcd_tables_samples,
-                                                        output_table=True, output_dir=output_directory,
-                                                        genome_build_label=reference_genome_path.stem.split('.')[0])
-        else:
-            print(f"WARNING - no TSV files found in directory '{reference_genome_fgcd_tables_samples_dir}'. No "
-                  f"consensus reference FGCD table will be output!")
-    # 3) read predefined genomic regions
+    # 2) read predefined genomic regions
     predefined_genomic_regions = load_predefined_genomic_regions(
         genomic_regions_table=predefined_genomic_regions_path)
     print(f"INSANITY CHECK - read {len(predefined_genomic_regions):,} lines from BED file "
           f"'{predefined_genomic_regions_path}'")
-    # 4) simulate fragment GC content distribution (= FGCD) in genomic intervals using multiprocessing
+    # 3) simulate fragment GC content distribution (= FGCD) in genomic intervals using multiprocessing
     simulate_expected_fgcd_for_intervals(genomic_intervals=predefined_genomic_regions,
                                          processes=parallel_processes,
                                          reference_genome=reference_genome_path,
@@ -548,41 +587,3 @@ if __name__ == '__main__':
                                          n_content_threshold=fragment_n_content_threshold,
                                          sample_n_fragments_per_mbp=fragments_per_mbp_sampled,
                                          precision=float_precision)
-
-# CMD line output was:
-# python3 03-GI-preselection_compute_genomic_interval_fragment_GC_content.py
-# INSANITY CHECK - read 1,702 lines from BED file '/accessory_files/hg38_minimalBlacklistOverlap_1Mbp_chunks_33pcOverlapLimited.bed'
-# Too many attempts of drawing random fragments for chunk 'chr4:48750000-49750000' were in vain (threshold was 62 tries). Marking interval as failed ..
-# Too many attempts of drawing random fragments for chunk 'chr19:23750000-24750000' were in vain (threshold was 55 tries). Marking interval as failed ..
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# Too many attempts of drawing random fragments for chunk 'chr2:88750000-89750000' were in vain (threshold was 55 tries). Marking interval as failed ..
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - 1 genomic intervals were marked for exclusion (i.e. not enough fragments passing the N-bases threshold could've been drawn from the reference sequence).
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - 1 genomic intervals were marked for exclusion (i.e. not enough fragments passing the N-bases threshold could've been drawn from the reference sequence).
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - 1 genomic intervals were marked for exclusion (i.e. not enough fragments passing the N-bases threshold could've been drawn from the reference sequence).
-# INFO - no genomic intervals were marked for exclusion.
-# INFO - no genomic intervals were marked for exclusion.
-#
-# Process finished with exit code 0
-
-# FAILED GENOMIC INTERVALS:
-# chr2	88750000	89750000	0,761915
-# chr4	48750000	49750000	0,698490
-# chr19	23750000	24750000	0,460836

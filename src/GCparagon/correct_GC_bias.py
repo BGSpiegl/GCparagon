@@ -223,14 +223,14 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                             default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION, type=Path,
                             help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
                                  "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
-                                 "GC) as relative frequencies of these percentage bins which (summing up to 1). If a "
+                                 "GC) as relative frequencies of these percentage bins (summing up to 1). If a "
                                  "custom reference genome is used, this file should be created anew from the simulated "
                                  "genome-wide ideal fragment GC content as simulated assuming a fragment length "
                                  "distribution as the one stored in 'accessory_files/"
-                                 "reference_fragment_length_distribution.tsv'! The provided information is used to "
+                                 "plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'! The provided information is used to "
                                  "optimize the combination of correction weight matrices from different genomic "
                                  "intervals to achieve a linear combination of these regions which resembles the "
-                                 "reference GC content distribution defined here.", metavar='File')
+                                 "reference GC content distribution defined here.", metavar='File')  # TODO: add info how to create that file!
     input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
@@ -272,7 +272,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'reduced when selecting a higher '
                                       'preset value. Preset 3 will attempt to process all genomic intervals (target '
                                       'number of fragments set to 100B) within the limits of the maximum allowed'
-                                      'exclusion marked regions overlap (per default default ~1.7 Gb of reference are '
+                                      'exclusion marked regions overlap (per default default ~2.7 Gb of reference are '
                                       'processed). NOTE: the percentage of total GC bias corrected fragments in the '
                                       'dataset for presets 1 vs. 3 increases only from 99.837%% to 99.938%% (average '
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '
@@ -603,7 +603,7 @@ def read_bad_genomic_intervals_bed_file(bed_path: str) -> BadIntervalsDict:
     return bad_intervals
 
 
-def create_region_label(chrm: str ,start: int, end: int):
+def create_region_label(chrm: str, start: int, end: int):
     return f"{chrm}_{start:,}-{end:,}"
 
 
@@ -1025,6 +1025,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                         show_plots=False) -> Tuple[Tuple[Path, np.array], Tuple[Path, np.array], Tuple[range, range]]:
     """
 
+    :param show_plots:
     :param focus_nondefault_values: plots will focus on these values using the integer value of the parameter as border
     :param ignored_fragments:
     :param output_all:
@@ -1188,7 +1189,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
                     f"{included_fragments / (included_fragments + ignored_fragments):.2%} of all processed fragments)",
             log_level=logging.INFO, logger_name=LOGGER)
     except ZeroDivisionError:  # this should never happen
-        log(message=f"Unable to estimate weighted dataset fraction!",
+        log(message=f"Unable to estimate weighted dataset fraction! (ZeroDivisionError)",
             log_level=logging.WARNING, logger_name=LOGGER)
     return (correction_weights_matrix_path, correction_weights_matrix_average), \
         (complete_mask_path, complete_mask), \
@@ -1212,7 +1213,7 @@ def sort_intervals_by_exclusion_ist_overlap(all_intervals_with_score: GenomicInt
                 f"further analysis based on the {max_overlap_percentage:.1f}% interval overlap with exclusion marked "
                 "regions threshold.", log_level=logging.INFO, logger_name=LOGGER)
     if remove_bad_intervals and bad_intervals is not None:  # remove bad intervals from library if any are defined
-        # TODO: UNTESTED CLAUSE!
+        # TODO: UNTESTED CLAUSE - TEST!
         # -> select next higher or equal target fragment value
         bad_intervals_for_check = []
         pre_bc_removal_intervals = len(intervals_passing_filters)
@@ -1256,80 +1257,85 @@ def gc_bias_worker(weighted_intervals_to_process: List[Tuple[float, Tuple[str, i
     :param min_unclipped_aln_fraction:
     :return:
     """
-    n_discarded_intervals = 0
-    n_observed_gc_matrices = 0
-    n_expected_gc_matrices = 0
-    observed_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                    dtype=float)  # interval is both sides inclusive
-    simulated_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                     dtype=float)  # interval is both sides inclusive
-    simulated_attributes_cumulated_raw_matrices = []
-    for mat_idx in range(n_sims):
-        simulated_attributes_cumulated_raw_matrices.append(np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
-                                                                    dtype=float))
-    n_fragments_processed = 0
-    n_fragments_ignored = 0
-    individual_matrices_tmp_dir = str(Path(tmp_dir) / 'data_per_interval') if keep_interval_data else None
-    bad_intervals_list = []
-    # process all received intervals (combine using weight!)
-    for region_weight, (interval_chrom, interval_start, interval_end) in weighted_intervals_to_process:
-        check_region_within_genomic_bounds(chrom=interval_chrom, start=interval_start, stop=interval_end,
-                                           chromosome_sizes=chromosome_sizes, raise_error=True)
-        # COMPUTE O_GC
-        gc_matrix_observed, interval_fragments_processed, frag_ignored = compute_observed_attributes_matrix(
-            two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, bam_file=input_bam,
-            start_coord=interval_start, stop_coord=interval_end, save_individual_matrices=keep_interval_data,
-            sample_id=sample_id, float_precision=precision, min_frag_len=min_frag_len, chromosome=interval_chrom,
-            max_frag_len=max_frag_len, strict_n_ref_bases_handling=strict_n_base_exclusion,
-            min_unclipped_aln_fraction=min_unclipped_aln_fraction)  # returns unweighted matrices
-        # COMPUTE S_GC; in-place manipulate the expected matrix
-        simulated_attributes_matrix, raw_simulated_matrices = simulate_fragment_attributes(
-            two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, min_frag_len=min_frag_len,
-            statistic_matrix=gc_matrix_observed, chromosome=interval_chrom, sample_id=sample_id,
-            start_coord=interval_start,
-            stop_coord=interval_end, simulation_repetitions=n_sims, save_individual_matrices=keep_interval_data,
-            random_seed=random_seed, float_precision=precision, expected_yield=expected_yield,
-            strict_n_ref_bases_handling=strict_n_base_exclusion, max_frag_len=max_frag_len)
-        # check if we've got a bad interval
-        if isinstance(simulated_attributes_matrix, tuple) and len(simulated_attributes_matrix) == 4:
-            # if so, discard entire interval info!
-            # (reduces the accuracy of the reconstruction but what can you do. It is what it is.)
-            bad_interval = (region_weight, simulated_attributes_matrix)  # in this case, simulated_attributes_matrix is
-            # a tuple: (chromosome, start_coord, stop_coord, expected_yield)
-            bad_intervals_list.append(bad_interval)
-            n_discarded_intervals += 1
-            continue
-        observed_attributes_cumulated_matrix += (gc_matrix_observed * region_weight)
-        n_fragments_processed += interval_fragments_processed - frag_ignored  # use actual fragment count?
-        n_fragments_ignored += frag_ignored  # use actual fragment count?
-        n_observed_gc_matrices += 1
-        simulated_attributes_cumulated_matrix += (simulated_attributes_matrix * region_weight)
+    try:
+        n_discarded_intervals = 0
+        n_observed_gc_matrices = 0
+        n_expected_gc_matrices = 0
+        observed_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
+                                                        dtype=float)  # interval is both sides inclusive
+        simulated_attributes_cumulated_matrix = np.zeros((max_frag_len - min_frag_len + 1, max_frag_len + 1),
+                                                         dtype=float)  # interval is both sides inclusive
+        simulated_attributes_cumulated_raw_matrices = []
         for mat_idx in range(n_sims):
-            simulated_attributes_cumulated_raw_matrices[mat_idx] += (raw_simulated_matrices[mat_idx] * region_weight)
-        n_expected_gc_matrices += n_sims
-    sender.send((observed_attributes_cumulated_matrix, simulated_attributes_cumulated_matrix,
-                 simulated_attributes_cumulated_raw_matrices, n_observed_gc_matrices,
-                 n_expected_gc_matrices, n_fragments_processed, n_fragments_ignored, n_discarded_intervals,
-                 bad_intervals_list))
-    sender.close()
+            simulated_attributes_cumulated_raw_matrices.append(np.zeros(
+                (max_frag_len - min_frag_len + 1, max_frag_len + 1), dtype=float))
+        n_fragments_processed = 0
+        n_fragments_ignored = 0
+        individual_matrices_tmp_dir = str(Path(tmp_dir) / 'data_per_interval') if keep_interval_data else None
+        bad_intervals_list = []
+        # process all received intervals (combine using weight!)
+        for region_weight, (interval_chrom, interval_start, interval_end) in weighted_intervals_to_process:
+            check_region_within_genomic_bounds(chrom=interval_chrom, start=interval_start, stop=interval_end,
+                                               chromosome_sizes=chromosome_sizes, raise_error=True)
+            # COMPUTE O_GC
+            gc_matrix_observed, interval_fragments_processed, frag_ignored = compute_observed_attributes_matrix(
+                two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir, bam_file=input_bam,
+                start_coord=interval_start, stop_coord=interval_end, save_individual_matrices=keep_interval_data,
+                sample_id=sample_id, float_precision=precision, min_frag_len=min_frag_len, chromosome=interval_chrom,
+                max_frag_len=max_frag_len, strict_n_ref_bases_handling=strict_n_base_exclusion,
+                min_unclipped_aln_fraction=min_unclipped_aln_fraction)  # returns unweighted matrices
+            # COMPUTE S_GC; in-place manipulate the expected matrix
+            simulated_attributes_matrix, raw_simulated_matrices = simulate_fragment_attributes(
+                two_bit_reference_path=two_bit_genome_file, tmp_dir=individual_matrices_tmp_dir,
+                min_frag_len=min_frag_len, statistic_matrix=gc_matrix_observed, chromosome=interval_chrom,
+                sample_id=sample_id, start_coord=interval_start, stop_coord=interval_end, simulation_repetitions=n_sims,
+                save_individual_matrices=keep_interval_data, random_seed=random_seed, float_precision=precision,
+                expected_yield=expected_yield, strict_n_ref_bases_handling=strict_n_base_exclusion,
+                max_frag_len=max_frag_len)
+            # check if we've got a bad interval
+            if isinstance(simulated_attributes_matrix, tuple) and len(simulated_attributes_matrix) == 4:
+                # if so, discard entire interval info!
+                # (reduces the accuracy of the reconstruction but what can you do. It is what it is.)
+                bad_interval = (region_weight, simulated_attributes_matrix)  # in this case,
+                # the simulated_attributes_matrix is a tuple: (chromosome, start_coord, stop_coord, expected_yield)
+                bad_intervals_list.append(bad_interval)
+                n_discarded_intervals += 1
+                continue
+            observed_attributes_cumulated_matrix += (gc_matrix_observed * region_weight)
+            n_fragments_processed += interval_fragments_processed - frag_ignored  # use actual fragment count?
+            n_fragments_ignored += frag_ignored  # use actual fragment count?
+            n_observed_gc_matrices += 1
+            simulated_attributes_cumulated_matrix += (simulated_attributes_matrix * region_weight)
+            for mat_idx in range(n_sims):
+                simulated_attributes_cumulated_raw_matrices[mat_idx] += (raw_simulated_matrices[mat_idx] *
+                                                                         region_weight)
+            n_expected_gc_matrices += n_sims
+        sender.send((observed_attributes_cumulated_matrix, simulated_attributes_cumulated_matrix,
+                     simulated_attributes_cumulated_raw_matrices, n_observed_gc_matrices,
+                     n_expected_gc_matrices, n_fragments_processed, n_fragments_ignored, n_discarded_intervals,
+                     bad_intervals_list))
+    except Exception as e:
+        print(f"CRITICAL - an unexpected error occurred:\n    -->> '{e}'")
+        sender.send(None)
+    finally:
+        sender.close()
 
 
 def compute_lin_comb_reconstructed_gc_distribution_error(
         bad_region_labels: List[str], processed_regions_weighted: List[Tuple[float, Tuple[str, int, int]]],
         reference_distribution: np.array, all_fgcds: Dict[str, np.array]) \
         -> Tuple[np.array, np.array, np.array, float]:
-    # insanity check
-    assert 0.999 < reference_distribution.sum() < 1.001
-    # used_weights = [reg_weight if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else 0
-    #                 for reg_weight, (hrm, strt, nd) in processed_regions_weighted]
+    # insanity check: create normalized target distribution if is insane
+    if not (0.9999 < reference_distribution.sum() < 1.0001):
+        reference_distribution /= reference_distribution.sum()
     weighted_fgcds = np.array([(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)] * reg_weight)
                                if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else
                                np.zeros(len(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)]))
                                for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
     original_fgcd_dist = np.array([(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)])
-                               if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else
-                               np.zeros(len(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)]))
-                               for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
+                                   if create_region_label(chrm=hrm, start=strt, end=nd) not in bad_region_labels else
+                                   np.zeros(len(all_fgcds[create_region_label(chrm=hrm, start=strt, end=nd)]))
+                                   for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
     original_fgcd_dist = original_fgcd_dist.sum(axis=0) / len(processed_regions_weighted)
     # assert 0.999 < original_fgcd_dist.sum() < 1.001
     reconstructed_ref_fgcd = weighted_fgcds.sum(axis=0)  # column-wise sum over all rows
@@ -1400,8 +1406,8 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
     # split up sorted intervals in lists for workers
     intervals_for_workers = [[] for _i in range(n_processes)]
     # sort intervals according to chromosome
-    sorted_weighted_intervals_to_process = humansorted(weighted_intervals_to_process,
-                                                       key=lambda t: (t[1][0], t[1][1]))  # sort by chrom., then start
+    sorted_weighted_intervals_to_process = humansorted(
+        weighted_intervals_to_process, key=lambda t: (t[1][0], t[1][1]))  # sort by chrom., then start
     n_intervals = len(sorted_weighted_intervals_to_process)
     # create consecutive intervals on as few chromosomes as much as possible for all workers
     # (speedup due to BAM file pointer requiring less jumping?)
@@ -1454,10 +1460,15 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
     total_discarded_intervals = 0
     all_bad_intervals = {}
     bad_interval_weights = []
-    deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
+    _ = deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
     # if memory profiler is applied to code and processes are spawned rather than forked, we get a PicklingError her:
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
+    if not received_data:
+        raise ChildProcessError(f"did not receive any results from GC bias worker processes!")
+    elif any([rcv_dt is None for rcv_dt in received_data]):
+        raise ChildProcessError(f"{sum([rcv_dt is None for rcv_dt in received_data]):,} GC bias worker process(es) "
+                                f"failed!")
     for o_gc_sum_mat, s_gc_sum_mat, s_gc_sum_raw_mats, n_observed, n_expected, n_fragments_processed, \
             n_fragments_ignored, n_discarded_intervals, list_of_bad_intervals in received_data:
         # received:
@@ -1486,7 +1497,6 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
             else:  # insanity check: interval locus already exists (= multiple entries! Not expected)
                 raise KeyError(f"the interval {(chrm, strt, stp)} has already been processed and should ot be present "
                                f"during accumulation of consolidated results!")
-                # all_bad_intervals[(chrm, strt, stp)].append(int(rst[1]))
     actually_processed_intervals = n_intervals - len(list_of_bad_intervals)
     # divide by applied region weights to finalize weighted mean
     bad_interval_labels = list(map(lambda t: create_region_label(chrm=t[0], start=t[1], end=t[2]),
@@ -1729,13 +1739,14 @@ def extend_intervals_for_index(target_index: int, scaffold_length: int, scaffold
         if l_idx == last_idx:  # actually load the sequence
             hypothetical_end_coordinate = interval_loading_size * (len(loaded_intervals) + 1)
             if hypothetical_end_coordinate > scaffold_length:
-                if scaffold_length < interval_loading_size * len(loaded_intervals):  # should never occur - illogical error
-                    log(message=f"Critical error encountered loading interval  {target_index} for scaffold {scaffold_name}"
-                                f". Length of scaffold {scaffold_length:,}bp was smaller than starting coordinate "
-                                f"{interval_loading_size * len(loaded_intervals)}bp. Terminating..",
+                if scaffold_length < interval_loading_size * len(loaded_intervals):  # should never occur
+                    log(message=f"Critical error encountered loading interval  {target_index} for scaffold "
+                                f"{scaffold_name}. Length of scaffold {scaffold_length:,}bp was smaller than starting "
+                                f"coordinate {interval_loading_size * len(loaded_intervals)}bp. Terminating..",
                         log_level=logging.CRITICAL, flush=True, logger_name=parent_logger)
                     raise AttributeError
-                loaded_sequences.append(chrom_handle[interval_loading_size * len(loaded_intervals):scaffold_length].upper())
+                loaded_sequences.append(
+                    chrom_handle[interval_loading_size * len(loaded_intervals):scaffold_length].upper())
             else:
                 loaded_sequences.append(chrom_handle[interval_loading_size * len(loaded_intervals):
                                                      interval_loading_size * (len(loaded_intervals) + 1)].upper())
@@ -2002,7 +2013,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                     _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
             # append created BAM file to return list
             tagged_bam_files.append(tagged_bam_file)
-    # report path to new BAM file
+    # report the path to new BAM file
     sender_connection.send(tagged_bam_files)
     sender_connection.close()
 
@@ -2545,6 +2556,10 @@ def read_gc_distribution(ref_table_path: OneOf[str, Path]):
             gc_content, relative_freq = data_line.strip().split('\t')
             assert int(gc_content) == gc_pc_range[line_idx]  # relative frequencies in ascending GC content order
             gc_dist.append(float(relative_freq))
+    # make sure these sum up to 1.0
+    gc_dist_sum = sum(gc_dist)
+    if not (0.9999 < gc_dist_sum < 1.0001):
+        gc_dist = [rf/gc_dist_sum for rf in gc_dist]  # force elements of distribution to sum up to 1.0
     return np.array(gc_dist)
 
 
@@ -2667,9 +2682,8 @@ def objective_function_mse(scale_factor: float, to_scale: np.array, target_func:
     return np.sum(mean_squared_diff)
 
 
-def reconstruct_distribution_nnls(target_distribution: np.array,
-                                  components: Dict[str, np.array],
-                                  component_order: List[str], verbose=True) \
+def reconstruct_distribution(target_distribution: np.array, components: Dict[str, np.array], component_order: List[str],
+                             verbose=True) \
         -> Tuple[Dict[str, float], float]:
     start_time = time.perf_counter_ns()
     # force all components to individually sum up to one:
@@ -2686,8 +2700,8 @@ def reconstruct_distribution_nnls(target_distribution: np.array,
     if ordered_components.shape != (len(component_order), len(target_distribution)):  # check dimensions
         if ordered_components.T.shape != (len(component_order), len(target_distribution)):
             raise ValueError(f"the expected dimensions of the components matrix ({ordered_components.shape}) seems to "
-                             "be broken (not transposed, I checked that).")
-        ordered_components = ordered_components.T  # try transposed version...
+                             "be broken (not a transposition problem, I checked that).")
+        ordered_components = ordered_components.T  # the transposed version should do the trick
     # compute initial error
     initial_re = aes(target=normalized_target_distribution, components=ordered_components,
                      weights=np.array([1 / n_components] * n_components))
@@ -2793,8 +2807,8 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
             log(message=f"There was no precomputed FGCD available for region '{region_id}'. Recompute!",
                 log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
             sys.exit(2)  # TODO: compute the interval instead of terminating !!
-    # create linear combination for best reference FGCD representation
-    interval_weights_per_component, reconstruction_residual = reconstruct_distribution_nnls(
+    # create the linear combination for best reference FGCD representation of each component
+    interval_weights_per_component, reconstruction_residual = reconstruct_distribution(
         target_distribution=reference_fgcd, components=preselected_interval_fgcds, component_order=interval_order,
         verbose=False)  # supress additional debugging info output
     visualize_weights(region_weights=np.array(list(interval_weights_per_component.values()), dtype=float),
@@ -2807,7 +2821,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
 def main() -> int:
     global LOGGER  # commandline logging only
 
-    # get name of machine
+    # get the name of the machine
     current_hostname = gethostname()
 
     cmd_args = get_cmdline_args()
@@ -2972,11 +2986,11 @@ def main() -> int:
         raise FileNotFoundError(f"the reference GC content distribution file could not be found/accessed!")
 
     if compute_bias:  # load information that needs to be loaded only once
-        # choose most recent bad intervals library version if multiple are present in parent directory
+        # choose the most recent bad intervals library version if multiple versions are present in the parent directory
         bad_intervals, exclude_genomic_intervals_bed_file = manage_bad_intervals(
             bad_genomic_intervals_bed=exclude_genomic_intervals_bed_file)
         ref_gc_dist = read_gc_distribution(ref_table_path=ref_gc_dist_path)
-        # read interval list (should be >=150Mbp in total)
+        # read the interval list (should be >=150Mbp in total)
         generally_processable_intervals_with_score, interval_gc_content_distributions = read_scored_regions_bed_file(
             bed_path=genomic_intervals_bed_file)
 
@@ -3115,7 +3129,7 @@ def main() -> int:
                 # get intervals with weights from estimated reference genome fragment GC content reconstruction!
                 # -> linear combination of selected intervals GC content that best approximates the reference GC content
                 # following a typical cfDNA fragment length distribution (provided for blood plasma cfDNA, plasmaSeq
-                # protocol in file: 'reference_fragment_length_distribution.tsv')
+                # protocol in file: 'plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv')
                 # NOW: compute GC bias!
                 ((correction_weights_matrix_path, correction_weights_matrix),
                  (mask_path, weights_mask)) = compute_gc_bias_parallel(
@@ -3170,24 +3184,28 @@ def main() -> int:
                 elapsed_time = datetime.timedelta(seconds=time.mktime(computation_end_time) - time.mktime(start_time))
                 log(message='GCparagon (adding weights to BAM file) Finished Successfully. '
                             f"Elapsed time: {elapsed_time} (h:mm:ss)", log_level=logging.INFO, logger_name=LOGGER)
-            # after BAM has been processed successfully, close logger handlers
+            # # after BAM has been processed successfully, close logger handlers
+            # current_logger = logging.getLogger(LOGGER)
+            # for hdlr in current_logger.handlers:
+            #     hdlr.flush()
+            #     if hdlr in current_logger.handlers:
+            #         current_logger.removeHandler(hdlr)
+            #     hdlr.close()
+        except ChildProcessError as e:  # if worker processes did not send any results
+            log(message=f"At least one GC bias worker process failed during processing of BAM file {input_bam}:\n"
+                        f"{create_exception_stack_trace(e)}\n"
+                        f"Continuing to process next BAM file..", log_level=logging.ERROR, logger_name=LOGGER)
+        except Exception as e:
+            log(message=f"The following exception occurred when trying to process BAM file {input_bam}:\n"
+                        f"{create_exception_stack_trace(e)}\n"
+                        f"Continuing to process next BAM file..", log_level=logging.ERROR, logger_name=LOGGER)
+        finally:
+            # after BAM has been processed successfully or an Exception was raised, close handlers of current logger
             current_logger = logging.getLogger(LOGGER)
             for hdlr in current_logger.handlers:
                 hdlr.flush()
                 if hdlr in current_logger.handlers:
-                    current_logger.removeHandler(hdlr)
-                hdlr.close()
-        except Exception as e:
-            log(message=f"The following exception occurred when trying to process BAM file {input_bam}:\n"
-                        f"{create_exception_stack_trace(e)}\n"
-                        f"Continuing to processing next BAM file..", log_level=logging.ERROR, logger_name=LOGGER)
-        finally:
-            # close logging handlers
-            final_logger = logging.getLogger(LOGGER)
-            for hdlr in final_logger.handlers:
-                hdlr.flush()
-                if hdlr in final_logger.handlers:
-                    final_logger.removeHandler(hdlr)  # local variable 'hdlr' referenced before assignment
+                    current_logger.removeHandler(hdlr)  # local variable 'hdlr' referenced before assignment
                 hdlr.close()
             # delete empty log files
             for lg_fl in (log_file, error_log):

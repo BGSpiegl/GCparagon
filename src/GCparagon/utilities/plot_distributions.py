@@ -560,9 +560,13 @@ def visualize_reconstruction_result(out_dir: OneOf[str, Path], target_dist: np.a
         if reduced_bins else range(0, len(target_dist), 1)  # ASSERTS all bins present!
     # add reference distribution
     if target_dist is not None:
+        # insanity check: create normalized target distribution if is insane
+        if not (0.9999 < target_dist.sum() < 1.0001):
+            target_dist /= target_dist.sum()
         if reduced_bins:  # left included; right excluded
             plot_data_list.extend(
-                [['expected reference GC', gc, target_dist[gc] + (target_dist[gc + 1] if gc != 100 else 0)]
+                [['expected reference GC', gc,
+                  (target_dist[gc] + (target_dist[gc + 1] if gc != 100 else target_dist[gc])) / 2]
                  for gc in gc_values])
         else:
             plot_data_list.extend([['expected reference GC', gc, target_dist[gc]] for gc in gc_values])

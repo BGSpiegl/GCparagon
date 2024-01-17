@@ -714,21 +714,24 @@ some of these files need to be passed to GCparagon via the following commandline
 These files can be created using the following code/scripts in ascending order:
  - [reference genome build download instructions](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh)
  - [Exclusion list creation info](accessory_files/GC_correction_exclusion_list_hg19_creation.info)
- - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
+ - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
 (creation of equal-sized genomic intervals, intersected with the exclusion marked regions list)
- - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
+ - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
 (selection of least-exclusion-list-overlapping regions)
- - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](accessory_files/genomic_interval_preselection-shifted4x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
+ - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
 (computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI);
 also detects bad simulation intervals and writes them to a separate BED file 
 '<GENOME_BUILD>_genomic_intervals_failed_fragment_drawing.bed')
- - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
+ - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
 (computing the genome-wide reference fragment GC content distribution = "reference FGCD" based on the reference 
 fragment length distribution).
 
  - Optionally,
 the diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
-[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted4x/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
+[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
+
+
+![hg19_GI_preselection](https://github.com/BGSpiegl/GCparagon/blob/dev-hg19ExclusionList/accessory_files/genomic_interval_preselection-shifted16x_hg19/hg19_FGCD_intervals_vs_reference/GC_content_reference_genome_vs_preselected_intervals.51bins.png?raw=true)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
 The size of preselected genomic intervals should be uniform and fit the application (i.e., larger genomic intervals for 
@@ -743,7 +746,7 @@ Gap tracks can be downloaded using the UCSC table browser [UCSC Table Browser][t
 An IGV screenshot visualizing the distribution of 
 [hg38 preselected 1Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed)
 across the whole genome, and additionally for two chromosomes, is provided 
-[here](accessory_files/genomic_interval_preselection-shifted4x/IGV_composite_preselected_intervals_hg38.png).
+[here](accessory_files/genomic_interval_preselection-shifted16x_hg19/IGV_composite_preselected_intervals_hg38.png).
 
 
 ## Repository Structure
@@ -761,7 +764,7 @@ Instructions for FastA reference genome sequence download can be found
 Code for genomic regions exclusion list creation can be found in 
 [GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
 Code for genomic interval preselection for a currently unsupported build can be found in folder 
-[accessory_files/genomic_interval_preselection-shifted4x_hg19](accessory_files/genomic_interval_preselection-shifted4x_hg19).
+[accessory_files/genomic_interval_preselection-shifted16x_hg19](accessory_files/genomic_interval_preselection-shifted16x_hg19).
 Users successfully creating reference files for other builds are kindly asked to create a branch + merge request, where 
 they provide these resources (i.e., a URL to the 2bit or FastA reference sequence file,
 <GENOME_BUILD>.genome_file.tsv, 

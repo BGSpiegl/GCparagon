@@ -3,6 +3,7 @@ import sys
 import pathlib
 from re import sub as re_sub
 from typing import Tuple, List
+from natsort import humansorted
 
 # path definitions (relative imports):
 CODE_ROOT_PATH = pathlib.Path(__file__).parent.parent.parent
@@ -10,9 +11,16 @@ CODE_ROOT_PATH = pathlib.Path(__file__).parent.parent.parent
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!
 INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
-SHIFT_N_TIMES = 4  # you might want to select a higher number
+SHIFT_N_TIMES = 16  # you might want to select a higher number
 GENOME_BUILD = 'hg19'
 REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
+multiples = (0, 1, 2, 3, 4, 5)  # 0 represents "use all exclusion listed regions irrespective of their size"
+FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE = 0  # use one of multiples HERE! default: 0
+if FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE not in multiples:
+    raise ValueError(f"FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE must be from multiples!")
+# (use all exclusion regions for statistics computation)
+SORTED_LOWERCASE_STD_CHROMOSOMES = humansorted([f'chr{i}' for i in range(1, 23, 1)] + ['chrx'])  # only include these
+CHROM_END_DISTANCE = 10**6  # regions within 1 Mbp from each chromosome end are skipped
 # ----------------------------------------------------------------------------------------------------------------------
 # info - all input regions within 1Mbp of the chromosome ends are removed
 genome_file_path = CODE_ROOT_PATH / f'accessory_files/{GENOME_BUILD}.genome_file.tsv'  # <---- required input!
@@ -23,8 +31,6 @@ all_region_shifts_with_overlaps = list(search_path.glob(
 all_region_shifts_with_overlaps.extend(list(search_path.glob(
     f"{INTERVAL_SIZE//10**3}kbp_intervals_bad_regions_overlap_ELRminSizes.tsv")))  # non-shifted regions
 # ^---- required input!
-# GCparagon: overlapping-exclusion-listed-bases, shifted up to 3 times by genomic_interval_size/4
-#            -> 4 files: 1x unshifted + 3x shifted assertion: intervals of equal size!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 with open(genome_file_path, 'rt') as f_genome:
@@ -32,12 +38,6 @@ with open(genome_file_path, 'rt') as f_genome:
 chromosome_lengths = {}.fromkeys(map(lambda x: x[0], content))
 for chrom, length in content:
     chromosome_lengths[chrom] = int(length)
-
-CHROM_END_DISTANCE = 10**6  # regions within 1 Mbp from each chromosome end ware skipped
-REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
-# i : in total, there were 237 events where a selected region overlapped more than the selected threshold of 33% of
-#     region size.
-# i : 295 cases of lowest-score-selection were skipped (66% allowed overlap)
 
 
 def somehow_overlap(r1: range, r2: range) -> bool:
@@ -59,7 +59,7 @@ if __name__ == '__main__':
         with open(tsv_f, 'rt') as f_vrlp:
             hdr1 = f_vrlp.readline().strip().split('\t')
             hdr2 = f_vrlp.readline().strip().split('\t')
-            bad_bases_overlap_column_idx = hdr2.index('bases')  # should be 2
+            bad_bases_overlap_column_idx = hdr2.index('bases') + 2 * FILTER_MERGED_EXCLUSION_REGIONS_FOR_MIN_KB_SIZE
             for lin_cont in f_vrlp.readlines():
                 interesting_content = lin_cont.strip().split('\t')[:bad_bases_overlap_column_idx+1]
                 chrom_str = interesting_content[0]
@@ -95,6 +95,8 @@ if __name__ == '__main__':
         chosen_regions[c] = []
     total_events_score_too_high = 0
     for chrom, reg_ranges in regions_overlap_dict.items():
+        if chrom.lower() not in SORTED_LOWERCASE_STD_CHROMOSOMES:
+            continue
         too_high_score_events = 0
         last_selected_range = range(-2, -1)
         for r_idx, (current_reg_range, region_score) in enumerate(reg_ranges):
@@ -158,6 +160,8 @@ if __name__ == '__main__':
     n_lines_written = 0
     with open(output_file, 'wt') as f_chosen_regs:
         for chrom in chroms_in_order:
+            if chrom.lower() not in SORTED_LOWERCASE_STD_CHROMOSOMES:
+                continue
             for reg_range, score in sorted(chosen_regions[chrom], key=lambda x: x[0].start, reverse=False):
                 reg_buffer.append(f"{chrom}\t{reg_range.start}\t{reg_range.stop+1}\t{score}\n")  # add back 1 to end
                 if len(reg_buffer) >= 500:

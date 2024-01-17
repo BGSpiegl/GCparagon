@@ -2821,7 +2821,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
 def main() -> int:
     global LOGGER  # commandline logging only
 
-    # get name of machine
+    # get the name of the machine
     current_hostname = gethostname()
 
     cmd_args = get_cmdline_args()

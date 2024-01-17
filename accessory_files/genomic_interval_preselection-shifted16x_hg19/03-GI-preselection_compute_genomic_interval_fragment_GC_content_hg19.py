@@ -7,6 +7,7 @@ import numpy as np
 from pathlib import Path
 from math import log10
 import multiprocessing as mp
+from natsort import humansorted
 from twobitreader import TwoBitFile
 from typing import Union as OneOf, Optional, Tuple, Dict, List
 
@@ -16,9 +17,28 @@ REPO_ROOT_DIR = Path(__file__).parent.parent.parent
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 # ADAPT THE FOLLOWING PARAMETERS ACCORDING TO YOUR NEEDS! MUST BE IDENTICAL TO THE ONES FROM THE PREVIOUS SCRIPTS !!!!!!
 INTERVAL_SIZE = 10**6  # 1Mbp -> change according to input BED files!
-SHIFT_N_TIMES = 4  # you might want to select a higher number
+SHIFT_N_TIMES = 16  # you might want to select a higher number
 GENOME_BUILD = 'hg19'
 REGION_OVERLAP_PERCENTAGE_THRESHOLD = 33  # percent max. bad region overlap!
+SORTED_LOWERCASE_STD_CHROMOSOMES = humansorted([f'chr{i}' for i in range(1, 23, 1)] + ['chrx'])  # only include these
+# analysis setup
+sample_n_fragments_per_mbp_default = 1 * 10**6
+# OUTPUT PRECISION
+DEFAULT_FLOAT_PRECISION_DIGITS = round(log10(sample_n_fragments_per_mbp_default)) + 3  # 9 digits after the comma
+# ^--- the parameter above is only used if fractions are stored instead of counts (i.e., SAVE_COUNTS = False)
+# Only has an impact if SAVE_COUNTS == False
+default_parallel_processes = 32
+exclude_n_bases_default = True
+# random numbers:
+RANDOM_SEED = random.randint(1, 999)
+DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3  # from correct_GC_bias.py
+SAVE_COUNTS = True  # saves relative frequency otherwise
+# PATH DEFINITIONS
+# below not required if ccfDNA from a blood plasma sample and the isolation protocol 'plasmaSeq' was used to
+# create the library where the reads of the input BAM file originate from
+default_putative_ref_flength_dist_table = \
+    REPO_ROOT_DIR / 'accessory_files/plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
+# WARNING: you MUST create a REFERENCE FRAGMENT LENGTH DISTRIBUTION ---^ from your input samples OTHERWISE!
 # !!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!!
 
 # table path definitions
@@ -30,24 +50,7 @@ default_predefined_genomic_regions = \
                      f'{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.bed')
 # ^------- OUTPUT TABLE PATH!
 default_output_directory = REPO_ROOT_DIR / 'accessory_files'
-# below not required if ccfDNA from a blood plasma sample and the isolation protocol 'plasmaSeq' was used to
-# create the library where the reads of the input BAM file originate from
-default_putative_ref_flength_dist_table = \
-    REPO_ROOT_DIR / 'accessory_files/plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'
-# WARNING: you MUST create a REFERENCE FRAGMENT LENGTH DISTRIBUTION ---^ from your input samples OTHERWISE!
-SAVE_COUNTS = True  # saves relative frequency otherwise
 
-# analysis setup
-sample_n_fragments_per_mbp_default = 1 * 10**6
-# OUTPUT PRECISION
-DEFAULT_FLOAT_PRECISION_DIGITS = round(log10(sample_n_fragments_per_mbp_default)) + 3  # 9 digits after the comma
-# ^--- the parameter above is only used if fractions are stored instead of counts (i.e., SAVE_COUNTS = False)
-# Only has an impact if SAVE_COUNTS == False
-default_parallel_processes = 3  # 24
-exclude_n_bases_default = True
-# random numbers:
-RANDOM_SEED = random.randint(1, 999)
-DEFAULT_FRAGMENT_N_CONTENT_THRESHOLD = 0.3  # from correct_GC_bias.py
 
 # definitions of specific exceptions
 class OutOfGenomicBoundsError(Exception):
@@ -208,6 +211,8 @@ def load_predefined_genomic_regions(genomic_regions_table: OneOf[str, Path]) -> 
     with open(genomic_regions_table, 'rt') as f_reg:
         for line in f_reg.readlines():
             chrom, start, end, overlap, *_ = line.strip().split('\t')
+            if chrom.lower() not in SORTED_LOWERCASE_STD_CHROMOSOMES:
+                continue
             genomic_intervals.append((chrom, int(start), int(end), int(overlap)))
     return genomic_intervals
 
@@ -397,8 +402,8 @@ def simulate_expected_fgcd_for_intervals(reference_fld: np.array, genomic_interv
         sim_proc.close()
     # output FGCD results table
     output_table_path = (Path(output_path) /
-                         f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed')
-    # i:                            ^--- ADAPT NAME IF PARAMETERS WERE CHANGED! (interval size and/or overlap threshold)
+                         f'{GENOME_BUILD}_minimalExclusionListOverlap_1Mbp_intervals_{REGION_OVERLAP_PERCENTAGE_THRESHOLD}pcOverlapLimited.FGCD.bed')
+    # i: ^--- ADAPT NAME IF PARAMETERS WERE CHANGED! (interval size and/or overlap threshold)
     output_table_path.parent.mkdir(parents=True, exist_ok=True)
     with open(output_table_path, 'wt') as f_out:
         hdr = '\t'.join(['chromosome', 'start', 'end', 'exclusion_marked_bases'] +

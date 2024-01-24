@@ -39,7 +39,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 3
+PATCH_NUMBER = 4
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -2160,7 +2160,7 @@ def order_bams(bam_list: List[str]) -> List[str]:
     # if the provided value is not in the header
     bam_paths_with_locus = []
     for bam_nm in bam_list:
-        chrm, strt, stp = Path(bam_nm).name.split('.GCcorr')[0].split('+')[-1].split('-')  # chrom-start-stop
+        chrm, strt, stp, *_ = Path(bam_nm).name.split('.GCcorr.bam')[0].split('+')[-1].split('-')  # chrom-start-stop
         bam_paths_with_locus.append(((chrm, int(strt)), str(bam_nm)))
     return [bam_path for _, bam_path in
             sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))]

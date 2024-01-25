@@ -464,7 +464,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   f'high performance hardware (high IOPs)! [ DEFAULT: {DEFAULT_TEMPORARY_DIRECTORY} ]')
     output_args.add_argument('-np', '--no-plots', action='store_false', dest='plot_result',
                              help='Flag suppresses creation of fragment length distribution plot and heatmaps for '
-                                  'observed, expected, correction, and computation mask matrices.')
+                                  'observed, expected, correction, and computation mask matrices.'
+                                  'Has no effect in --tag-only mode.')
     output_args.add_argument('-os', '--output-simulations', action='store_true', dest='output_simulation_results',
                              help='Optional flag for GC-bias computation for plotting individual simulation results '
                                   '(simulated fragments and iteration-specific masks). The simulated fragment '
@@ -475,8 +476,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Optional flag to activate writing of the GC-correction-weights-tagged BAM file '
                                   'AFTER COMPUTING GC BIAS (--tag-only flag is not set), either using the statistics '
                                   'computed from the input BAM file or a correction weights matrix specified via '
-                                  "--correction-weights. WARNING: currently, the output BAM won't contain "
-                                  'unaligned reads!')
+                                  "--correction-weights. Is implicit if --tag-only is used. WARNING: currently, the "
+                                  "output BAM won't contain unaligned reads!")
     output_args.add_argument('-our', '--output-unaligned-reads', dest='output_unaligned_reads', action='store_true',
                              help='Optional flag to activate writing of unaligned reads to a separate BAM file. '
                                   'Per default, unaligned reads are not output. Setting this flag '
@@ -1653,21 +1654,21 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
         if f.is_dir():  # subdir -> can be completely moved & target completely deleted
             # (will only concern the bam parts if they were kept in a previous analysis)
             target_dir_path = target_path / f.name
-            if target_dir_path.exists():
+            if target_dir_path.is_dir():
                 log(message=f"Target path for directory '{f.name}' exists and will be completely deleted! "
                             f"Deleting '{target_dir_path}' ..", log_level=logging.WARNING, logger_name=LOGGER)
                 shutil.rmtree(target_dir_path)
             _ = shutil.move(f, target_path)
         elif f.is_file():
             target_file_path = target_path / f.name
-            if target_file_path.exists():
-                os.remove(target_file_path)
-            _ = shutil.move(f, target_path)  # just move inside target dir
+            if target_file_path.is_file():
+                target_file_path.unlink()
+            _ = shutil.move(f, target_path)  # move the file into the target dir
     if source_path.exists() and target_path.exists() and \
             (len([None for _2 in target_path.iterdir()]) >= len([None for _1 in source_path.iterdir()]) or
-             len([None for _1 in source_path.iterdir()]) == 0):  # delete if same or more content OR source is empty
+             len([None for _1 in source_path.iterdir()]) == 0):  # delete if the same or more content OR source is empty
         shutil.rmtree(source_path)  # delete temp dir and all content that still exists
-        # (should be gone after successfully moving entire dir)
+        # (should be gone after successfully moving the entire dir)
     moved_correction_matrix_path = target_path / use_correction_matrix_path.name
     if not moved_correction_matrix_path.is_file():
         log(message=f"Moved correction matrix not found at '{moved_correction_matrix_path}'",
@@ -1899,11 +1900,11 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                     loaded_ref_intervals = [True]
                 elif scaffold_length < 2 * ref_interval_loading_size:
                     ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
-                                           chromosome_handle[ref_interval_loading_size:scaffold_length].upper()]
+                                              chromosome_handle[ref_interval_loading_size:scaffold_length].upper()]
                     loaded_ref_intervals = [True, True]
                 else:
                     ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
-                                           chromosome_handle[ref_interval_loading_size:2 * ref_interval_loading_size].upper()]
+                                              chromosome_handle[ref_interval_loading_size:2 * ref_interval_loading_size].upper()]
                     loaded_ref_intervals = [True, True]
                 # fastforward until no N-contigs are in ref_contig_intervals-deque any more
                 try:
@@ -2329,10 +2330,22 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
             Path(f'{unaligned_bam}.bai').unlink()  # delete empty index
         else:  # there were unaligned reads
             if output_unaligned:
+                output_ubam_path = target_path / unaligned_bam.name
+                output_ubam_index_path = target_path / f'{unaligned_bam.name}.bai'
+                if output_ubam_path.is_file():
+                    log(message=f"The output BAM file for unaligned reads already exists. Will delete it now before "
+                                f"moving the unaligned reads BAM file to the output directory ..",
+                        log_level=logging.WARNING, logger_name=LOGGER)
+                    output_ubam_path.unlink()
+                if output_ubam_index_path.is_file():
+                    log(message=f"The output BAM file index for unaligned reads already exists. Will delete it now "
+                                f"before moving the unaligned reads BAM index file to the output directory ..",
+                        log_level=logging.WARNING, logger_name=LOGGER)
+                    output_ubam_index_path.unlink()
                 _ = shutil.move(unaligned_bam, target_path)  # copy uBAM to target dir
                 _ = shutil.move(f'{unaligned_bam}.bai', target_path)  # move index for index-free samtools cat
             else:
-                unaligned_bam.unlink()  # delete empty uBAM
+                unaligned_bam.unlink()  # delete uBAM
                 Path(f'{unaligned_bam}.bai').unlink()  # delete empty index
     # combine individual scaffold BAM files to
     log(message=f"Merging tagged scaffold BAMs into temporary output file '{tagged_bam_file}' ..",
@@ -2347,15 +2360,15 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
         if f.is_dir():  # subdir -> can be completely moved & target completely deleted
             # (will only concern the bam parts if kept)
             target_dir_path = target_path / f.name
-            if target_dir_path.exists():
+            if target_dir_path.is_dir():
                 log(message=f"Target path for directory '{f.name}' exists and will be completely deleted! "
                             f"Deleting '{target_dir_path}' ..", log_level=logging.WARNING, logger_name=LOGGER)
                 shutil.rmtree(target_dir_path)
             _ = shutil.move(f, target_path)
         elif f.is_file():
             target_file_path = target_path / f.name
-            if target_file_path.exists():
-                os.remove(target_file_path)
+            if target_file_path.is_file():
+                target_file_path.unlink()
             _ = shutil.move(f, target_path)  # just move inside target dir
     source_path = Path(temporary_directory_sample)
     if source_path.exists() and target_path.exists() and \

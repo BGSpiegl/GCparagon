@@ -1,10 +1,9 @@
 name: GCparagon  # install with: mamba env create -f GCparagon_Ubuntu22_py3.10_env.yml; should also work with conda
 channels:
-  - bioconda
   - conda-forge
-  - anaconda
-  - plotly  # encountered problem with the kaleido package from conda-forge channel chosen by mamba
-  - defaults
+  - bioconda
+  - plotly
+  - nodefaults
 dependencies:
   - samtools=1.16
   - bedtools=2.30

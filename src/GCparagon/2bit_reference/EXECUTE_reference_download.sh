@@ -19,6 +19,7 @@ wget --ftps-implicit --auth-no-challenge --no-cookies --no-directories --no-host
 # # 2bit conversion command above ignores lowercase masking; uses 64 bit for index; ignores duplicate sequence names (uses first instance found only), the latter which should not occur
 
 # The hg19 analysis set can be downloaded like this:
+# ----------------------------------------------------------------------------------------------------------------------
 #set -e  # exit as soon as a command fails
 #dwnld_script_dir="$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )"  # to change into target dir later
 # two_bit_ref_url="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit"

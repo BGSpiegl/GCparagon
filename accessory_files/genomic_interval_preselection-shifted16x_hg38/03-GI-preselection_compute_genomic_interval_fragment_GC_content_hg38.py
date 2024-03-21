@@ -43,7 +43,7 @@ default_putative_ref_flength_dist_table = \
 
 # table path definitions
 default_2bit_reference_genome_path = (REPO_ROOT_DIR /
-                                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.analysisSet.2bit')  # <---- required input!
+                                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')  # <---- required input!
 default_predefined_genomic_regions = \
     REPO_ROOT_DIR / (f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
                      f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE//10**6}Mbp_intervals_'

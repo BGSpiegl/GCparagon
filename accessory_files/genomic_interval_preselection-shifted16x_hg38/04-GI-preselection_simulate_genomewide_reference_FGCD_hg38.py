@@ -185,7 +185,7 @@ def sample_ref_genome(ref_genome_file: OneOf[str, Path], chom_sizes: Dict[str, i
         process_index = chrom_idx % n_processes
         if cum_lengths[process_index + process_offset] >= target_sum_bases:  # increase the offset
             while cum_lengths[process_index + process_offset] >= target_sum_bases:
-                if process_offset == n_processes:  # all have reached the target base sum -> assign to smalles list
+                if process_offset == n_processes:  # all have reached the target base sum -> assign to smallest list
                     smalles_scaffold_list_process_index = cum_lengths.index(min(cum_lengths))
                     chroms_per_proc[smalles_scaffold_list_process_index].append(chrom)
                     cum_lengths[smalles_scaffold_list_process_index] += bases
@@ -226,6 +226,10 @@ def sample_ref_genome(ref_genome_file: OneOf[str, Path], chom_sizes: Dict[str, i
             continue
         for gc_pc, sample_count in res.items():
             combined_gc_frequencies[gc_pc] += sample_count
+    # make sure all GC percentages are present
+    for gc_perc in range(0, 101, 1):
+        if combined_gc_frequencies.get(gc_perc) is None:
+            combined_gc_frequencies[gc_perc] = 0
     return combined_gc_frequencies, broken
 
 
@@ -234,7 +238,7 @@ def write_gc_percentages(gc_percentages: defaultdict, was_failure: bool):
     out_file = out_path / f"{ref_name}_reference_GC_content_distribution{'-FAILED' if was_failure else ''}.tsv"
     out_path.mkdir(parents=True, exist_ok=True)  # should exist
     out_lines = ['gc_percentage\trelative_frequency\n']
-    total_sum = sum(gc_percentages.values())  # must not be 0 but can't in a non-empty dataset reality
+    total_sum = sum(gc_percentages.values())  # must not be 0
     out_lines.extend([f'{gc_perc}\t{gc_percentages[gc_perc] * 100. /total_sum}\n'
                       for gc_perc in sorted(list(gc_percentages.keys()))])
     with open(out_file, 'wt') as f_out:

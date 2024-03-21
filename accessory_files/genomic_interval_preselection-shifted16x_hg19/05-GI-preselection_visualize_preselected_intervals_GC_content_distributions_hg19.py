@@ -165,4 +165,4 @@ if __name__ == '__main__':
                                   # (NOTE: plotly.graph_objs.scattergl.Line
                                   normalize_to_dataset_size=True, annotation=None,
                                   reference_normalized=False, show_figure=False, image_formats=('png', 'svg', 'pdf'),
-                                  reduced_bins=True)  # smoothes a bit
+                                  reduced_bins=False)  # smoothes a bit

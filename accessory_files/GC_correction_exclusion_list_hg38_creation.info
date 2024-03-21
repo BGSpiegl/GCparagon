@@ -20,12 +20,13 @@ regions added to ENCODE blacklist to be excluded during GC-bias computation:
  - GRC incident regions from UCSC genome browser (table browser) with issues that haven't been marked as resolved: track name="GRC Incident Database"
    description="This track shows locations in the human assembly where assembly problems have been noted or resolved,
    as reported by the Genome Reference Consortium (GRC)." (hg38_GRC_incident.bed); Size: 310,320,042 bases!!!
+   update 20.03.2024: removed a clone status problem that lead to removal of entire chr22
 
 blacklist creation commands:
 
 	cat hg38-ENCODE_blacklist.v2.bed hg38_N_gaps.stdchroms.bed hg38_10kbp_telomeres.bed hg38_gaps_between_scaffolds.bed \
 	hg38_gaps_between_contigs.bed GRCh38_centromeres.bed hg38_hetchrom.bed hg38_non_standard_contigs.bed hg38_PAR_chrY.bed \
-	hg38_short_arm_gaps.bed hg38_false_duplications.bed hg38_GRC_incident.bed | sort -k1,1 -k2,2n > \
+	hg38_short_arm_gaps.bed hg38_false_duplications.bed hg38_GRC_incident_chr22Debugged.bed | sort -k1,1 -k2,2n > \
 	hg38_GCcorrection_ExclusionList.sorted.bed && bedtools merge -o distinct -c 4 -i hg38_GCcorrection_ExclusionList.sorted.bed | \
 	sort -k1,1 -k2,2n > hg38_GCcorrection_ExclusionList.merged.sorted.bed && rm hg38_GCcorrection_ExclusionList.sorted.bed
 

@@ -226,6 +226,10 @@ def sample_ref_genome(ref_genome_file: OneOf[str, Path], chom_sizes: Dict[str, i
             continue
         for gc_pc, sample_count in res.items():
             combined_gc_frequencies[gc_pc] += sample_count
+    # make sure all GC percentages are present
+    for gc_perc in range(0, 101, 1):
+        if combined_gc_frequencies.get(gc_perc) is None:
+            combined_gc_frequencies[gc_perc] = 0
     return combined_gc_frequencies, broken
 
 
@@ -253,7 +257,7 @@ def main():
           "High IOPS expected! This will take some time (30 minutes+) depending on your hardware setup. "
           "Please be patient..")
     gc_percs, failure = sample_ref_genome(ref_genome_file=two_bit_ref_genome, chom_sizes=chom_sizes,
-                                          sample_n_from_chroms_per_flen=sample_n_from_chroms)
+                                          sample_n_from_chroms_per_flen=sample_n_from_chroms)  # TODO: debug - gc_percs only from 0 to 99
     if gc_percs is None:
         return 1
     # write!

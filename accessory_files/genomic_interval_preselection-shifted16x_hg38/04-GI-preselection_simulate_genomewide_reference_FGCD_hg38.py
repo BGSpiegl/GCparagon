@@ -22,11 +22,11 @@ GENOME_BUILD = 'hg38'
 
 # GENOME BUILD FILE DEFINITIONS - set according to your target genome build!
 # ----------------------------------------------------------------------------------------------------------------------
-two_bit_ref_genome = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit'
+two_bit_ref_genome = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.analysisSet.2bit'
 # ^--- needs to be downloaded using the EXECUTE_reference_download.sh script or a commented-out command inside
 if not two_bit_ref_genome.is_file():
     raise FileNotFoundError(f"required 2bit reference file not found at: '{two_bit_ref_genome}'")
-ref_genome_chrom_sizes = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.chrom.sizes'
+ref_genome_chrom_sizes = SOURCE_CODE_ROOT_PATH / f'src/GCparagon/2bit_reference/{GENOME_BUILD}.analysisSet.chrom.sizes'
 # ANALYSIS PERFORMANCE DEFINITIONS
 draw_n_fragments = 500*10**6  # draw five hundred million fragments in total; the more, the merrier
 n_processes = 23  # if 23, actually 1 used per std-chrom (without chrY which is too small)

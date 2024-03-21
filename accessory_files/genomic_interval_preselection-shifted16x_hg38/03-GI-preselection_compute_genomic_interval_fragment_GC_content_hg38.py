@@ -43,7 +43,7 @@ default_putative_ref_flength_dist_table = \
 
 # table path definitions
 default_2bit_reference_genome_path = (REPO_ROOT_DIR /
-                                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.2bit')  # <---- required input!
+                                      f'src/GCparagon/2bit_reference/{GENOME_BUILD}.analysisset2bit')  # <---- required input!
 default_predefined_genomic_regions = \
     REPO_ROOT_DIR / (f'accessory_files/genomic_interval_preselection-shifted{SHIFT_N_TIMES}x_{GENOME_BUILD}/'
                      f'{GENOME_BUILD}_minimalExclusionListOverlap_{INTERVAL_SIZE//10**6}Mbp_intervals_'
@@ -568,7 +568,7 @@ if __name__ == '__main__':
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():
         use_reference_fld, flength_range = load_table_with_flength_hdr(table_path=putative_ref_flength_dist_table)
-    else:  # TODO: test this clause!
+    else:
         use_reference_fld, flength_range = get_ref_flength_rel_frequencies(
             corrected_fraglengths_table_path=fragment_lengths_table_path,
             normalize_sample_counts=True, output_table=True, output_dir=output_directory)

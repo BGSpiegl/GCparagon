@@ -34,12 +34,12 @@ from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 OneOf = Union
 
-# TODO: add hg19 compatibility and cmdline flag specifying hg19 instead of hg38
+# TODO: add hg19 cmdline flag specifying hg19 resources instead of hg38
 
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 4
+PATCH_NUMBER = 5
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -108,11 +108,19 @@ sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
 DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
-EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit'
-PREDEFINED_1MBP_INTERVALS_TO_PROCESS = SOURCE_CODE_ROOT_PATH.parent.parent / \
-    'accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed'
-DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION = SOURCE_CODE_ROOT_PATH.parent.parent / \
-    'accessory_files/hg38_reference_GC_content_distribution.tsv'
+DEFAULT_GENOME_BUILD = 'hg38'
+EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = {'hg38': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit',
+                                          'hg19': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg19.2bit'}
+PREDEFINED_1MBP_INTERVALS_TO_PROCESS = {'hg38': SOURCE_CODE_ROOT_PATH.parent.parent /
+                                        'accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_'
+                                        '33pcOverlapLimited.FGCD.bed',
+                                        'hg19': SOURCE_CODE_ROOT_PATH.parent.parent /
+                                        'accessory_files/hg19_minimalExclusionListOverlap_1Mbp_intervals_'
+                                        '33pcOverlapLimited.FGCD.bed'}
+DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION = {'hg38': SOURCE_CODE_ROOT_PATH.parent.parent /
+                                                           'accessory_files/hg38_reference_GC_content_distribution.tsv',
+                                                           'hg19': SOURCE_CODE_ROOT_PATH.parent.parent /
+                                                           'accessory_files/hg19_reference_GC_content_distribution.tsv'}
 TIMESTAMP_FORMAT = '%Y-%m-%d_%H-%M-%S'
 BAD_INTERVALS_FILE_PATTERN_AS_PATH = Path(f'bad_intervals_{TIMESTAMP_FORMAT}.bed')
 
@@ -201,15 +209,22 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "index file is not found on runtime, GCparagon tries to create it. The alignment "
                                  "algorithm used for creating the input BAM file MUST follow the SAM format "
                                  "specifications! The TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]")
+    input_args.add_argument('-rgb', '--reference-genome-build', dest='reference_genome_build', choices=['hg38', 'hg19'],
+                            default=DEFAULT_GENOME_BUILD,
+                            help="The version of the reference genome build used for creating the input BAM file. "
+                                 "Currently only hg19 and hg38 are available. Used to define "
+                                 "-rtb/--two-bit-reference-genome, --c/-intervals-bed and "
+                                 "-rgcd/--reference-gc-content-distribution-table. The definition is overridden if any "
+                                 "of these parameters are specified on the command line.")
     input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', type=Path,
-                            default=EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
-                                 'file using the following command: '
-                                 "'faToTwoBit <PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' "
-                                 "(see genome.ucsc.edu/goldenPath/help/twoBit.html for more details)", metavar='File')
+                                 "file using the following command: 'faToTwoBit <PATH_TO_REF_FASTA> -long "
+                                 "<PATH_TO_OUT_2BIT>' (see genome.ucsc.edu/goldenPath/help/twoBit.html for more "
+                                 "details) "
+                                 f"[ DEFAULT: '{EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH[DEFAULT_GENOME_BUILD]}' ]",
+                            metavar='File')
     input_args.add_argument('-c', '--intervals-bed', dest='genomic_intervals_bed_file', type=Path,
-                            default=PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
                             help='Path to BED file containing predefined genomic intervals to process. These should '
                                  'have been selected based on minimal overlap with exclusion-masked regions of the '
                                  'reference genome build used for read alignment earlier (i.e., creation of --bam). '
@@ -218,19 +233,25 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "reference_fragment_lenght_distribution.tsv'. The GC content distributions are used "
                                  "to create an optimized consolidated weight matrix using a weighted mean. The weights "
                                  "for each region are selected such that the reference GC content distribution in "
-                                 f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS}' ]", metavar='File')
-    input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path', 
-                            default=DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION, type=Path,
+                                 f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS[DEFAULT_GENOME_BUILD]}' ]",
+                            metavar='File')
+    input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path',
+                            type=Path,
                             help="Path to TSV file containing two data columns with header: 'gc_percentage', and "
                                  "'relative_frequency'. This table defines a GC content distribution (0%% GC to 100%% "
                                  "GC) as relative frequencies of these percentage bins (summing up to 1). If a "
                                  "custom reference genome is used, this file should be created anew from the simulated "
                                  "genome-wide ideal fragment GC content as simulated assuming a fragment length "
                                  "distribution as the one stored in 'accessory_files/"
-                                 "plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'! The provided information is used to "
-                                 "optimize the combination of correction weight matrices from different genomic "
-                                 "intervals to achieve a linear combination of these regions which resembles the "
-                                 "reference GC content distribution defined here.", metavar='File')  # TODO: add info how to create that file!
+                                 "plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'! "
+                                 "The provided information is used to optimize the combination of correction weight "
+                                 "matrices from different genomic intervals to achieve a linear combination of these "
+                                 "regions which resembles the reference GC content distribution defined here. This "
+                                 "file can be computed following the instructions of gGenomic intervals preselection "
+                                 "script 4: 'accessory_files/genomic_interval_preselection-shifted16x_hg38/"
+                                 "04-GI-preselection_simulate_genomewide_reference_FGCD_hg38.py'. [ DEFAULT: "
+                                 f"'{DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[DEFAULT_GENOME_BUILD]}' ]",
+                            metavar='File')
     input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
@@ -2697,7 +2718,7 @@ def objective_function_mse(scale_factor: float, to_scale: np.array, target_func:
 
 def reconstruct_distribution(target_distribution: np.array, components: Dict[str, np.array], component_order: List[str],
                              verbose=True) \
-        -> Tuple[Dict[str, float], float]:
+        -> Tuple[Dict[str, float], float, bool, float]:
     start_time = time.perf_counter_ns()
     # force all components to individually sum up to one:
     for cmp_lab, cmp in components.items():  # TypeError: 'cell' object is not callable
@@ -2718,7 +2739,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
     # compute initial error
     initial_re = aes(target=normalized_target_distribution, components=ordered_components,
                      weights=np.array([1 / n_components] * n_components))
-    component_weight_boundaries = (0.1, 10)
+    component_weight_boundaries = (0.1, 10.)
     # compute component fit:
     residuals_from_component_fit = []
     for cmp_idx, o_cmp in enumerate(ordered_components):  # scale each component linearly
@@ -2738,13 +2759,11 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
     # such that sum of multiplied components is one
     min_weight, max_weight = component_weight_boundaries
     residual_values = [res[0] for res in residuals_from_component_fit]
-    _5pc, upper_bound = np.percentile(residual_values, (5, 95))  # to make more resilient against outliers
-    lower_bound = min(residual_values)  # try lowering lower bound
+    lower_bound, upper_bound = np.percentile(residual_values, (10, 90))  # to make more resilient against outliers
     # transform residuals to weights
     weights_per_component = {}.fromkeys(component_order)
     for cmp_idx, o_cmp in enumerate(component_order):  # scale each component linearly
         res, cmp_lab = residuals_from_component_fit[cmp_idx]
-        assert o_cmp == cmp_lab
         if res <= lower_bound:
             weights_per_component[o_cmp] = max_weight  # low deviation -> gets highest weight!
         elif upper_bound <= res:
@@ -2767,13 +2786,14 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
 
     elapsed_time_ns = time.perf_counter_ns() - start_time
     if residual_error > initial_re:
-        log(message=f"Could not achieve a reduction of reconstruction error (took {elapsed_time_ns / 10**6:,.2f} ms). "
-                    f"Will use default weights to combine results from genomic intervals.",
+        log(message=f"Could not achieve a reduction of the initial reconstruction error of {initial_re:.2%} "
+                    f"(elapsed time: {elapsed_time_ns / 10**6:,.2f} ms). Will average results from genomic intervals "
+                    f"instead of using a weighted mean.",
             log_level=logging.INFO, logger_name=LOGGER)
         fallback_weights_per_component = {}.fromkeys(weights_per_component)
         for comp in fallback_weights_per_component.keys():
             fallback_weights_per_component[comp] = 1 / n_components
-        return fallback_weights_per_component, initial_re
+        return fallback_weights_per_component, initial_re, False
     log(message=f"Successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
                 f"{residual_error:.3f} (took {elapsed_time_ns / 10**6:,.2f} ms).", log_level=logging.INFO,
         logger_name=LOGGER)
@@ -2787,7 +2807,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
                     f"Range of actual weights is: [{min(final_ordered_weights):.6f}, "
                     f"{max(final_ordered_weights):.6f}].",
             log_level=logging.INFO, logger_name=LOGGER)
-    return weights_per_component, residual_error
+    return weights_per_component, residual_error, True, component_weight_boundaries[1]
 
 
 def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, int]], reference_fgcd: np.array,
@@ -2821,12 +2841,13 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                 log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
             sys.exit(2)  # TODO: compute the interval instead of terminating !!
     # create the linear combination for best reference FGCD representation of each component
-    interval_weights_per_component, reconstruction_residual = reconstruct_distribution(
-        target_distribution=reference_fgcd, components=preselected_interval_fgcds, component_order=interval_order,
-        verbose=False)  # supress additional debugging info output
-    visualize_weights(region_weights=np.array(list(interval_weights_per_component.values()), dtype=float),
-                      sample_label=sample_name, out_dir=output_path, compute_skew=True, compute_curtosis=True,
-                      show_figure=show_figures)
+    interval_weights_per_component, reconstruction_residual, reg_comb_optimized, max_region_weight = \
+        reconstruct_distribution(target_distribution=reference_fgcd, components=preselected_interval_fgcds,
+                                 component_order=interval_order, verbose=False)  # supress additional debugging info output
+    if reg_comb_optimized:
+        visualize_weights(region_weights=np.array(list(interval_weights_per_component.values()), dtype=float),
+                          sample_label=sample_name, out_dir=output_path, compute_skew=True, compute_curtosis=True,
+                          show_figure=show_figures, max_weight=max_region_weight)
     return list(zip([interval_weights_per_component[create_region_label(chrm=hrm, start=strt, end=nd)]
                      for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
@@ -2840,6 +2861,7 @@ def main() -> int:
     cmd_args = get_cmdline_args()
     # input options
     input_bams = cmd_args.input_bams
+    reference_genome_build = cmd_args.reference_genome_build
     two_bit_reference_file = cmd_args.two_bit_reference_file
     genomic_intervals_bed_file = cmd_args.genomic_intervals_bed_file
     exclude_genomic_intervals_bed_file = cmd_args.exclude_genomic_intervals_bed_file
@@ -2893,11 +2915,45 @@ def main() -> int:
     exit_after_warnings = 0
     print_warnings = []
     if two_bit_reference_file is None:
-        if not EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH.is_file():
-            print("cannot proceed - no two-boit reference file defined and default expected file not present under "
+        if not EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH[reference_genome_build].is_file():
+            print("cannot proceed - no two-bit reference file defined and default expected file not present under "
                   f"{EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH}. Terminating ..")
             sys.exit(3)
-        two_bit_reference_file = EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH
+        two_bit_reference_file = EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH[reference_genome_build]
+    elif two_bit_reference_file != EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH[reference_genome_build]:
+        print_warnings.append(f"Custom reference genome file specified. Thought we would use the "
+                              f"'{reference_genome_build}' reference genome build but will use user-defined file "
+                              f"instead. The 2bit reference genome file is specified by default via the "
+                              f"-rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version of "
+                              f"your custom reference genome file matches the specifications for -c/--intervals-bed "
+                              f"and -rgcd/--reference-gc-content-distribution-table!")
+    if genomic_intervals_bed_file is None:
+        if not PREDEFINED_1MBP_INTERVALS_TO_PROCESS[reference_genome_build].is_file():
+            print("cannot proceed - no genomic intervals BED file defined and default expected file not present under "
+                  f"{PREDEFINED_1MBP_INTERVALS_TO_PROCESS[reference_genome_build]}. Terminating ..")
+            sys.exit(3)
+        genomic_intervals_bed_file = PREDEFINED_1MBP_INTERVALS_TO_PROCESS[reference_genome_build]
+    elif genomic_intervals_bed_file != PREDEFINED_1MBP_INTERVALS_TO_PROCESS[reference_genome_build]:
+        print_warnings.append(f"Custom genomic intervals BED file specified. Thought we would use the file for the "
+                              f"'{reference_genome_build}' reference genome build but will use user-defined file "
+                              f"instead. The genomic intervals BED file is specified by default via "
+                              f"the -rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version "
+                              f"of your custom reference genome file matches the specifications for "
+                              f"-rtb/--two-bit-reference-genome and -rgcd/--reference-gc-content-distribution-table!")
+    if ref_gc_dist_path is None:
+        if not DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build].is_file():
+            print("cannot proceed - no reference genome GC content distribution file defined and default expected file "
+                  "not present under "
+                  f"{DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build]}. Terminating ..")
+            sys.exit(3)
+        ref_gc_dist_path = DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build]
+    elif ref_gc_dist_path != DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build]:
+        print_warnings.append(f"Custom reference genome GC content distribution file specified. Thought we would use "
+                              f"the file for the '{reference_genome_build}' reference genome build but will use "
+                              f"user-defined file instead. The reference genome GC content distribution file can also "
+                              f"be specified for hg19 and hg38 using the -rgb/--reference-genome-build flag. Make sure "
+                              f"the build version of your custom reference genome GC content distribution file matches "
+                              f"the specifications for -rtb/--two-bit-reference-genome and -c/--intervals-bed!")
     if floating_point_precision < 2:
         print_warnings.append(f"Floating pint precision was set to {floating_point_precision} but needs to "
                               f"be at least 3! Setting to default of {DEFAULT_FLOAT_PRECISION} instead. Continuing ..")
@@ -3092,6 +3148,7 @@ def main() -> int:
                             f"|   Configuration for processing sample {sample_id} on {current_hostname} was:\n"
                             f"|   +++++++++++++++++++++++++++++++++++++++++"
                             f"{'+' * (len(sample_id) + len(current_hostname))}\n" +
+                            f"|   Reference genome build: '{reference_genome_build}'\n" +
                             (f'|   Using parameter preset {preset_number}\n'
                              if preset_number in (1, 2, 3) else '') +
                             f"|   Minimum fragment length: {lower_limit_fragment_length:,}bp\n"

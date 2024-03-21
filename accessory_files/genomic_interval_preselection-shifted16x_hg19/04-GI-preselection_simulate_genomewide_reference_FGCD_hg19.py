@@ -257,7 +257,7 @@ def main():
           "High IOPS expected! This will take some time (30 minutes+) depending on your hardware setup. "
           "Please be patient..")
     gc_percs, failure = sample_ref_genome(ref_genome_file=two_bit_ref_genome, chom_sizes=chom_sizes,
-                                          sample_n_from_chroms_per_flen=sample_n_from_chroms)  # TODO: debug - gc_percs only from 0 to 99
+                                          sample_n_from_chroms_per_flen=sample_n_from_chroms)
     if gc_percs is None:
         return 1
     # write!

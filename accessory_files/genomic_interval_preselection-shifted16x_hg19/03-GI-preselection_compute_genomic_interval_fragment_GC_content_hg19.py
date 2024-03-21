@@ -567,7 +567,7 @@ if __name__ == '__main__':
     # 1) read reference fragment length distribution (= FLD)
     if putative_ref_flength_dist_table is not None and Path(putative_ref_flength_dist_table).is_file():
         use_reference_fld, flength_range = load_table_with_flength_hdr(table_path=putative_ref_flength_dist_table)
-    else:  # TODO: test this clause!
+    else:
         use_reference_fld, flength_range = get_ref_flength_rel_frequencies(
             corrected_fraglengths_table_path=fragment_lengths_table_path,
             normalize_sample_counts=True, output_table=True, output_dir=output_directory)

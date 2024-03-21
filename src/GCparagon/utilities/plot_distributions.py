@@ -1,5 +1,5 @@
 #!/usr/bin/env python3
-
+import math
 import re
 import sys
 import gzip
@@ -500,14 +500,14 @@ def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_d
 
 def visualize_weights(region_weights: np.array, out_dir: OneOf[str, Path], sample_label: str,
                       show_figure=False, image_formats=('png',), compute_skew=True, compute_curtosis=True,
-                      fig_width=1800, fig_height=1000, fig_fontsize=30):
-    plot_data = pd.DataFrame({'interval weights': region_weights})  # transform to plottable object
+                      fig_width=1800, fig_height=1000, fig_fontsize=30, max_weight: int = 10):
+    plot_data = pd.DataFrame({'interval weights': region_weights / max(region_weights) * max_weight})  # transform to plot-able object
     weights_fig = px.histogram(plot_data, x="interval weights",  # create histogram
                                title='Weights of Genomic Interval to approximate Genomic GC Content',
                                histnorm='percent',  #  If “percent” / “probability”, the span of each bar corresponds to
                                # the percentage / fraction of occurrences with respect to the total number of sample
                                # points (here, the sum of all bin HEIGHTS equals 100% / 1)
-                               width=fig_width, height=fig_height)
+                               width=fig_width, height=fig_height, nbins=20)
     x_max_value = weights_fig.data[0].x.max()
     n_weights = len(region_weights)
     region_weights *= n_weights
@@ -566,7 +566,7 @@ def visualize_reconstruction_result(out_dir: OneOf[str, Path], target_dist: np.a
         if reduced_bins:  # left included; right excluded
             plot_data_list.extend(
                 [['expected reference GC', gc,
-                  (target_dist[gc] + (target_dist[gc + 1] if gc != 100 else target_dist[gc])) / 2]
+                  (target_dist[gc] + (target_dist[gc + 1] if gc != 100 else target_dist[gc]))]
                  for gc in gc_values])
         else:
             plot_data_list.extend([['expected reference GC', gc, target_dist[gc]] for gc in gc_values])

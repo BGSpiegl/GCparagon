@@ -215,7 +215,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "Currently only hg19 and hg38 are available. Used to define "
                                  "-rtb/--two-bit-reference-genome, --c/-intervals-bed and "
                                  "-rgcd/--reference-gc-content-distribution-table. The definition is overridden if any "
-                                 "of these parameters are specified on the command line.")
+                                 "of these parameters are specified on the command line. "
+                                 f"[ DEFAULT: '{DEFAULT_GENOME_BUILD}' ]")
     input_args.add_argument('-rtb', '--two-bit-reference-genome', dest='two_bit_reference_file', type=Path,
                             help='Path to 2bit version of the reference genome FastA file which was used for read '
                                  'alignment of the input BAM file. If the 2bit version is missing, one can create the '
@@ -233,6 +234,10 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "reference_fragment_lenght_distribution.tsv'. The GC content distributions are used "
                                  "to create an optimized consolidated weight matrix using a weighted mean. The weights "
                                  "for each region are selected such that the reference GC content distribution in "
+                                 "'accessory_files/hg38_reference_GC_content_distribution.tsv' is approximated better "
+                                 "than by naive averaging region GC content distributions. This optimization is might "
+                                 "fail in cases where the majority of preselected genomic regions are used to estimate "
+                                 "GC bias. In these cases, the naive approach is used as a fallback option. "
                                  f"[ DEFAULT: '{PREDEFINED_1MBP_INTERVALS_TO_PROCESS[DEFAULT_GENOME_BUILD]}' ]",
                             metavar='File')
     input_args.add_argument('-rgcd', '--reference-gc-content-distribution-table', dest='ref_gc_dist_path',

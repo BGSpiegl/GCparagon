@@ -119,10 +119,10 @@ Activate the new environment:
 
 `conda activate GCparagon`
 
-Run the `setup.py` in combination with `pip` to make GCparagon directly executable from the 
-console afterward:
+Run `pip` to make GCparagon directly executable from the 
+console:
 
-`python setup.py bdist_wheel && python -m pip install --force-reinstall dist/*.whl`
+`pip install .`
 
 After successful setup, GCparagon should be available via the `gcparagon` command. For a detailed help, type:
 `gcparagon --help`
@@ -450,7 +450,7 @@ The most basic call after downoading the 2bit version of the reference genome is
 OR:
 
 `gcparagon --bam <INPUT_BAM>`
-(available only if setup.py was run)
+(available only if `pip install .` was run)
 
 This minimalistic setup uses the parent directory of the input BAM fle as output directory.
 The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).

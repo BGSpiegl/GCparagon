@@ -5,11 +5,11 @@ channels:
   - plotly
   - nodefaults
 dependencies:
-  - samtools
   - bedtools
   - python=3.10
   - pip
   - numpy
+  - samtools
   - pysam
   - natsort
   - py2bit

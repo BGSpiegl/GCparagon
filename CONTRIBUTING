@@ -1,0 +1,32 @@
+About this file:
+As many things, this is just a first version of the real thing. As I am not a professional software developer (rather a self-taught bioinformatician), I still have to learn many ways of the Git. I am more than happy to do so via the contributions/help of the community!
+A comprehensive "how to contribute" section and a general "code of conduct" section will be added later.
+This file contains:
+ - "Project status": do we have a release version? if major release version <1, we are still in pre-release phase. Please be gentle!
+ - "How to contribute": if you find an error, have a clever idea how to improve this commandline tool intended for cfDNA sequencing data analysis (paired-end data only atm), or if you think the tool could benefit in other ways, please read this section carefully!
+                        Any constructive contribution is well received and a place among the list of GCparagon contributors is yours!
+ - "List of Contributors": the magnificent individuals who strive to make the world a better place, including through their contribution to this humble NGS data pre-processing tool!
+
+
+Project status: pre-release (major release version = 0)
+
+
+How to contribute:
+!! THIS SECTION IS UNDER CONSTRUCTION !!
+Remember: always bump at least the "PATCH_NUMBER" in correct_GC_bias.py, README.md, and setup.py!
+If you add a feature, please bump the MINOR_RELEASE.
+
+
+List of Contributors
+
+  Code Maintainer:
+     Benjamin Spiegl - https://github.com/BGSpiegl
+
+  Code contributors (in order of earliest contribution):
+     Benjamin Spiegl     - https://github.com/BGSpiegl
+     Marharyta Papakina
+     Sebastian Röner     - https://github.com/sroener
+     Isaac Lazzeri       - https://github.com/Isy89
+
+Love is the answer!
+Live long and prosper.

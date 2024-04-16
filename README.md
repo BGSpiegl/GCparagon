@@ -80,6 +80,8 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
+Latest version is v0.6.7
+
 
 ### How to use cfDNA fragment weights
 Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
@@ -184,8 +186,6 @@ Please see [Genomic Region Preselection](#genomic-region-preselection) section f
 ## Installation
 
 -------------------------------------------------------------------------------------------------------------------
-
-Latest version is v0.6.6
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 

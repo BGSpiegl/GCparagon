@@ -2565,7 +2565,7 @@ def manage_bad_intervals(bad_genomic_intervals_bed: Optional[str]) \
                 lib_dates.append(time.strptime('_'.join(cur_lib.stem.split('_')[-2:]), TIMESTAMP_FORMAT))
             except ValueError:  # is raised if the expected timestamp is not present
                 pass
-        # find most recent time stamp, assuming default output naming -> just use input as-is otherwise
+        # find the most recent time stamp, assuming default output naming -> otherwise, use input as-is
         try:
             most_recent_lib_date = max(lib_dates)
             new_bad_genomic_intervals_bed_path = Path(
@@ -2798,7 +2798,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
         fallback_weights_per_component = {}.fromkeys(weights_per_component)
         for comp in fallback_weights_per_component.keys():
             fallback_weights_per_component[comp] = 1 / n_components
-        return fallback_weights_per_component, initial_re, False
+        return fallback_weights_per_component, initial_re, False, 1
     log(message=f"Successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
                 f"{residual_error:.3f} (took {elapsed_time_ns / 10**6:,.2f} ms).", log_level=logging.INFO,
         logger_name=LOGGER)

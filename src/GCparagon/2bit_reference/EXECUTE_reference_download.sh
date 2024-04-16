@@ -1,4 +1,7 @@
 #!/bin/bash
+
+# WARNING: if pip . install is used, both hg19 and hg38 2bit reference files MUST be downloaded first!
+
 # bash script: execute to download the standard analysis set reference file (without the hs38d1 decoys) for hg38
 # already in 2bit format
 set -e  # exit as soon as a command fails

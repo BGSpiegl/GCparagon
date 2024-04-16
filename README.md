@@ -119,6 +119,9 @@ Activate the new environment:
 
 `conda activate GCparagon`
 
+Download the 2bit reference files - if `pip .` install is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
+already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`!
+
 Run `pip` to make GCparagon directly executable from the 
 console:
 

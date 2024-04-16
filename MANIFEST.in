@@ -1,0 +1,11 @@
+# reference files - MUST BE DOWNLOADED BEFORE INSTALLING! See
+# hg38:
+include src/GCparagon/2bit_reference/hg38.analysisSet.chrom.sizes  # chromosome sizes file
+include src/GCparagon/2bit_reference/hg38.analysisSet.2bit  # 2bit reference file
+include accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed  # pre-sel. interv.
+include accessory_files/hg38_reference_GC_content_distribution.tsv  # reference GC content distribution
+# hg19:
+include src/GCparagon/2bit_reference/hg19.chrom.sizes  # chromosome sizes file
+include src/GCparagon/2bit_reference/hg19.2bit  # 2bit reference file
+include accessory_files/hg19_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed  # pre-sel. interv.
+include accessory_files/hg19_reference_GC_content_distribution.tsv  # reference GC content distribution

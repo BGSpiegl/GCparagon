@@ -34,21 +34,30 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 -------------------------------------------------------------------------------------------------------------------
 - [Description](#description)
   - [How to use cfDNA fragment weights](#how-to-use-cfdna-fragment-weights)
-  - [Installation](#installation)
+  - [Software Dependencies](#software-dependencies)
+  - [Hardware Requirements](#hardware-requirements)
+  - [Repository Structure](#repository-structure)
+  - [Required Files](#required-files)
+
+
+- [Installation](#installation)
   - [Recommended Installation Procedure](#recommended-installation-procedure)
-  - [Contributors](#contributors)
-  - [Copyright](#copyright)
-  - [Software License](#software-license)
-- [Result of GC Bias Correction](#result-of-gc-bias-correction)
-- [Output](#output)
-- [! Performance !](#performance)
-- [Hardware Requirements](#hardware-requirements)
-- [Software Dependencies](#software-dependencies)
-- [Required Files](#required-files)
+
 - [Usage](#usage)
+  - [Examples](#examples)
+  - [Performance](#performance)
+  - [Full Commandline Description](#full-commandline-description)
   - [Parameter Presets](#parameter-presets)
-- [Genomic Region Preselection](#genomic-region-preselection)
-- [Repository Structure](#repository-structure)
+
+- [Result of GC Bias Correction](#result-of-gc-bias-correction)
+  - [Output](#output)
+  - [Genomic Region Preselection](#genomic-region-preselection)
+  - [Optimization of Combining Preselected Regions](#optimization-of-combining-results-from-preselected-regions)
+  - [Validation](#validation-v060)
+
+- [Copyright](#copyright)
+- [Software License](#software-license)
+- [Contributors](#contributors)
 
 
 ## Description
@@ -71,6 +80,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
+
 ### How to use cfDNA fragment weights
 Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
 fragments to obtain an unbiased result for signal extraction. An example could be depth of coverage computation for 
@@ -78,7 +88,103 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 "[Result of GC Bias Correction](#result-of-gc-bias-correction)". To this end, Faruk Kapidzic created a Pysam fork which can directly use the tags.
 
 
-### Installation
+### Software Dependencies
+
+- UNIX system (server or HPC cluster recommended)
+
+The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS operating system, using a Python3.10 conda 
+environment which can be installed using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
+Per default, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
+  - samtools=1.16
+  - bedtools=2.30
+  - python=3.10
+  - pip=22.3
+  - numpy=1.23
+  - pysam=0.19
+  - natsort=8.2
+  - py2bit=0.3
+  - cycler=0.11
+  - pandas=1.5
+  - scipy=1.9
+  - ucsc-fatotwobit=377
+  - twobitreader=3.1
+  - plotly_express=0.4
+  - python-kaleido=0.2
+  - psutil=5.9
+  - requests=2.28
+  - memory_profiler
+  - pybedtools
+  - polars
+  - scikit-learn
+  - matplotlib
+
+You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
+
+
+### Hardware Requirements
+
+- 12 cores are default, more cores are better
+- \> 8.5 GiB of RAM, 16 GB recommended (max. observed memory usage for preset 2 computation was 8.5 GiB @ 24 cores. 
+A preset 3 computation is expected to use more RAM!)
+- SSD scratch drive for `--temporary-directory` with at least twice the input BAM file's size in free space for the 
+tagging procedure
+
+Computation time might increase significantly if hardware requirements are not met.
+Computation may terminate if drive space and/or RAM size requirements are not met!
+
+### Repository Structure
+
+Instructions for FastA reference genome sequence download can be found 
+[here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
+
+Code for genomic regions exclusion list creation can be found in 
+[GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
+Code for genomic interval preselection for a currently unsupported build can be found in folder 
+[accessory_files/genomic_interval_preselection-shifted16x_hg19](accessory_files/genomic_interval_preselection-shifted16x_hg19).
+
+Users successfully creating reference files for other genome builds are kindly asked to create a branch + pull request, where 
+they also provide these resources (i.e., a URL to the 2bit or FastA reference sequence file,
+<GENOME_BUILD>.genome_file.tsv,
+<GENOME_BUILD>_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed, 
+<GENOME_BUILD>_reference_GC_content_distribution.tsv,
+and optionally a different reference fragment length distribution file 
+<ISOLATION_PROTOCOL>_<SAMPLE_TYPE>_reference_fragment_length_distribution.tsv in case the plasmaSeq ccfDNA 
+reference is inadequate for the analyzed samples).
+
+Note: a separate fragment length distribution file is required for urine samples because of the higher
+fragmentation of cfDNA in urine samples (compared to blood plasma cfDNA).
+
+Results of the correction benchmark including the Griffin algorithm can be found in [validation](validation).
+
+Results from the [profile_command.py](src/GCparagon/profile_command.py) script are stored in 
+[preset_computation/benchmark_results](preset_computation/benchmark_results).
+
+
+### Required Files
+
+GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
+specification conforming input BAM file.
+The reference genome used to create the 4 BAM files in plots can be downloaded using the 
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script.
+It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
+[https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
+
+Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
+containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
+(see comment on the bottom of 
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh))
+
+GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via 
+[BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
+Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
+
+
+
+
+## Installation
+
+-------------------------------------------------------------------------------------------------------------------
+
 Latest version is v0.6.6
 
 GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
@@ -91,7 +197,8 @@ directly using the YAML file.
 If you experience the same issue, it can possibly be solved manually installing dependencies one-by-one.
 
 The author recommends to use [mamba/micromamba][mamba install] for environment creation/resolving of dependencies.
-Mamba can be added to an existing [conda installation][conda install].
+In case you are using conda version 22 or above, your installation can be easily upgraded with the [mamba solver][libmamba solver].
+Mamba can be added to an older existing [conda installation][conda install].
 
 For a detailed list of dependencies (manual installation, not recommended!) please go to 
 [Software Dependencies](#software-dependencies)
@@ -132,6 +239,7 @@ Default output created by GCparagon is described [here](#result-of-gc-bias-corre
 There are several options available to alter plotting behaviour or to keep intermediate data created during
 simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output**.
 To activate BAM output, use the `--output-bam` flag.
+
 Be mindful of setting the `--temporary-directory` to a reasonable path!
 (I.e. high IOPS hardware if available +
 sufficient storage space available for tagged BAM etc.)
@@ -141,7 +249,7 @@ To gain access to the four BAM files used in the publication, go to EGA, create 
 
 To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
 first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
-The reference genome used to create the 4 BAM files in plots can be downloaded using the 
+The hg38 reference genome used to create the 4 BAM files in plots can be downloaded using the 
 [EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script:
 
 `bash src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`
@@ -154,165 +262,53 @@ After the download has finished, you can run the [driver script](driver_scripts/
 You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
 50 minutes for each sample.
 
-#### Validation v0.6.0+
-To compute the validation results for the depth of coverage signals, one can either use the npz exported, normalized and
-averaged DoC values for each loci group, preset and sample (mean of 10th to 90th percentile of normalized cDoC values, 
-per base position) in the subdirectories of the 
-[coverage signals validation directory](validation/02_loci_overlay_central_coverages) and run the two plotting code 
-scripts for [TSS loci groups](validation/02-2_create_TSS_subplot_figure_from_extracted_cDoC.py) and 
-[TFBS loci groups](validation/02-3_create_TFBS_subplot_figure_from_extracted_cDoC.py)
-OR create these coverage *.npz files themselves using their own custom code 
-(extract from 110bp-210 bp fragments the central 61 bp fragment DoC signal for each locus and compute central 80% DoC mean 
-for each position in the window).
-To process Griffin output (bias matrices), one must run the scripts in the [validation directory](validation) in numerical 
-order (i.e. from [01-1_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py) to 
-[03-3_plot_per_fragment_GC_content_correction_fidelity.py](validation/03-3_plot_per_fragment_GC_content_correction_fidelity.py)).
 
-The full validation requires the GCparagon preset benchmark results to be available.
-To create the genome-wide correction fidelity plots, the transformed Griffin bias matrices and Griffin weights-tagged 
-BAM files must be available (compute matrices with 
-[01_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py)).
-All results created by these scrips are provided along with the code, except the Griffin correction weights-tagged BAM 
-files. These can be created with the [02-1_tag_BAMs_with_Griffin_result.py](validation/02-1_tag_BAMs_with_Griffin_result.py) script.
-Some of the validation template scripts must be completed with the appropriate directory and/or code paths before being 
-called (see "TODO" comments at the beginning of scripts).
-
-### Contributors
-- Benjamin Spiegl ([BGSpiegl][github user])
-- Marharyta Papakina
-
-### Copyright
-- Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl
-- Original work on profile_command.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
-
-### Software license
-[MIT License](src/GCparagon/LICENSE)
-
-Intended for research use only.
-
-## Result of GC Bias Correction
+## Usage
 
 -------------------------------------------------------------------------------------------------------------------
-GC bias correction results using default parameter preset 2 (5–10 min) of two human cfDNA samples (paired-end WGS, 
-[EGAS00001006963]) are shown below.
-For each sample, the original fragment GC content distribution (= "FGCD", dotted colored lines), the GCparagon-corrected
-FGCD (solid colored lines), the correction achieved with the Griffin algorithm (grey dashed lines), and the simulated 
-FGCD across the entire analyzable genome (GRCh38, black lines) are displayed.
-The GC content of fragments was estimated either:
- - by using the read sequence, if the template length is (shorter or) equal to the read sequence length,
- - or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
+Run the GCparagon.py script with installed [dependencies](#software-dependencies) using an appropriate Python3.10+ 
+interpreter.
 
-![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/B01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
+### Examples
 
-(B01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
+The most basic call after downoading the 2bit version of the reference genome is as follows:
 
+`python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
 
-![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/P01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
+OR:
 
-(P01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
+`gcparagon --bam <INPUT_BAM>`
+(available only if `pip install .` was run)
 
-The maximum residual bias seems to depend on the initial intensity of GC bias and on the representativeness of
-preselected genomic intervals that were used for computing GC bias.
-In general, more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
-achieve a comparable number of processed fragments.
-With increasing preset number, the number of genomic intervals used
-for GC bias computation also increases. This also allows for a better representation of the reference FGCD by linear 
-combination of weight matrices computed from individual preseleted genomic intervals.
+This minimalistic setup uses the parent directory of the input BAM fle as output directory.
+The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
 
-When applied to multiple transcription start sites (TSSs) of genes which are generally expected to be inactive in adult 
-humans ([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
-and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)), GC bias manifests as changes in the average
-central 61 bp fragment depth of coverage (cDoC) across these 5' -> 3' oriented sites. Active genes are expected 
-to show a nucleosome depleted region (unprotected -> decrease in coverage) slightly upstream to the TSS, whereas 
-unexpressed or lowly expressed genes should show an almost flat cDoC profile.
+To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
 
-Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
-unexpressed genes is shown below (fragment coverage in silico reduced to their central 61 bp).
-Original coverage before correctoin is shown as thin-colored lines.
-cDoC of mono-nucleosomal fragments after GC bias correction with GCparagon is shown as thick-colored lines.
+`gcparagon --bam <INPUT_BAM> --output-bam`
 
-For these plots, only mono-nucleosomal fragments with observed template length between 110-210bp were included to create 
-a surrogate signal to assess the average nucleosome positioning across combined regions (active genes: expected 
-increased positioning of nculeosomes downstream to the TSS; inactive genes: negligible positioning).
-The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
-GC bias. Hence, the original and corrected DoC profiles are very similar. We also corrected the same samples using the 
-Griffin algorithm and processed fragments accordingly. Correction resulting from Griffin is shown as back lines.
+It is recommended to set `--temporary-directory` to be located on SSD hardware:
 
-![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TSSs_preset2.png?raw=true)
+`gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
 
-The DoC increase/decrease before correction and downstream to position 0 (= TSS) for samples showing a positive/negative
-GC bias (P01/B01) is because of the increased GC content of human genomic exon 1 sequences compared to the immediate 
-upstream core promoter sequences as shown below. These promoter sequences tend to contain the [TATA-box] element 25bp 
-upstream to position zero (approx. every 3rd promoter).
+If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`. All created files 
+are saved to the temporary directory first before being moved to the output directory after successful
+script execution. 
 
-![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TFBSs_preset2.png?raw=true)
+Rich customization options are available:
+To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
 
-Similarly, many transcription factor binding motifs show an increased GC content. Original cDoC is increased/decreased 
-for samples showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus 
-of P01 which shows the most intense GC bias (+5.0% GC).
+`gcparagon --bam <INPUT_BAM> --output-bam --threads 24`
+
+To get a quick estimate of the GCbias, the user can set a lower preset
+
+`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1`
+
+The `--preset 2` setup is recommended though.
 
 
-## Output
+### Performance
 
--------------------------------------------------------------------------------------------------------------------
-Default outputs are:
-
-- log files (stdout and stderr logged individually)
-- fragment length distribution (plot only; can be computed from `*_observed_attributes_matrix.txt.gz`)
-
-(P01, default preset 2 examples shown)
-
-![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.fragment_length_distribution.png?raw=true)
-
-- observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
-
-![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.O_gc.heatmap.png?raw=true)
-
-- simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
-`*_simulated_attributes_matrix.txt.gz`)
-
-![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.S_gc.heatmap.png?raw=true)
-
-- weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
-
-![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.Mask.heatmap.png?raw=true)
-
-- correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
-
-![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc.heatmap.png?raw=true)
-
-- correction weights matrix, extreme outliers capped at threshold (plot; data in 
-`*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
-
-![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
-
-- correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
-`*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
-
-![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
-
-## Optimization of Combining Results from Preselected Regions
-From v0.6.0 on, fragment attribute counts from preselected genomic intervals are combined using a linear combination 
-such that their simulated cfDNA fragment GC content distribution approximates the FGCD of the reference genome without 
-dropping information gathered from individual regions. The range of weights from which the linear combination of 
-genomic interval FGCDs is created is: [0.1, 10].
-
-A plot showing the relative frequency of selected weights within this range is created by default:
-
-![p01_int_w](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.preselectedRegionWeights_refGCreconstruction.png?raw=true)
-
-The weights should not accumulate at the lower end of the scale because this would mean an over-fitting to a small 
-subset of genomic intervals that themselves resemble the reference GC content best in a specific linear combination. 
-
-Another plot shows the improvement of the reference GC content approximation by the computed linear combination over 
-a naive combination of GC correction weights:
-
-![p01_recons_GC](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.GCcontent_RefVsReconstructed.png?raw=true)
-
-
-## Performance
-
--------------------------------------------------------------------------------------------------------------------
 A benchmark of GCparagon, preset2 (v0.5.5) against the Griffin algorithm highlighted the superior computation speed of GCparagon:
 
 | Sample |    Griffin table output    | GCparagon table output | GCparagon tagged BAM output | 
@@ -362,121 +358,6 @@ computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
 directory before running GCparagon with `--output-bam`!
 
-
-## Hardware Requirements
-
--------------------------------------------------------------------------------------------------------------------
-- 12 cores are default, more cores are better
-- \> 8.5 GiB of RAM, 16 GB recommended (max. observed memory usage for preset 2 computation was 8.5 GiB @ 24 cores. 
-A preset 3 computation is expected to use more RAM!)
-- SSD scratch drive for `--temporary-directory` with at least twice the input BAM file's size in free space for the 
-tagging procedure
-
-Computation time might increase significantly if hardware requirements are not met.
-Computation may terminate if drive space and/or RAM size requirements are not met!
-
-
-## Software Dependencies
-
--------------------------------------------------------------------------------------------------------------------
-- UNIX system (server or HPC cluster recommended)
-
-The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS operating system, using a Python3.10 conda 
-environment which can be installed using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
-Per default, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
-  - samtools=1.16
-  - bedtools=2.30
-  - python=3.10
-  - pip=22.3
-  - numpy=1.23
-  - pysam=0.19
-  - natsort=8.2
-  - py2bit=0.3
-  - cycler=0.11
-  - pandas=1.5
-  - scipy=1.9
-  - ucsc-fatotwobit=377
-  - twobitreader=3.1
-  - plotly_express=0.4
-  - python-kaleido=0.2
-  - psutil=5.9
-  - requests=2.28
-  - memory_profiler
-  - pybedtools
-  - polars
-  - scikit-learn
-  - matplotlib
-
-You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
-
-
-## Required Files
-
--------------------------------------------------------------------------------------------------------------------
-GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
-specification conforming input BAM file.
-The reference genome used to create the 4 BAM files in plots can be downloaded using the 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script.
-It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
-[https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
-
-Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
-containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
-(see comment on the bottom of 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh))
-
-GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via 
-[BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
-Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
-
-To recreate the presented GC correction results, run [this driver script](driver_scripts/drv_compute_GC_presets.sh) 
-after setting up the conda env and downloading the 2bit reference genome file and the [EGAS00001006963] BAMs.
-The BAM files used in plots can be requested for download from EGA via the accession [EGAS00001006963].
-If required, a new EGA account can be created for free.
-
-
-## Usage
-
--------------------------------------------------------------------------------------------------------------------
-Run the GCparagon.py script with installed [dependencies](#software-dependencies) using an appropriate Python3.10+ 
-interpreter.
-
-### Examples
-
-The most basic call after downoading the 2bit version of the reference genome is as follows:
-
-`python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
-
-OR:
-
-`gcparagon --bam <INPUT_BAM>`
-(available only if `pip install .` was run)
-
-This minimalistic setup uses the parent directory of the input BAM fle as output directory.
-The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
-
-To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
-
-`gcparagon --bam <INPUT_BAM> --output-bam`
-
-It is recommended to set `--temporary-directory` to be located on SSD hardware:
-
-`gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
-
-If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`. All created files 
-are saved to the temporary directory first before being moved to the output directory after successful
-script execution. 
-
-Rich customization options are available:
-To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
-
-`gcparagon --bam <INPUT_BAM> --output-bam --threads 24`
-
-To get a quick estimate of the GCbias, the user can set a lower preset
-
-`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1`
-
-The `--preset 2` setup is recommended though.
 
 ### Full Commandline Description
 
@@ -675,6 +556,7 @@ Post-processing options:
                         integer in the range of 1-10 (inclusive). [ DEFAULT: 5 ]
 ```
 
+
 ### Parameter Presets
 Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
@@ -690,12 +572,112 @@ samples from [EGAS00001006963].
 *depends on DoC of BAM file
 
 
-## Genomic Region Preselection
+## Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
-The code uses up to 1,702 
+GC bias correction results using default parameter preset 2 (5–10 min) of two human cfDNA samples (paired-end WGS, 
+[EGAS00001006963]) are shown below.
+For each sample, the original fragment GC content distribution (= "FGCD", dotted colored lines), the GCparagon-corrected
+FGCD (solid colored lines), the correction achieved with the Griffin algorithm (grey dashed lines), and the simulated 
+FGCD across the entire analyzable genome (GRCh38, black lines) are displayed.
+The GC content of fragments was estimated either:
+ - by using the read sequence, if the template length is (shorter or) equal to the read sequence length,
+ - or from slices of the reference genome using the leftmost alignment position and the template length otherwise.
+
+![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/B01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
+
+(B01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
+
+
+![p01_preset2_correction](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/03_genome-wide_correction_fidelity/FGCD_correction_plots/preset2/P01_GCparagon_GC-content-comparison_GC-bias-correction_SPLINE_cfDNAref.png?raw=true)
+
+(P01, GCparagon preset 2 vs. Griffin correction; fragment GC content in 2 %GC bins, spline interpolated)
+
+The maximum residual bias seems to depend on the initial intensity of GC bias and on the representativeness of
+preselected genomic intervals that were used for computing GC bias.
+In general, more intervals are used for shallow sequenced samples than for deeper sequenced ones to 
+achieve a comparable number of processed fragments.
+With increasing preset number, the number of genomic intervals used
+for GC bias computation also increases. This also allows for a better representation of the reference FGCD by linear 
+combination of weight matrices computed from individual preseleted genomic intervals.
+
+When applied to multiple transcription start sites (TSSs) of genes which are generally expected to be inactive in adult 
+humans ([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
+and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)), GC bias manifests as changes in the average
+central 61 bp fragment depth of coverage (cDoC) across these 5' -> 3' oriented sites. Active genes are expected 
+to show a nucleosome depleted region (unprotected -> decrease in coverage) slightly upstream to the TSS, whereas 
+unexpressed or lowly expressed genes should show an almost flat cDoC profile.
+
+Examples of the effect of positive (P01, +5.0%) and negative GC bias (B01, -2.2%) on the average DoC for expressed and 
+unexpressed genes is shown below (fragment coverage in silico reduced to their central 61 bp).
+Original coverage before correctoin is shown as thin-colored lines.
+cDoC of mono-nucleosomal fragments after GC bias correction with GCparagon is shown as thick-colored lines.
+
+For these plots, only mono-nucleosomal fragments with observed template length between 110-210bp were included to create 
+a surrogate signal to assess the average nucleosome positioning across combined regions (active genes: expected 
+increased positioning of nculeosomes downstream to the TSS; inactive genes: negligible positioning).
+The original H01 sample has the lowest deviation of average GC content from the expected 40.4% and shows the weakest
+GC bias. Hence, the original and corrected DoC profiles are very similar. We also corrected the same samples using the 
+Griffin algorithm and processed fragments accordingly. Correction resulting from Griffin is shown as back lines.
+
+![doc_corr_res_tsss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TSSs_preset2.png?raw=true)
+
+The DoC increase/decrease before correction and downstream to position 0 (= TSS) for samples showing a positive/negative
+GC bias (P01/B01) is because of the increased GC content of human genomic exon 1 sequences compared to the immediate 
+upstream core promoter sequences as shown below. These promoter sequences tend to contain the [TATA-box] element 25bp 
+upstream to position zero (approx. every 3rd promoter).
+
+![doc_corr_res_tfbss](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/02_loci_overlay_central_coverages/coverage_overlay_plot_output/DoC_bias_correction_effect_TFBSs_preset2.png?raw=true)
+
+Similarly, many transcription factor binding motifs show an increased GC content. Original cDoC is increased/decreased 
+for samples showing a positive/negative GC bias (P01/B01) with the most extreme distortion observed for the LYL1 locus 
+of P01 which shows the most intense GC bias (+5.0% GC).
+
+
+### Output
+
+Default outputs are:
+
+- log files (stdout and stderr logged individually)
+- fragment length distribution (plot only; can be computed from `*_observed_attributes_matrix.txt.gz`)
+
+(P01, default preset 2 examples shown)
+
+![p01_frag_length_dist](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.fragment_length_distribution.png?raw=true)
+
+- observed fragment attributes (plot, data in `*_observed_attributes_matrix.txt.gz`)
+
+![p01_observed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.O_gc.heatmap.png?raw=true)
+
+- simulated fragment attributes using reference genome and fragment length distribution (plot, data in 
+`*_simulated_attributes_matrix.txt.gz`)
+
+![p01_simmed_atts](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.S_gc.heatmap.png?raw=true)
+
+- weights computation mask (plot; data in `*_gc_bias_computation_mask.txt.gz`)
+
+![p01_comp_mask](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.Mask.heatmap.png?raw=true)
+
+- correction weights matrix (plot; data in `*_gc_weights_*simsMean.txt.gz`)
+
+![p01_w_gc](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc.heatmap.png?raw=true)
+
+- correction weights matrix, extreme outliers capped at threshold (plot; data in 
+`*_gc_weights_*simsMean.*outliersRemoved.txt.gz`)
+
+![p01_w_gc_ol](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed.heatmap.png?raw=true)
+
+- correction weights matrix, extreme outliers capped at threshold, local smoothing applied (plot; data in 
+`*_gc_weights_*simsMean.*outliersRemoved.*gaussSmoothed.txt.gz`)
+
+![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
+
+
+### Genomic Region Preselection
+
+The code uses up to 2,342 
 [preselected 1 Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed) of 
-hg38 reference genome for processing.
+hg38 reference genome for processing (2,204 regions for hg19).
 Preselection was carried on the basis of an 
 [exclusion listed regions BED file](accessory_files/hg38_GCcorrection_ExclusionList.merged.sorted.bed) to:
 - reduce the overlap of 1 Mb genomic intervals with regions found to be problematic for short read sequencing or sequence alignment
@@ -764,38 +746,76 @@ across the whole genome, and additionally for two chromosomes, is provided
 [here](accessory_files/genomic_interval_preselection-shifted16x_hg19/IGV_composite_preselected_intervals_hg38.png).
 
 
-## Repository Structure
+### Optimization of Combining Results from Preselected Regions
+From v0.6.0 on, fragment attribute counts from preselected genomic intervals are combined using a linear combination 
+such that their simulated cfDNA fragment GC content distribution approximates the FGCD of the reference genome without 
+dropping information gathered from individual regions. The range of weights from which the linear combination of 
+genomic interval FGCDs is created is: [0.1, 10].
+
+A plot showing the relative frequency of selected weights within this range is created by default:
+
+![p01_int_w](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.preselectedRegionWeights_refGCreconstruction.png?raw=true)
+
+The weights should not accumulate at the lower end of the scale because this would mean an over-fitting to a small 
+subset of genomic intervals that themselves resemble the reference GC content best in a specific linear combination. 
+
+Another plot shows the improvement of the reference GC content approximation by the computed linear combination over 
+a naive combination of GC correction weights:
+
+![p01_recons_GC](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.GCcontent_RefVsReconstructed.png?raw=true)
+
+
+### Validation v0.6.0+
+Access the validation code via the [including_EGAS00001006963_results][validation branch]!
+
+To recreate the presented GC correction results, run [this driver script](driver_scripts/drv_compute_GC_presets.sh) 
+after setting up the conda env and downloading the 2bit reference genome file and the [EGAS00001006963] BAM files.
+The BAMs used in plots can be requested for download from EGA via the accession [EGAS00001006963].
+If required, a new EGA account can be created for free.
+
+To compute the validation results for the depth of coverage signals, one can either use the npz exported, normalized and
+averaged DoC values for each loci group, preset and sample (mean of 10th to 90th percentile of normalized cDoC values, 
+per base position) in the subdirectories of the 
+[coverage signals validation directory](validation/02_loci_overlay_central_coverages) and run the two plotting code 
+scripts for [TSS loci groups](validation/02-2_create_TSS_subplot_figure_from_extracted_cDoC.py) and 
+[TFBS loci groups](validation/02-3_create_TFBS_subplot_figure_from_extracted_cDoC.py)
+OR create these coverage *.npz files themselves using their own custom code 
+(extract from 110bp-210 bp fragments the central 61 bp fragment DoC signal for each locus and compute central 80% DoC mean 
+for each position in the window).
+To process Griffin output (bias matrices), one must run the scripts in the [validation directory](validation) in numerical 
+order (i.e. from [01-1_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py) to 
+[03-3_plot_per_fragment_GC_content_correction_fidelity.py](validation/03-3_plot_per_fragment_GC_content_correction_fidelity.py)).
+
+The full validation requires the GCparagon preset benchmark results to be available.
+To create the genome-wide correction fidelity plots, the transformed Griffin bias matrices and Griffin weights-tagged 
+BAM files must be available (compute matrices with 
+[01_transform_Griffin_GC_bias_weights.py](validation/01-1_transform_Griffin_GC_bias_weights.py)).
+All results created by these scrips are provided along with the code, except the Griffin correction weights-tagged BAM files.
+These can be created with the [02-1_tag_BAMs_with_Griffin_result.py](validation/02-1_tag_BAMs_with_Griffin_result.py) script.
+Some of the validation template scripts must be completed with the appropriate directory and/or code paths before being 
+called (see "TODO" comments at the beginning of scripts).
+
+
+## Copyright
 
 -------------------------------------------------------------------------------------------------------------------
-Target output excluding BAM files (which can be created using the 
-[drv_compute_GC_presets.sh](driver_scripts/drv_compute_GC_presets.sh) script) can be found in the 
-[preset_computation](preset_computation) folder.
+- Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl
+- Original work on profile_command.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
-WGS cfDNA data sequenced on Illumina NovaSeq from EGA dataset [EGAS00001006963] was used for preset testing.
+## Software license
 
-Instructions for FastA reference genome sequence download can be found 
-[here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
+-------------------------------------------------------------------------------------------------------------------
+[MIT License](src/GCparagon/LICENSE)
 
-Code for genomic regions exclusion list creation can be found in 
-[GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
-Code for genomic interval preselection for a currently unsupported build can be found in folder 
-[accessory_files/genomic_interval_preselection-shifted16x_hg19](accessory_files/genomic_interval_preselection-shifted16x_hg19).
-Users successfully creating reference files for other builds are kindly asked to create a branch + merge request, where 
-they provide these resources (i.e., a URL to the 2bit or FastA reference sequence file,
-<GENOME_BUILD>.genome_file.tsv, 
-<GENOME_BUILD>_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed, 
-<GENOME_BUILD>_reference_GC_content_distribution.tsv,
-and optionally a different reference fragment length distribution file 
-<ISOLATION_PROTOCOL>_<SAMPLE_TYPE>_reference_fragment_length_distribution.tsv in case the plasmaSeq ccfDNA 
-reference is inadequate for the analyzed samples).
+Intended for research use only.
 
-Note: a separate fragment length distribution file is required for urine samples because of the higher
-fragmentation of cfDNA in urine samples (compared to blood plasma cfDNA).
+## Contributors
 
-Results of the correction benchmark including the Griffin algorithm can be found in [validation](validation).
-
-Results from the [profile_command.py](src/GCparagon/profile_command.py) script are stored in 
-[preset_computation/benchmark_results](preset_computation/benchmark_results).
+-------------------------------------------------------------------------------------------------------------------
+- Benjamin Spiegl ([BGSpiegl][github user])
+- Marharyta Papakina
+- Sebastian Röner
+- Isaac Lazzeri
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -829,3 +849,5 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [genome browser]: https://genome.ucsc.edu/
 [encode_exclusion_listed_regions_url]: https://github.com/Boyle-Lab/Blacklist/
 [table browser]: https://genome.ucsc.edu/cgi-bin/hgTables
+[libmamba solver]: https://conda.github.io/conda-libmamba-solver/user-guide/
+[validation branch]: https://github.com/BGSpiegl/GCparagon/tree/including_EGAS00001006963_results

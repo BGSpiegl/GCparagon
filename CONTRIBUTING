@@ -1,32 +1,54 @@
 About this file:
-As many things, this is just a first version of the real thing. As I am not a professional software developer (rather a self-taught bioinformatician), I still have to learn many ways of the Git. I am more than happy to do so via the contributions/help of the community!
-A comprehensive "how to contribute" section and a general "code of conduct" section will be added later.
+As many things, this is just an early version of the real thing.
+As I am not a professional software developer (rather a self-taught bioinformatician), I still have to learn many ways to Git Gud.
+I am more than happy to do so via the contributions/help of the community!
+
+A comprehensive "How to contribute" section and a general "code of conduct" section will be added later.
 This file contains:
  - "Project status": do we have a release version? if major release version <1, we are still in pre-release phase. Please be gentle!
  - "How to contribute": if you find an error, have a clever idea how to improve this commandline tool intended for cfDNA sequencing data analysis (paired-end data only atm), or if you think the tool could benefit in other ways, please read this section carefully!
                         Any constructive contribution is well received and a place among the list of GCparagon contributors is yours!
  - "List of Contributors": the magnificent individuals who strive to make the world a better place, including through their contribution to this humble NGS data pre-processing tool!
+ - "Code Maintainer(s)": the people who make sure GCparagon works and make decisions concerning the repo
 
 
-Project status: pre-release (major release version = 0)
+# Project status: pre-release (major release version = 0)
+  As of April 2024, the GCparagon algorithm has been validated and the implementation has been updated several times since its first release v0.5.3-beta in April 2023.
+  Ready to be used for scientific purposes only!
 
 
-How to contribute:
+# How to contribute:
 !! THIS SECTION IS UNDER CONSTRUCTION !!
-Remember: always bump at least the "PATCH_NUMBER" in correct_GC_bias.py, README.md, and setup.py!
-If you add a feature, please bump the MINOR_RELEASE.
+
+Before pushing anything to the repo, please:
+  0) create an issue in the GCparagon repo, describing the problem you are trying to solve and your approach to get it done
+  1) checkout the "dev" branch and test if your problem still exists
+  2) create and checkout a feature branch (from dev) using a descriptive name of the feature/problem
+  3) implement AND test your changes
+  4) merge your feature branch into the dev branch of the original GCparagon repository using a pull request ("Contribute" button in github.com) where you describe your changes
+
+Rules applying to all branches:
+ - signed commits only
+
+Rules applying only to main branch:
+ - contribution requires a merge request from another branch
+ - merging pull requests requires an approval first
+
+Remember: when introducing minor changes to the code, always bump at least the "PATCH_NUMBER" in correct_GC_bias.py, README.md, and setup.py!
+Changes in the README.md or similar text files that do not influence the code or analysis do not require an increment of the patch number. You are still allowed to do so if you wish to.
+If you add a feature, please increment the MINOR_RELEASE number and set "PATCH_NUMBER" to zero.
 
 
 List of Contributors
-
-  Code Maintainer:
-     Benjamin Spiegl - https://github.com/BGSpiegl
 
   Code contributors (in order of earliest contribution):
      Benjamin Spiegl     - https://github.com/BGSpiegl
      Marharyta Papakina
      Sebastian Röner     - https://github.com/sroener
      Isaac Lazzeri       - https://github.com/Isy89
+
+Code Maintainer(s):
+ Benjamin Spiegl - https://github.com/BGSpiegl
 
 Love is the answer!
 Live long and prosper.

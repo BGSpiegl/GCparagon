@@ -28,3 +28,4 @@ dependencies:
   - scikit-learn
   - matplotlib  # for memory profiling plots
   - pyranges
+  - singularity

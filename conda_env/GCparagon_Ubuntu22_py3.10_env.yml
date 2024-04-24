@@ -27,3 +27,4 @@ dependencies:
   - polars
   - scikit-learn
   - matplotlib  # for memory profiling plots
+  - singularity

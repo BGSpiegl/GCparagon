@@ -94,9 +94,13 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 
 - UNIX system (server or HPC cluster recommended)
 
-The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS operating system, using a Python3.10 conda 
-environment which can be installed using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
-Per default, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
+The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS and Ubuntu 22.04.4 LTS operating systems,
+using a Python3.10 conda environment.
+
+#### Conda installation
+This software environment can be installed using the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
+
+Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
   - samtools=1.16
   - bedtools=2.30
   - python=3.10
@@ -119,8 +123,38 @@ Per default, the following dependencies will be installed into the conda env nam
   - polars
   - scikit-learn
   - matplotlib
+  - singularity
 
-You can create the environment using the following command: `mamba env create -f GCparagon_py3.10_env.yml`
+You can create the environment using the following command:
+
+`conda env create -f GCparagon_py3.10_env.yml`
+
+#### Singularity container
+As an alternative, a singularity image can be created (using the singularity executable from the aforementioned conda 
+environment from OUTSIDE conda) using the [gcparagon.def](singularity_definition_file/gcparagon.def) singularity 
+definitions file, OR pulled from cloud.sylabs.io and verified using:
+
+`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
+
+
+Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
+
+`conda install singularity`
+
+GCparagon can then be run from the singularity container file like this:
+
+`singularity run gcparagon-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
+
+NOTE: do not run singularity commands from within the conda environment!
+Rather use the absolute path to the singularity executable from outside conda:
+
+`/home/<USERNAME>/miniforge-pypy3/bin/singularity run ...`
+
+As a workaround, you can create a symlink to that executable in your local bin folder:
+
+`ln -s /home/<USERNAME>/miniforge-pypy3/bin/singularity /usr/local/bin`
+
+After that, singularity is available via the expected `singularity` command.
 
 
 ### Hardware Requirements

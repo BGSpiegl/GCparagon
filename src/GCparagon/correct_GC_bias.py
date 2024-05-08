@@ -75,7 +75,9 @@ READS_EXTRACTION_TIMEOUT = 1800  # seconds; wait a maximum of 30 minutes for sin
 MAX_FRAGMENT_LENGTH = 1200  # maximum allowed fragment length; THIS MUST BE CHANGED TO ENABLE USING LONGER FRAGMENTS!
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!
 DEFAULT_MAX_FRAGMENT_LENGTH = 550
-DEFAULT_TAG_NAME = 'GC'
+DEFAULT_GC_TAG_NAME = 'GC'
+DEFAULT_MAPPABILITY_TAG_NAME = 'MP'
+DEFAULT_COMBINED_TAG_NAME = 'MG'
 DEFAULT_WEIGHT = 1.0
 DEFAULT_MIN_OCCURRENCES = 3
 ABSOLUTE_MIN_OCCURRENCES = 2
@@ -499,11 +501,12 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     output_args.add_argument('-k', '--keep-interval-data', dest='keep_interval_data', action='store_true',
                              help='Optional flag which can be used to save intermediate data per genomic interval.')
     output_args.add_argument('-ob', '--output-bam', dest='output_corrected_bam', action='store_true',
-                             help='Optional flag to activate writing of the GC-correction-weights-tagged BAM file '
-                                  'AFTER COMPUTING GC BIAS (--tag-only flag is not set), either using the statistics '
-                                  'computed from the input BAM file or a correction weights matrix specified via '
-                                  "--correction-weights. Is implicit if --tag-only is used. WARNING: currently, the "
-                                  "output BAM won't contain unaligned reads!")
+                             help='Optional flag to activate writing of the mappability-correction and GC-correction-'
+                                  'weights-tagged BAM file AFTER COMPUTING BIASES (--tag-only flag is not set), either '
+                                  'using the statistics computed from the input BAM file or a correction weights '
+                                  'matrix specified via --correction-weights. Is implicit if --tag-only is used. '
+                                  "WARNING: the output BAM won't contain unaligned reads! If you want to retain the "
+                                  "unaligned reads, set the '--output-unaligned-reads' flag!")
     output_args.add_argument('-our', '--output-unaligned-reads', dest='output_unaligned_reads', action='store_true',
                              help='Optional flag to activate writing of unaligned reads to a separate BAM file. '
                                   'Per default, unaligned reads are not output. Setting this flag '
@@ -519,10 +522,21 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'expected DoC with how many signals you sum up to get an estimate of which precision '
                                   'you would need to definitively be able to rule out any influence by rounding '
                                   f'errors. These should average out though. [ DEFAULT: {DEFAULT_FLOAT_PRECISION} ]')
-    output_args.add_argument('-tg', '--tag-name', dest='gc_tag_name', default=DEFAULT_TAG_NAME, metavar='String',
+    output_args.add_argument('-gtg', '--gc-tag-name', dest='gc_tag_name', default=DEFAULT_TAG_NAME, metavar='String',
                              help='Name of the GC-bias correction weight tag that will be added to alignments in the '
                                   'BAM file. If none is provided, the default tag will be used. Must not be longer '
-                                  f'than 2 characters! [ DEFAULT: {DEFAULT_TAG_NAME} ]')
+                                  f'than 2 characters! [ DEFAULT: {DEFAULT_GC_TAG_NAME} ]')
+    output_args.add_argument('-mtg', '--mappability-tag-name', dest='gc_tag_name', default=DEFAULT_GC_TAG_NAME,
+                             metavar='String',
+                             help='Name of the GC-bias correction weight tag that will be added to alignments in the '
+                                  'BAM file. If none is provided, the default tag will be used. Must not be longer '
+                                  f'than 2 characters! [ DEFAULT: {DEFAULT_MAPPABILITY_TAG_NAME} ]')
+    output_args.add_argument('-ctg', '--combined-tag-name', dest='combined_tag_name', default=DEFAULT_MAPPABILITY_TAG_NAME,
+                             metavar='String',
+                             help='Name of the combined GC bias and mappability correction weight '
+                                  '(GC-bias-correction-weight * mappability-correction-weight) tag that will be added '
+                                  'to alignments in the BAM file. If none is provided, the default tag will be used. '
+                                  f'Must not be longer than 2 characters! [ DEFAULT: {DEFAULT_COMBINED_TAG_NAME} ]')
     output_args.add_argument('-wie', '--write-interval-exclusion', dest='write_updated_bad_intervals_library',
                              action='store_true',
                              help='Optional flag for writing an updated version of the library listing intervals '

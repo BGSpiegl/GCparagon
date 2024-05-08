@@ -1,0 +1,165 @@
+Ideation of mappability correction initiated by Isaac Lazzeri ("lasery")
+detailed development and implementation done by Benjamin Spiegl while continuously discussing with Dr. Lazzeri Dot.
+(8th May 2024)
+
+COPY OF ZENODO INFORMATION
+
+Version 1.0.0
+10.5281/zenodo.5521424
+
+Mappability tracks (47.2 GB for hg19 + hg38; hg38: 18.7 GB) as computed by the Peter Peneder for their Liquorice publication.
+(NOTE: hg38 track for 35 bp sequences not included; file size correlates negatively with sequence length)
+
+https://zenodo.org/records/5521424
+
+Tracks were computed using this work https://evodify.com/gem-mappability/ and the following code:
+(Reference: Marco‐Sola, S., & Ribeca, P. (2015). Efficient Alignment of Illumina‐Like High‐Throughput Sequencing Reads
+            with the GEnomic Multi‐tool (GEM) Mapper. Current protocols in bioinformatics, 50(1), 11-13.)
+
+# --------- CODE BLOCK START ---------
+#!/usr/bin/env bash
+
+# Code from: https://evodify.com/gem-mappability/
+
+GENOME_FASTA="$1"
+READLENGTH="$2"
+NCORES="$3"
+
+FASTA_NAME="$(basename ${GENOME_FASTA})"
+# dowload the GEM library binary file:
+wget https://sourceforge.net/projects/gemlibrary/files/gem-library/Binary%20pre-release%203/GEM-binaries-Linux-x86_64-core_i3-20130406-045632.tbz2
+bzip2 -d GEM-binaries-Linux-x86_64-core_i3-20130406-045632.tbz2
+tar -xvf GEM-binaries-Linux-x86_64-core_i3-20130406-045632.tar
+rm GEM-binaries-Linux-x86_64-core_i3-20130406-045632.tar
+export PATH=$(realpath GEM-binaries-Linux-x86_64-core_i3-20130406-045632/bin):$PATH
+#
+wget http://hgdownload.cse.ucsc.edu/admin/exe/linux.x86_64/wigToBigWig
+chmod 744 wigToBigWig
+#
+## Create GEM index and mappability tracks
+gem-indexer -T $NCORES -i $GENOME_FASTA -o ${FASTA_NAME}.gem_index
+gem-mappability -T $NCORES -I "${FASTA_NAME}.gem_index.gem" -l $READLENGTH -o "${FASTA_NAME}.mappability_${READLENGTH}bp.gem"
+
+# Convert the mappability track to bigwig format
+gem-2-wig -I "${FASTA_NAME}.gem_index.gem" -i "${FASTA_NAME}.mappability_${READLENGTH}bp.gem.mappability" -o ${FASTA_NAME}.mappability_${READLENGTH}bp
+./wigToBigWig "${FASTA_NAME}.mappability_${READLENGTH}bp.wig" "${FASTA_NAME}.mappability_${READLENGTH}bp.sizes" "${FASTA_NAME}.mappability_${READLENGTH}bp.bw"
+
+## clean up
+rm "${FASTA_NAME}.mappability_${READLENGTH}bp.gem.mappability"
+rm "${FASTA_NAME}.mappability_${READLENGTH}bp.wig"
+# --------- CODE BLOCK END ---------
+
+
+Mappability .bigwig reference files for hg38/hg19; various read lengths
+Creators
+
+    Peter Peneder
+
+Description
+
+This dataset contains reference mappability .bigwig files for the reference genomes hg38 and hg19, for various read lengths.
+The files were generated with the GEM library (https://sourceforge.net/projects/gemlibrary/files/gem-library/Binary%20pre-release%203/GEM-binaries-Linux-x86_64-core_i3-20130406-045632.tbz2) using this script (based on this work).
+The files can be used as input for LIQUORICE (https://liquorice.readthedocs.io) - just select the file that matches
+your sequencing protocol (i.e. read length) and the reference genome of your mapped .bam files.
+
+________________________________________________________________________________________________________________________
+NOW: Links to mappability tracks
+------------------------------------------------------------------------------------------------------------------------
+------------------------------------------------------------------------------------------------------------------------
+
+------------------------------------------------------------------------------------------------------------------------
+hg38 mappability tracks:
+------------------------
+------------------------
+
+ hg38.fa.mappability_50bp.bw
+ https://zenodo.org/records/5521424/files/hg38.fa.mappability_50bp.bw
+md5:ab95af69704784137877d641270858ae
+
+ hg38.fa.mappability_75bp.bw
+ https://zenodo.org/records/5521424/files/hg38.fa.mappability_75bp.bw
+md5:a2c32d04387409afb6e0302f8c198e5a
+
+ hg38.fa.mappability_100bp.bw
+ https://zenodo.org/records/5521424/files/hg38.fa.mappability_100bp.bw
+md5:34771c928bf36d0d50996211cb9b9206
+
+ hg38.fa.mappability_150bp.bw
+ https://zenodo.org/records/5521424/files/hg38.fa.mappability_150bp.bw
+md5:7ca4733b527e522a01ef0942d959595a
+
+ hg38.fa.mappability_250bp.bw
+ https://zenodo.org/records/5521424/files/hg38.fa.mappability_250bp.bw
+md5:f9389285cf280fb53c24445ade3c6978
+
+download all hg38 files (uses curl: "sudo apt install curl -y"):
+-----------------------
+cd <EXISTING_FOLDER_FOR_DOWNLOAD> && curl -O https://zenodo.org/records/5521424/files/hg38.fa.mappability_50bp.bw \
+-O https://zenodo.org/records/5521424/files/hg38.fa.mappability_75bp.bw -O https://zenodo.org/records/5521424/files/hg38.fa.mappability_100bp.bw \
+-O https://zenodo.org/records/5521424/files/hg38.fa.mappability_150bp.bw -O https://zenodo.org/records/5521424/files/hg38.fa.mappability_250bp.bw
+
+validate downloaded hg38 files with:
+------------------------------
+md5sum hg38.fa.mappability_50bp.bw hg38.fa.mappability_75bp.bw hg38.fa.mappability_100bp.bw \
+hg38.fa.mappability_150bp.bw hg38.fa.mappability_250bp.bw > hg38_mappability_tracks_hashfile.txt && \
+md5sum --strict -c hg38_mappability_tracks_hashfile.txt
+----------------------------------------------
+Validating may take a few minutes. Be patient!
+----------------------------------------------
+
+
+------------------------------------------------------------------------------------------------------------------------
+hg19 mappability tracks:
+------------------------
+------------------------
+
+ hg19.fa.mappability_50bp.bw
+ https://zenodo.org/records/5521424/files/hg19.fa.mappability_50bp.bw?download=1
+md5:fdccb486611b8b1d13ef48476b02df46
+
+ hg19.fa.mappability_75bp.bw
+ https://zenodo.org/records/5521424/files/hg19.fa.mappability_75bp.bw?download=1
+md5:5ffd05ac98abe128ee5dde6d330638ea
+
+ hg19.fa.mappability_100bp.bw
+ https://zenodo.org/records/5521424/files/hg19.fa.mappability_100bp.bw?download=1
+md5:dfc13b550043f41ac6c8cfa0f765e119
+
+ hg19.fa.mappability_150bp.bw
+ https://zenodo.org/records/5521424/files/hg19.fa.mappability_150bp.bw?download=1
+md5:0056dd43093ac3610c5a1dcf7acc427d
+
+ hg19.fa.mappability_250bp.bw
+ https://zenodo.org/records/5521424/files/hg19.fa.mappability_250bp.bw?download=1
+md5:729da07b55e11252caa315b2e2057ac6
+
+download all hg19 files (uses curl: "sudo apt install curl -y"):
+-----------------------
+cd <EXISTING_FOLDER_FOR_DOWNLOAD> && curl -O https://zenodo.org/records/5521424/files/hg19.fa.mappability_50bp.bw \
+-O https://zenodo.org/records/5521424/files/hg19.fa.mappability_75bp.bw -O https://zenodo.org/records/5521424/files/hg19.fa.mappability_100bp.bw \
+-O https://zenodo.org/records/5521424/files/hg19.fa.mappability_150bp.bw -O https://zenodo.org/records/5521424/files/hg19.fa.mappability_250bp.bw
+
+validate downloaded hg19 files with:
+------------------------------
+md5sum hg19.fa.mappability_50bp.bw hg19.fa.mappability_75bp.bw hg19.fa.mappability_100bp.bw \
+hg19.fa.mappability_150bp.bw hg19.fa.mappability_250bp.bw > hg19_mappability_tracks_hashfile.txt && \
+md5sum --strict -c hg19_mappability_tracks_hashfile.txt
+----------------------------------------------
+Validating may take a few minutes. Be patient!
+________________________________________________________________________________________________________________________
+
+# TODO: + infer the max. read length (used sequencing cycles)
+#       + implement a read length specific exclusion of mappability from the GC correction
+#         - do not use fragment occurrences but rather the inverse of the pe-mappability (mean(R1_mapbty, R2_mapbty))
+#           to create the O_gc matrix
+#         - read per-base mappability from bigwig file; compute average across reference bases "covered" by either
+#           the entire fragment or average bases across each aligned read (increses computational complexity)
+#         - also regard mappability when randomly drawing fragments from the reference and use criterion to redraw if
+#           too many bases have a too low mappability (simulation)
+#           -> could use some sort of observed (per-base ?) mappability distribution per fragment length
+#       + implement a tagging of fragments using mappability of either the reference bases covered by each read sequence
+#         or the fragment covered sequence ('MP' tag)
+#         - compare entire fragment sequence as drawn from reference genome vs. 2 sequences computed using a fixed
+#           read length; the latter also regards effects arising from central read overlap and central gaps while
+#           "fragment mappability" would only work as a first approximation
+#       + validate each flavour of including mappability!

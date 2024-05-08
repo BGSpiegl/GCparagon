@@ -1,0 +1,5 @@
+fdccb486611b8b1d13ef48476b02df46  hg19.fa.mappability_50bp.bw
+5ffd05ac98abe128ee5dde6d330638ea  hg19.fa.mappability_75bp.bw
+dfc13b550043f41ac6c8cfa0f765e119  hg19.fa.mappability_100bp.bw
+0056dd43093ac3610c5a1dcf7acc427d  hg19.fa.mappability_150bp.bw
+729da07b55e11252caa315b2e2057ac6  hg19.fa.mappability_250bp.bw

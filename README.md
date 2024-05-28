@@ -35,13 +35,16 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 - [Description](#description)
   - [How to use cfDNA fragment weights](#how-to-use-cfdna-fragment-weights)
   - [Software Dependencies](#software-dependencies)
+    - [Conda installation](#conda-installation)
+    - [Singularity container](#singularity-container)
   - [Hardware Requirements](#hardware-requirements)
   - [Repository Structure](#repository-structure)
   - [Required Files](#required-files)
 
 
 - [Installation](#installation)
-  - [Recommended Installation Procedure](#recommended-installation-procedure)
+  - [Singularity Installation Procedure](#singularity-installation-procedure)
+  - [Conda Installation Procedure](#conda-installation-procedure)
 
 - [Usage](#usage)
   - [Examples](#examples)
@@ -237,7 +240,10 @@ Mamba can be added to an older existing [conda installation][conda install].
 For a detailed list of dependencies (manual installation, not recommended!) please go to 
 [Software Dependencies](#software-dependencies)
 
-### Recommended Installation Procedure
+### Singularity Installation Procedure
+See here: [Singularity container](#singularity-container)
+
+### Conda Installation Procedure
 First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
 repository:
 

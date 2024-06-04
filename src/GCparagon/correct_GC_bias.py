@@ -522,7 +522,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'expected DoC with how many signals you sum up to get an estimate of which precision '
                                   'you would need to definitively be able to rule out any influence by rounding '
                                   f'errors. These should average out though. [ DEFAULT: {DEFAULT_FLOAT_PRECISION} ]')
-    output_args.add_argument('-gtg', '--gc-tag-name', dest='gc_tag_name', default=DEFAULT_TAG_NAME, metavar='String',
+    output_args.add_argument('-gtg', '--gc-tag-name', dest='gc_tag_name', default=DEFAULT_GC_TAG_NAME, metavar='String',
                              help='Name of the GC-bias correction weight tag that will be added to alignments in the '
                                   'BAM file. If none is provided, the default tag will be used. Must not be longer '
                                   f'than 2 characters! [ DEFAULT: {DEFAULT_GC_TAG_NAME} ]')
@@ -1895,7 +1895,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                                        fragment_length_range: range, two_bit_reference_path: OneOf[str, Path],
                                        tagging_intervals_list: List[str], reference_lengths: Dict[str, int],
                                        sender_connection: mp_connection.Connection, parent_logger: str,
-                                       default_weight: float = 1.0, tag_name=DEFAULT_TAG_NAME,
+                                       default_weight: float = 1.0, tag_name=DEFAULT_GC_TAG_NAME,
                                        ref_interval_loading_size: int = 500000, annotation_str=None):
     """
 
@@ -2234,7 +2234,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                                              bam_path: str, ref_lengths: Dict[str, int],
                                              temporary_directory_sample: str, gc_base_limits: range,
                                              output_unaligned=False, default_fragment_weight: float = 1.,
-                                             tag_name=DEFAULT_TAG_NAME, samtools_path=DEFAULT_SAMTOOLS_PATH):
+                                             tag_name=DEFAULT_GC_TAG_NAME, samtools_path=DEFAULT_SAMTOOLS_PATH):
     """
     Size increase of BAM file: 6.8 Gb to 6.9 Gb ~= 1.5%
     Test on the 22/11/2022: duration of BAM file tagging was 0:11:30 (h:mm:ss)

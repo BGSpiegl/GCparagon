@@ -1379,7 +1379,7 @@ def compute_lin_comb_reconstructed_gc_distribution_error(
                                    for reg_weight, (hrm, strt, nd) in processed_regions_weighted], dtype=float)
     original_fgcd_dist = original_fgcd_dist.sum(axis=0) / len(processed_regions_weighted)
     # assert 0.999 < original_fgcd_dist.sum() < 1.001
-    reconstructed_ref_fgcd = weighted_fgcds.sum(axis=0)  # column-wise sum over all rows
+    reconstructed_ref_fgcd = weighted_fgcds.sum(axis=0)  # column-wise sum across all rows
     # assert 0.999 < reconstructed_ref_fgcd.sum() < 1.001
     # assert len(reconstructed_ref_fgcd) == len(reference_distribution)
     residual_distribution = reconstructed_ref_fgcd - reference_distribution
@@ -1502,7 +1502,7 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
     all_bad_intervals = {}
     bad_interval_weights = []
     _ = deque(map(lambda w: w.start(), gc_bias_workers), maxlen=0)
-    # if memory profiler is applied to code and processes are spawned rather than forked, we get a PicklingError her:
+    # if memory profiler is applied to code and processes are spawned rather than forked, we get a PicklingError here:
     # "Can't pickle <function gc_bias_worker at 0xsomething>: attribute lookup gc_bias_worker on __main__ failed"
     received_data = [incoming_result.recv() for incoming_result in receivers]  # collect self-terminating worker returns
     if not received_data:
@@ -1585,7 +1585,7 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
                         "maximum fragment length!", log_level=logging.WARNING, logger_name=LOGGER)
     else:
         log(message=f"No alignments were rejected.", log_level=logging.INFO, logger_name=LOGGER)
-    # give feedback about the reconstruction accuracy of the distribution of the reference genome fragment GC content
+    # give feedback about the accuracy of reconstructing the reference genome fragment GC content distribution
     original_fgcd, reconstructed_fgcd, residual_distribution, absolute_error_pc = \
         compute_lin_comb_reconstructed_gc_distribution_error(
             bad_region_labels=bad_interval_labels, processed_regions_weighted=sorted_weighted_intervals_to_process,
@@ -2834,7 +2834,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                                 temporary_directrory: OneOf[str, Path],
                                 fragment_length_range: range, output_path: OneOf[str, Path], sample_name: str,
                                 show_figures: bool = False) -> Tuple[List[Tuple[float, Tuple[str, int, int]]], float]:
-    # infer number of required intervals based on # fragments in 10 intervals
+    # infer the number of required intervals based on # of fragments in ~10 intervals
     inferred_number_of_required_intervals = infer_intervals_for_n_fragments(
         intervals=genomic_intervals_sorted, bam_path=bam_file, target_fragment_count=target_fragment_number,
         flength_range=fragment_length_range, repetitions=3, estimate_from_n_intervals=8, temp_dir=temporary_directrory)
@@ -2846,7 +2846,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
     preselected_interval_fgcds = {}
     interval_order = []
     ordered_intervals = []
-    for pi_c, pi_s, pi_e, *rest in preselected_intervals:  # rest should be empty...
+    for pi_c, pi_s, pi_e, *rest in preselected_intervals:  # the rest should be empty...
         region_id = create_region_label(chrm=pi_c, start=pi_s, end=pi_e)
         interval_order.append(region_id)
         if not rest:  # expect this to be an empty list: []
@@ -3156,7 +3156,7 @@ def main() -> int:
             weights_mask = None
             if compute_bias:
                 # Integrate information about all encountered bad intervals so far using bad regions library file which
-                # contains bad regions that were recorded during the analyiss of previous samples. Remove regions based
+                # contains bad regions that were recorded during the analysis of previous samples. Remove regions based
                 # on "target fragments processed" which acts as a lower boundary for how many fragments are expected to
                 # be available for processing by GCparagon in a dataset.
                 expect_sufficient_fragment_count, n_expected_fragments = sufficient_aligned_reads_available(

@@ -500,7 +500,7 @@ def plot_fragment_gc_dists(original_gc_data: Dict[str, np.array], corrected_gc_d
 
 def visualize_weights(region_weights: np.array, out_dir: OneOf[str, Path], sample_label: str,
                       show_figure=False, image_formats=('png',), compute_skew=True, compute_curtosis=True,
-                      fig_width=1800, fig_height=1000, fig_fontsize=30, max_weight: int = 10):
+                      fig_width=1800, fig_height=1000, fig_fontsize=30, max_weight: float = 10.):
     plot_data = pd.DataFrame({'interval weights': region_weights / max(region_weights) * max_weight})  # transform to plot-able object
     weights_fig = px.histogram(plot_data, x="interval weights",  # create histogram
                                title='Weights of Genomic Interval to approximate Genomic GC Content',

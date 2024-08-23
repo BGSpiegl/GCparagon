@@ -213,10 +213,10 @@ It downloads the hg38 lowercase-masked standard analysis set reference file in 2
 Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
 containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
 (see comment on the bottom of 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh))
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) for instructions to get the hg19 2bit reference)
 
-GCparagon uses preselected genomic regions for GC bias computation. These are provided only for hg38 via 
-[BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
+GCparagon uses preselected genomic regions for GC bias computation. These are provided for hg19 and for hg38 
+via [BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
 Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
 
 
@@ -316,6 +316,7 @@ interpreter.
 
 ### Examples
 
+#### Basic
 The most basic call after downoading the 2bit version of the reference genome is as follows:
 
 `python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
@@ -328,10 +329,24 @@ OR:
 This minimalistic setup uses the parent directory of the input BAM fle as output directory.
 The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
 
+#### Output tagged BAM file
 To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
 
 `gcparagon --bam <INPUT_BAM> --output-bam`
 
+#### Select reference genome build
+To use hg19 reference genome-specific files for the bias computation, set the `-rgb`/`--reference-genome-build` parameter:
+
+`gcparagon --bam <INPUT_BAM> --reference-genome-build hg19`
+
+The option sets the following three parameters:
+ - `-rtb`/`--two-bit-reference-genome`
+ - `-c`/`--intervals-bed`
+ - `-rgcd`/`--reference-gc-content-distribution-table`
+
+These parameters can be redefined separately.
+
+#### Temporary directory
 It is recommended to set `--temporary-directory` to be located on SSD hardware:
 
 `gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
@@ -340,6 +355,7 @@ If not set, the temporary directory will default to the output of Python's `temp
 are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
+#### Further options
 Rich customization options are available:
 To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
 
@@ -979,7 +995,9 @@ is documented [here](accessory_files/GC_correction_exclusion_list_creation.info)
 The hg19 version is documented [here](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
 The final GRCh38 exclusion list includes 385,022,382 reference positions (=12.68% of GRCh38).
 
-Currently, only a preselection of GRCh38 and hg19 genomic 1 Mb regions is available.
+Currently, only a preselection of GRCh38 and hg19 genomic 1 Mb regions is available. To specify the genome 
+build for your analysis, set the `-rgb`/`--reference-genome-build` parameter to either `hg38` or `hg19`. Per 
+default, `hg38` is used.
 Preselection for other genome builds currently has to be carried out by the user using their own exclusion list.
 The following files need to be created:
  - *<GENOME_BUILD>.2bit*

@@ -2166,7 +2166,7 @@ def get_unaligned_reads(bam_path: OneOf[str, Path], output_dir: OneOf[str, Path]
 
 def samtools_cat_bams(list_of_bams: List[str], samtools_path: OneOf[str, Path],
                       tmp_dir: OneOf[str, Path], output_bam: Path, keep_input=False):
-    concatenation_command = [str(samtools_path), 'cat', '-o', output_bam, '--no-PG', '--threads', '4'] + list_of_bams
+    concatenation_command = [str(samtools_path), 'cat', '-o', str(output_bam), '--no-PG', '--threads', '4'] + list_of_bams
     called_concatenation_command = sp.run(concatenation_command)
     try:
         called_concatenation_command.check_returncode()

@@ -528,7 +528,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   f'than 2 characters! [ DEFAULT: {DEFAULT_GC_TAG_NAME} ]')
     output_args.add_argument('-mtg', '--mappability-tag-name', dest='gc_tag_name', default=DEFAULT_GC_TAG_NAME,
                              metavar='String',
-                             help='Name of the GC-bias correction weight tag that will be added to alignments in the '
+                             help='Name of the mappability bias correction weight tag that will be added to alignments in the '
                                   'BAM file. If none is provided, the default tag will be used. Must not be longer '
                                   f'than 2 characters! [ DEFAULT: {DEFAULT_MAPPABILITY_TAG_NAME} ]')
     output_args.add_argument('-ctg', '--combined-tag-name', dest='combined_tag_name', default=DEFAULT_MAPPABILITY_TAG_NAME,
@@ -536,7 +536,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Name of the combined GC bias and mappability correction weight '
                                   '(GC-bias-correction-weight * mappability-correction-weight) tag that will be added '
                                   'to alignments in the BAM file. If none is provided, the default tag will be used. '
-                                  f'Must not be longer than 2 characters! [ DEFAULT: {DEFAULT_COMBINED_TAG_NAME} ]')
+                                  f'Must NOT be longer than 2 characters! [ DEFAULT: {DEFAULT_COMBINED_TAG_NAME} ]')
     output_args.add_argument('-wie', '--write-interval-exclusion', dest='write_updated_bad_intervals_library',
                              action='store_true',
                              help='Optional flag for writing an updated version of the library listing intervals '
@@ -544,8 +544,8 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'for exclusion if drawing fragments of a specific size repeatedly fails (at least 55 '
                                   'times (for strict reference N base handling, 33 times otherwise) or 1/3 of number '
                                   'of fragments that need to be drawn, whichever is higher) due '
-                                  'to getting only poly-N sequences. In general, the frequency of these exclusion '
-                                  'events is dependent on the DoC of the sample, which can be substituted by the '
+                                  'to getting only poly-N sequences from the reference FastA sequence. In general, the frequency of these exclusion '
+                                  'events depends on the DoC of the sample, which can be substituted by the '
                                   'number of fragments estimated to be obtained from all predefined intervals in BAM '
                                   "file in a first approximation. WARNING: don't mix exclusion-marked interval "
                                   'libraries computed from different (predefined) interval BED files! If the user '
@@ -555,11 +555,11 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   "depth.")
     output_args.add_argument('-nfp', '--no-focused-plots', action='store_true', dest='dont_focus_plots',
                              help='Optional flag to deactivate focusing of matrix plots on non-default values (focus '
-                                  'uses a border of up to 10 default values). Only has an effect if --no-plots flag is '
-                                  'not set.')
+                                  'uses a border of up to 10 default values). Has no effect if the --no-plots flag is '
+                                  'set.')
     output_args.add_argument('-sf', '--show-figures', action='store_true', dest='show_plots',
                              help='Optional flag to display plots in an interactive browser window in addition to '
-                                  'saving them to a file.')
+                                  "saving them to a file. Shouldn't be used on headless servers!")
     return commandline_parser.parse_args()
 
 

@@ -279,6 +279,20 @@ console:
 After successful setup, GCparagon should be available via the `gcparagon` command. For a detailed help, type:
 `gcparagon --help`
 
+To make the reference build definition work with the gcparagon command, you might need to copy the contents of 
+the `src/GCparagon/2bit_reference/` directory and the `accessory_files/` directory to the conda env lib 
+site-packages folder of your user like this:
+
+`mkdir ~/miniconda3/envs/GCparagon/lib/python3.10/site-packages/GCparagon/2bit_reference/ && 
+cp src/GCparagon/2bit_reference/* ~/miniconda3/envs/GCparagon/lib/python3.10/site-packages/GCparagon/2bit_reference/`
+
+and:
+
+`mkdir ~/miniconda3/envs/GCparagon/lib/python3.10/accessory_files/ && 
+cp accessory_files/*_minimalExclusionListOverlap_* accessory_files/*_reference_* ~/miniconda3/envs/GCparagon/lib/python3.10/accessory_files/`
+
+This will be added to the setup in a future version, if possible.
+
 See [Usage](#usage) for a complete explanation of commandline options.
 Default output created by GCparagon is described [here](#result-of-gc-bias-correction).
 There are several options available to alter plotting behaviour or to keep intermediate data created during

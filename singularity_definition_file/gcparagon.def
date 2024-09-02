@@ -2,7 +2,6 @@ Bootstrap: docker
 From: ubuntu:22.04
 
 %post
-
     # Install Git
     apt-get update && apt-get upgrade -y && apt-get install -y build-essential make cmake curl git
 
@@ -18,11 +17,25 @@ From: ubuntu:22.04
     git clone https://github.com/BGSpiegl/GCparagon.git && cd GCparagon
     conda env create -f conda_env/GCparagon_py3.10_env.yml -y
     conda activate GCparagon
-    two_bit_ref_url="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.2bit"
+    two_bit_ref_url_hg38="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.2bit"
+    two_bit_ref_url_hg19="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit"
     cd src/GCparagon/2bit_reference/
-    curl -O "${two_bit_ref_url}"
+    curl -O "${two_bit_ref_url_hg38}"
+    curl -O "${two_bit_ref_url_hg19}"
     cd /opt/github/GCparagon
     python -m pip install .
+
+    # move files to expected directory after installation (the gcparagon command is used below which assumes another )
+    # These files are used by variables EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH, PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
+    # and DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION.
+    target_path=/opt/conda/envs/GCparagon/lib/python3.10/site-packages/GCparagon
+    # move reference genomes
+    mv /opt/github/GCparagon/src/GCparagon/2bit_reference/*.2bit "${target_ref_files_path}/2bit_reference/"
+    mv /opt/github/GCparagon/src/GCparagon/2bit_reference/*.chrom.sizes "${target_ref_files_path}/2bit_reference/"
+    # move pre-selected intervals
+    mv /opt/github/GCparagon/src/GCparagon/accessory_files/*_minimalExclusionListOverlap_*OverlapLimited.FGCD.bed  "${target_ref_files_path}/accessory_files/"
+    # move reference GC content distributions
+    mv /opt/github/GCparagon/src/GCparagon/accessory_files/*_reference_GC_content_distribution.tsv  "${target_ref_files_path}/accessory_files/"
 
 %environment
     export PATH=/opt/conda/bin:$PATH

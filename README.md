@@ -68,7 +68,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 -------------------------------------------------------------------------------------------------------------------
 
 GCparagon is a Python commandline tool for the rapid calculation and correction of fragment length specific GC biases
-in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines but can be also used on Windows or MAC using the available singularity image (requires a working [singularity installation][singularity_installation]).
+in WGS cfDNA sequencing datasets for liquid biopsy applications. Code was developed for UNIX machines but can be also used on Windows or MAC using the available Apptainer/SingularityCE image (requires a working [singularity installation][singularity_installation]).
 
 GCparagon takes an aligned BAM file as input and processes the alignments in predefined genomic intervals to estimate 
 GC bias in the sample.
@@ -84,7 +84,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.7
+Latest version is v0.6.8
 
 
 ### How to use cfDNA fragment weights
@@ -137,16 +137,22 @@ You can create the environment using the following command:
 #### Singularity container
 As an alternative, a singularity image can be created (using the singularity executable from the aforementioned conda 
 environment from OUTSIDE conda) using the [gcparagon.def](singularity_definition_file/gcparagon.def) singularity 
-definitions file, OR pulled from cloud.sylabs.io and verified using:
+definitions file, OR pulled from cloud.sylabs.io into the current directory and verified using:
 
-`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && 
+singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
 
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
 
 `conda install singularity`
 
-GCparagon can then be run from the singularity container file like this:
+Programs run from within Apptainer/SingularityCE images do not have access to all directories of your file system per 
+default. To make an inacvcessible path available to the GCparagon image, follow the steps detailed in the 
+[Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
+(see the `--bind` Examples).
+
+GCparagon can then be run from the singularity container file like this (after cd-ing into the directory of the sif):
 
 `singularity run gcparagon-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
 
@@ -176,7 +182,7 @@ Computation may terminate if drive space and/or RAM size requirements are not me
 ### Repository Structure
 
 Instructions for FastA reference genome sequence download can be found 
-[here](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh).
+[here](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) [and here for hg19](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download_hg19.sh).
 
 Code for genomic regions exclusion list creation can be found in 
 [GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
@@ -206,14 +212,14 @@ Results from the [profile_command.py](src/GCparagon/profile_command.py) script a
 GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
 specification conforming input BAM file.
 The reference genome used to create the 4 BAM files in plots can be downloaded using the 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script.
+[EXECUTE_reference_download_hg38.sh](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) bash script.
 It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
 [https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
 
 Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
 containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
-(see comment on the bottom of 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) for instructions to get the hg19 2bit reference)
+(execute 
+[EXECUTE_reference_download_hg19.sh](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download.sh) to download the hg19 2bit reference)
 
 GCparagon uses preselected genomic regions for GC bias computation. These are provided for hg19 and for hg38 
 via [BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
@@ -269,7 +275,8 @@ Activate the new environment:
 `conda activate GCparagon`
 
 Download the 2bit reference files - if `pip .` install is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
-already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`!
+already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg38.sh` 
+and `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg19.sh`!
 
 Run `pip` to make GCparagon directly executable from the 
 console:
@@ -309,7 +316,7 @@ To gain access to the four BAM files used in the publication, go to EGA, create 
 To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
 first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
 The hg38 reference genome used to create the 4 BAM files in plots can be downloaded using the 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh) bash script:
+[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) bash script:
 
 `bash src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`
 
@@ -1028,7 +1035,7 @@ some of these files need to be passed to GCparagon via the following commandline
  - `--two-bit-reference-genome <path_to/GENOME_BUILD>.2bit`
 
 These files can be created using the following code/scripts in ascending order:
- - [reference genome build download instructions](src/GCparagon/2bit_reference/EXECUTE_reference_download.sh)
+ - [reference genome build download instructions](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh)
  - [Exclusion list creation info](accessory_files/GC_correction_exclusion_list_hg19_creation.info)
  - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
 (creation of equal-sized genomic intervals, intersected with the exclusion marked regions list)
@@ -1171,3 +1178,5 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [libmamba solver]: https://conda.github.io/conda-libmamba-solver/user-guide/
 [validation branch]: https://github.com/BGSpiegl/GCparagon/tree/including_EGAS00001006963_results
 [singularity_installation]: https://docs.sylabs.io/guides/3.0/user-guide/installation.html
+[apptainer_files_doc]: https://apptainer.org/docs/user/latest/quick_start.html#working-with-files
+[singularity_binds_and_mounts_doc]: https://docs.sylabs.io/guides/3.9/user-guide/bind_paths_and_mounts.html

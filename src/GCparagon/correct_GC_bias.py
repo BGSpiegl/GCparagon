@@ -34,12 +34,10 @@ from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 OneOf = Union
 
-# TODO: add hg19 cmdline flag specifying hg19 resources instead of hg38
-
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 7
+PATCH_NUMBER = 8
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -3071,7 +3069,8 @@ def main() -> int:
         raise AttributeError("path to samtools executable either not found or not accessible. Please provide a valid "
                              "and accessible path using '-sp' or '--samtools-path'.")
     if not ref_gc_dist_path.is_file():
-        raise FileNotFoundError(f"the reference GC content distribution file could not be found/accessed!")
+        raise FileNotFoundError(f"the reference GC content distribution file could not be found/accessed at "
+                                f"'{str(ref_gc_dist_path)}'!")
 
     if compute_bias:  # load information that needs to be loaded only once
         # choose the most recent bad intervals library version if multiple versions are present in the parent directory

@@ -148,7 +148,7 @@ Note: this requires a working installation of singularity. The easiest way to us
 `conda install singularity`
 
 Programs run from within Apptainer/SingularityCE images do not have access to all directories of your file system per 
-default. To make an inacvcessible path available to the GCparagon image, follow the steps detailed in the 
+default. To make an inaccessible path available to the GCparagon image, follow the steps detailed in the 
 [Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
 (see the `--bind` Examples).
 
@@ -163,7 +163,7 @@ Rather use the absolute path to the singularity executable from outside conda:
 
 As a workaround, you can create a symlink to that executable in your local bin folder:
 
-`ln -s /home/<USERNAME>/miniforge-pypy3/bin/singularity /usr/local/bin`
+`sudo ln -s /home/<USERNAME>/miniforge-pypy3/bin/singularity /usr/local/bin`
 
 After that, singularity is available via the expected `singularity` command.
 

@@ -135,29 +135,31 @@ You can create the environment using the following command:
 `conda env create -f GCparagon_py3.10_env.yml`
 
 #### Singularity container
-As an alternative, a singularity image can be created (using the singularity executable from the aforementioned conda 
-environment from OUTSIDE conda) using the [gcparagon.def](singularity_definition_file/gcparagon.def) singularity 
-definitions file, OR pulled from cloud.sylabs.io into the current directory and verified using:
+As an alternative, a singularity image can be either downloaded or created (using the singularity executable 
+from the aforementioned conda environment from OUTSIDE conda) using the 
+[gcparagon.def](singularity_definition_file/gcparagon.def) singularity definitions file. 
+A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
+directory and verified using a functioning singularity installation:
 
 `singularity pull library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && 
 singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
-
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
 
 `conda install singularity`
 
-Programs run from within Apptainer/SingularityCE images do not have access to all directories of your file system per 
-default. To make an inaccessible path available to the GCparagon image, follow the steps detailed in the 
-[Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
-(see the `--bind` Examples).
+If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
+it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
+use the `remote` command to specify cloud.sylabs.io as remote endpoint to be able to pull the latest GCparagon container 
+(see [here][singularity_remotes]).
 
-GCparagon can then be run from the singularity container file like this (after cd-ing into the directory of the sif):
+GCparagon can then be run from the singularity container file like this 
+(from within the singularity image file's parent directory):
 
-`singularity run gcparagon-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
+`singularity run gcparagon.sif <YOUR PARAMETERS HERE>` 
 
-NOTE: do not run singularity commands from within the conda environment!
-Rather use the absolute path to the singularity executable from outside conda:
+NOTE: do not run singularity commands with the activated conda environment that includes singularity!
+Rather use the absolute path to the singularity executable from outside conda like this:
 
 `/home/<USERNAME>/miniforge-pypy3/bin/singularity run ...`
 
@@ -166,6 +168,16 @@ As a workaround, you can create a symlink to that executable in your local bin f
 `sudo ln -s /home/<USERNAME>/miniforge-pypy3/bin/singularity /usr/local/bin`
 
 After that, singularity is available via the expected `singularity` command.
+
+IMPORTANT: programs run from inside Apptainer/SingularityCE images (i.e., GCparagon) do not have access to all 
+directories of your file system per default. Examples of exceptions are the user's `$HOME` directory, `\sys`, `\proc`, 
+and `\var\tmp`. To make an inaccessible path available to the GCparagon image, follow the steps detailed in the 
+[Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
+(see the `--bind` Examples).
+
+An example of using your local directories under `/mnt` would be:
+
+`singularity run -B /mnt:/mnt gcparagon.sif <YOUR PARAMETERS HERE INCLUDING PATHS UNDER MNT>` 
 
 
 ### Hardware Requirements
@@ -1180,3 +1192,4 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [singularity_installation]: https://docs.sylabs.io/guides/3.0/user-guide/installation.html
 [apptainer_files_doc]: https://apptainer.org/docs/user/latest/quick_start.html#working-with-files
 [singularity_binds_and_mounts_doc]: https://docs.sylabs.io/guides/3.9/user-guide/bind_paths_and_mounts.html
+[singularity_remotes]: https://docs.sylabs.io/guides/3.5/user-guide/endpoint.html

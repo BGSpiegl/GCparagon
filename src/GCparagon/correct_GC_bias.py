@@ -2803,7 +2803,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
 
     elapsed_time_ns = time.perf_counter_ns() - start_time
     if residual_error > initial_re:
-        log(message=f"Could not achieve a reduction of the initial reconstruction error of {initial_re:.2%} "
+        log(message=f"Could not achieve a reduction of the initial reconstruction error of {initial_re:.3f} "
                     f"(elapsed time: {elapsed_time_ns / 10**6:,.2f} ms). Will average results from genomic intervals "
                     f"instead of using a weighted mean.",
             log_level=logging.INFO, logger_name=LOGGER)

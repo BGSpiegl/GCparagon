@@ -17,4 +17,4 @@ setup(
     }
 )
 
-# install with "python setup.py bdist_wheel && python -m pip install --force-reinstall dist/*.whl"
+# simply install with "pip install ."

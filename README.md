@@ -141,8 +141,8 @@ from the aforementioned conda environment from OUTSIDE conda) using the
 A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && 
-singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.8-ubuntu-22_04-container:latest && 
+singularity verify gcparagon_0.6.8-ubuntu-22_04-container_latest.sif`
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
 

@@ -22,34 +22,14 @@ From: ubuntu:22.04
     cd src/GCparagon/2bit_reference/
     curl -O "${two_bit_ref_url_hg38}"
     curl -O "${two_bit_ref_url_hg19}"
-    cd /opt/github/GCparagon
-    python -m pip install .
+    #cd /opt/github/GCparagon
+    #python -m pip install .  # avoid installation -> enlarges the sif unnecessarily and makes installation longer!
 
-    # move files to expected directory after installation (the gcparagon command is used below which assumes another )
-    # These files are used by variables EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH, PREDEFINED_1MBP_INTERVALS_TO_PROCESS,
-    # and DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION.
-    # need paths: "/opt/conda/envs/GCparagon/lib/python3.10/site-packages/GCparagon/2bit_reference/"
-    # and:        "/opt/conda/envs/GCparagon/lib/python3.10/accessory_files/"
-    target_ref_files_path="/opt/conda/envs/GCparagon/lib/python3.10"
-    # create if it does not exist
-    if [ ! -d "${target_ref_files_path}/site-packages/GCparagon/2bit_reference/" ]; then
-        mkdir -p "${target_ref_files_path}/site-packages/GCparagon/2bit_reference/"
-    fi
-    if [ ! -d "${target_ref_files_path}/accessory_files/" ]; then
-        mkdir "${target_ref_files_path}/accessory_files/"
-    fi
-    # move reference genomes
-    mv /opt/github/GCparagon/src/GCparagon/2bit_reference/*.2bit "${target_ref_files_path}/site-packages/GCparagon/2bit_reference/"
-    mv /opt/github/GCparagon/src/GCparagon/2bit_reference/*.chrom.sizes "${target_ref_files_path}/site-packages/GCparagon/2bit_reference/"
-    # move pre-selected intervals
-    mv /opt/github/GCparagon/accessory_files/*_minimalExclusionListOverlap_*OverlapLimited.FGCD.bed  "${target_ref_files_path}/accessory_files/"
-    # move reference GC content distributions
-    mv /opt/github/GCparagon/accessory_files/*_reference_GC_content_distribution.tsv  "${target_ref_files_path}/accessory_files/"
-
-%environment
-    export PATH=/opt/conda/bin:$PATH
+#%environment
+#    export PATH=/opt/conda/bin:$PATH
 
 %runscript
     . /opt/conda/etc/profile.d/conda.sh
     conda activate GCparagon
-    exec gcparagon "$@"
+    # exec gcparagon "$@"
+    python3 /opt/github/GCparagon/correct_GC_bias.py "$@"

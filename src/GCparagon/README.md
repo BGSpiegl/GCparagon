@@ -84,7 +84,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.8
+Latest version is v0.6.9
 
 
 ### How to use cfDNA fragment weights
@@ -141,8 +141,8 @@ from the aforementioned conda environment from OUTSIDE conda) using the
 A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.8-ubuntu-22_04-container:latest && 
-singularity verify gcparagon_0.6.8-ubuntu-22_04-container_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.9-ubuntu-22_04-container:latest && 
+singularity verify gcparagon_0.6.9-ubuntu-22_04-container_latest.sif`
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
 
@@ -197,9 +197,9 @@ Instructions for FastA reference genome sequence download can be found
 [here](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) [and here for hg19](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download_hg19.sh).
 
 Code for genomic regions exclusion list creation can be found in 
-[GC_correction_exclusion_list_hg19_creation.info](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
+[GC_correction_exclusion_list_hg19_creation.info](src/GCparagon-AccessoryFiles/GC_correction_exclusion_list_hg19_creation.info).
 Code for genomic interval preselection for a currently unsupported build can be found in folder 
-[accessory_files/genomic_interval_preselection-shifted16x_hg19](accessory_files/genomic_interval_preselection-shifted16x_hg19).
+[src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19).
 
 Users successfully creating reference files for other genome builds are kindly asked to create a branch + pull request, where 
 they also provide these resources (i.e., a URL to the 2bit or FastA reference sequence file,
@@ -234,7 +234,7 @@ containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_an
 [EXECUTE_reference_download_hg19.sh](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download.sh) to download the hg19 2bit reference)
 
 GCparagon uses preselected genomic regions for GC bias computation. These are provided for hg19 and for hg38 
-via [BED file](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
+via [BED file](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
 Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
 
 
@@ -286,7 +286,7 @@ Activate the new environment:
 
 `conda activate GCparagon`
 
-Download the 2bit reference files - if `pip .` install is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
+Download the 2bit reference files - if `pip install .` is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
 already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg38.sh` 
 and `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg19.sh`!
 
@@ -297,18 +297,6 @@ console:
 
 After successful setup, GCparagon should be available via the `gcparagon` command. For a detailed help, type:
 `gcparagon --help`
-
-To make the reference build definition work with the gcparagon command, you might need to copy the contents of 
-the `src/GCparagon/2bit_reference/` directory and the `accessory_files/` directory to the conda env lib 
-site-packages folder of your user like this:
-
-`mkdir ~/miniconda3/envs/GCparagon/lib/python3.10/site-packages/GCparagon/2bit_reference/ && 
-cp src/GCparagon/2bit_reference/* ~/miniconda3/envs/GCparagon/lib/python3.10/site-packages/GCparagon/2bit_reference/`
-
-and:
-
-`mkdir ~/miniconda3/envs/GCparagon/lib/python3.10/accessory_files/ && 
-cp accessory_files/*_minimalExclusionListOverlap_* accessory_files/*_reference_* ~/miniconda3/envs/GCparagon/lib/python3.10/accessory_files/`
 
 This will be added to the setup in a future version, if possible.
 
@@ -462,13 +450,15 @@ The following argument is required: -b/--bam
 usage: correct_GC_bias.py [-h] [--version] -b List[File] [List[File] ...]
                           [-rgb {hg38,hg19}] [-rtb File] [-c File] [-rgcd File]
                           [-ec File] [-cw File] [-wm File] [-p Integer] [-to]
-                          [-rep Integer] [-mafl Integer] [-mifl Integer] [-t Integer]
-                          [-rs Integer] [-sp File] [-nf Integer] [-mf Integer] [-anf]
-                          [-ucmaf Float] [-dw DEFAULT_FRAGMENT_WEIGHT]
+                          [-rep Integer] [-mafl Integer] [-mifl Integer]
+                          [-t Integer] [-rs Integer] [-sp File] [-nf Integer]
+                          [-mf Integer] [-anf] [-ucmaf Float]
+                          [-dw DEFAULT_FRAGMENT_WEIGHT]
                           [-reto UNALIGNED_EXTRACTION_TIMEOUT] [-do] [-odm String]
                           [-ods Integer] [-sw] [-sk String] [-si Integer] [-v]
                           [-o File] [-tmp File] [-np] [-os] [-k] [-ob] [-our]
-                          [-fp Integer] [-tg String] [-wie] [-nfp] [-sf]
+                          [-fp Integer] [-gtg String] [-mtg String] [-ctg String]
+                          [-wie] [-nfp] [-sf]
 
 _____________________________________________________________________________
 v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
@@ -496,7 +486,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                                                              
 -----------------------------------------------------------------------------
                                                                              
-             GCparagon (v0.6.7) maintained by @BGSpiegl
+             GCparagon (v0.6.9) maintained by @BGSpiegl
                  Copyright (c) 2023 Benjamin Spiegl
             GitHub: https://github.com/BGSpiegl/GCparagon
 
@@ -510,149 +500,165 @@ options:
 Input (required):
   -b List[File] [List[File] ...], --bam List[File] [List[File] ...]
                         Path to sorted BAM file for which the fragment length-
-                        dependent GC-content-based over-representation (= 'GC-bias')
-                        should be computed and/or corrected. WARNING: don't use
-                        unaligned BAM files (uBAM) or multi-sample/run BAM files! If
-                        the BAM's index file is not found on runtime, GCparagon tries
-                        to create it. The alignment algorithm used for creating the
-                        input BAM file MUST follow the SAM format specifications! The
-                        TLEN column is used by GCparagon. [ PARAMETER REQUIRED ]
+                        dependent GC-content-based over-representation (= 'GC-
+                        bias') should be computed and/or corrected. WARNING: don't
+                        use unaligned BAM files (uBAM) or multi-sample/run BAM
+                        files! If the BAM's index file is not found on runtime,
+                        GCparagon tries to create it. The alignment algorithm used
+                        for creating the input BAM file MUST follow the SAM format
+                        specifications! The TLEN column is used by GCparagon. [
+                        PARAMETER REQUIRED ]
   -rgb {hg38,hg19}, --reference-genome-build {hg38,hg19}
-                        The version of the reference genome build used for creating
-                        the input BAM file. Currently only hg19 and hg38 are
-                        available. Used to define -rtb/--two-bit-reference-genome,
-                        --c/-intervals-bed and -rgcd/--reference-gc-content-
-                        distribution-table. The definition is overridden if any of
-                        these parameters are specified on the command line. [ DEFAULT:
-                        'hg38' ]
+                        The version of the reference genome build used for
+                        creating the input BAM file. Currently only hg19 and hg38
+                        are available. Used to define -rtb/--two-bit-reference-
+                        genome, --c/-intervals-bed and -rgcd/--reference-gc-
+                        content-distribution-table. The definition is overridden
+                        if any of these parameters are specified on the command
+                        line. [ DEFAULT: 'hg38' ]
   -rtb File, --two-bit-reference-genome File
-                        Path to 2bit version of the reference genome FastA file which
-                        was used for read alignment of the input BAM file. If the 2bit
-                        version is missing, one can create the file using the
-                        following command: 'faToTwoBit <PATH_TO_REF_FASTA> -long
-                        <PATH_TO_OUT_2BIT>' (see
-                        genome.ucsc.edu/goldenPath/help/twoBit.html for more details)
-                        [ DEFAULT: '/mnt/NVMeScratch/PycharmProjects/GCparagon_public/
-                        src/GCparagon/2bit_reference/hg38.analysisSet.2bit' ]
+                        Path to 2bit version of the reference genome FastA file
+                        which was used for read alignment of the input BAM file.
+                        If the 2bit version is missing, one can create the file
+                        using the following command: 'faToTwoBit
+                        <PATH_TO_REF_FASTA> -long <PATH_TO_OUT_2BIT>' (see
+                        genome.ucsc.edu/goldenPath/help/twoBit.html for more
+                        details) [ DEFAULT: '/mnt/NVMeScratch/PycharmProjects/GCpa
+                        ragon_public/src/GCparagon/2bit_reference/hg38.analysisSet
+                        .2bit' ]
   -c File, --intervals-bed File
-                        Path to BED file containing predefined genomic intervals to
-                        process. These should have been selected based on minimal
-                        overlap with exclusion-masked regions of the reference genome
-                        build used for read alignment earlier (i.e., creation of
-                        --bam). Since v0.5.6, the table also contains expected GC
-                        content counts which should be computed using the fragment
-                        length distribution from
-                        'accessory_files/reference_fragment_lenght_distribution.tsv'.
-                        The GC content distributions are used to create an optimized
-                        consolidated weight matrix using a weighted mean. The weights
-                        for each region are selected such that the reference GC
-                        content distribution in
-                        'accessory_files/hg38_reference_GC_content_distribution.tsv'
+                        Path to BED file containing predefined genomic intervals
+                        to process. These should have been selected based on
+                        minimal overlap with exclusion-masked regions of the
+                        reference genome build used for read alignment earlier
+                        (i.e., creation of --bam). Since v0.5.6, the table also
+                        contains expected GC content counts which should be
+                        computed using the fragment length distribution from
+                        'src/GCparagon-AccessoryFiles/reference_fragment_lenght_di
+                        stribution.tsv'. The GC content distributions are used to
+                        create an optimized consolidated weight matrix using a
+                        weighted mean. The weights for each region are selected
+                        such that the reference GC content distribution in
+                        'src/GCparagon-
+                        AccessoryFiles/hg38_reference_GC_content_distribution.tsv'
                         is approximated better than by naive averaging region GC
                         content distributions. This optimization is might fail in
-                        cases where the majority of preselected genomic regions are
-                        used to estimate GC bias. In these cases, the naive approach
-                        is used as a fallback option. [ DEFAULT: '/mnt/NVMeScratch/Pyc
-                        harmProjects/GCparagon_public/accessory_files/hg38_minimalExcl
-                        usionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed' ]
+                        cases where the majority of preselected genomic regions
+                        are used to estimate GC bias. In these cases, the naive
+                        approach is used as a fallback option. [ DEFAULT: '/mnt/NV
+                        MeScratch/PycharmProjects/GCparagon_public/src/GCparagon-A
+                        ccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_interv
+                        als_33pcOverlapLimited.FGCD.bed' ]
   -rgcd File, --reference-gc-content-distribution-table File
                         Path to TSV file containing two data columns with header:
-                        'gc_percentage', and 'relative_frequency'. This table defines
-                        a GC content distribution (0% GC to 100% GC) as relative
-                        frequencies of these percentage bins (summing up to 1). If a
-                        custom reference genome is used, this file should be created
-                        anew from the simulated genome-wide ideal fragment GC content
-                        as simulated assuming a fragment length distribution as the
-                        one stored in 'accessory_files/plasmaSeq_ccfDNA_reference_frag
-                        ment_length_distribution.tsv'! The provided information is
-                        used to optimize the combination of correction weight matrices
+                        'gc_percentage', and 'relative_frequency'. This table
+                        defines a GC content distribution (0% GC to 100% GC) as
+                        relative frequencies of these percentage bins (summing up
+                        to 1). If a custom reference genome is used, this file
+                        should be created anew from the simulated genome-wide
+                        ideal fragment GC content as simulated assuming a fragment
+                        length distribution as the one stored in 'src/GCparagon-Ac
+                        cessoryFiles/plasmaSeq_ccfDNA_reference_fragment_length_di
+                        stribution.tsv'! The provided information is used to
+                        optimize the combination of correction weight matrices
                         from different genomic intervals to achieve a linear
-                        combination of these regions which resembles the reference GC
-                        content distribution defined here. This file can be computed
-                        following the instructions of gGenomic intervals preselection
-                        script 4: 'accessory_files/genomic_interval_preselection-
+                        combination of these regions which resembles the reference
+                        GC content distribution defined here. This file can be
+                        computed following the instructions of gGenomic intervals
+                        preselection script 4: 'src/GCparagon-
+                        AccessoryFiles/genomic_interval_preselection-
                         shifted16x_hg38/04-GI-
-                        preselection_simulate_genomewide_reference_FGCD_hg38.py'. [
-                        DEFAULT: '/mnt/NVMeScratch/PycharmProjects/GCparagon_public/ac
-                        cessory_files/hg38_reference_GC_content_distribution.tsv' ]
+                        preselection_simulate_genomewide_reference_FGCD_hg38.py'.
+                        [ DEFAULT: '/mnt/NVMeScratch/PycharmProjects/GCparagon_pub
+                        lic/GCparagon-
+                        AccessoryFiles/hg38_reference_GC_content_distribution.tsv'
+                        ]
   -ec File, --exclude-intervals File
                         Path to library file (BED-like) holding DoC-specific
-                        definition of bad intervals (intervals must be exact genomic
-                        locus match for exclusion, DO NOT expect bedtools intersect-
-                        like behavior!). If the bad intervals library is left default,
-                        the bad intervals library with the most recent time stamp in
-                        the parent directory of the default library/BED file is used.
-                        The bad intervals library is intended to speed up the sample
-                        processing by excluding intervals with insufficient DoC form
-                        the beginning. Excluded intervals were observed to appear most
-                        frequently close to centromeres.
+                        definition of bad intervals (intervals must be exact
+                        genomic locus match for exclusion, DO NOT expect bedtools
+                        intersect-like behavior!). If the bad intervals library is
+                        left default, the bad intervals library with the most
+                        recent time stamp in the parent directory of the default
+                        library/BED file is used. The bad intervals library is
+                        intended to speed up the sample processing by excluding
+                        intervals with insufficient DoC form the beginning.
+                        Excluded intervals were observed to appear most frequently
+                        close to centromeres.
   -cw File, --correction-weights File
                         Optional input for --tag-only mode: a matrix file
-                        ('*_gc_weights.txt.gz') containing correction weights to be
-                        used in tag-only mode ('--tag-only' flag must be set) to
-                        create a new, GC-bias-corrected BAM file with weighted
+                        ('*_gc_weights.txt.gz') containing correction weights to
+                        be used in tag-only mode ('--tag-only' flag must be set)
+                        to create a new, GC-bias-corrected BAM file with weighted
                         fragments (GC-tag).
   -wm File, --weights-mask File
-                        Optional path to a weights matrix mask file. These are usually
-                        named '<SAMPLE_ID>_gc_bias_computation_mask.txt.gz'. If none
-                        is defined (default behaviour), either the currently create
+                        Optional path to a weights matrix mask file. These are
+                        usually named
+                        '<SAMPLE_ID>_gc_bias_computation_mask.txt.gz'. If none is
+                        defined (default behaviour), either the currently create
                         mask (when computing GC bias correction weights) or (for
                         --tag-only) a mask file in the same input directory as the
                         correction weights matrix defined via --correction-weights
-                        parameter is used based on the naming of the file. If none is
-                        specified or found, correction weights are reduced to rows and
-                        columns containing non-default values (values other than 1.
-                        and 0.).
+                        parameter is used based on the naming of the file. If none
+                        is specified or found, correction weights are reduced to
+                        rows and columns containing non-default values (values
+                        other than 1. and 0.).
 
 Output options:
   -v, --verbose         This flag can be set to provide more output, especially
-                        information about fragments that fall outside of the defined
-                        fragment length window.
+                        information about fragments that fall outside of the
+                        defined fragment length window.
   -o File, --out-dir File
-                        Path to which output is moved from --temporary-directory after
-                        each processing step (GC-bias computation, BAM tagging). The
-                        directory will be created if it does not exist. Make sure that
-                        it is empty if it exists, otherwise the whole directory will
-                        be deleted before writing to it in the GC-bias computation
-                        step! If none is provided, a new subdirectory named
-                        'GC_bias_correction_GCparagonv0.6.7' will be created in the
-                        input BAM's parent directory and used as output directory. The
-                        output for each sample will be gathered in a subdirectory of
-                        this --out-dir which will be named after the sample. The
-                        output directory may be located on slow hardware such as a USB
-                        drive or a network storage since everything is stored in
-                        --temporary-directory first and moved after completion of all
-                        defined phases of the GC bias computation.
+                        Path to which output is moved from --temporary-directory
+                        after each processing step (GC-bias computation, BAM
+                        tagging). The directory will be created if it does not
+                        exist. Make sure that it is empty if it exists, otherwise
+                        the whole directory will be deleted before writing to it
+                        in the GC-bias computation step! If none is provided, a
+                        new subdirectory named
+                        'GC_bias_correction_GCparagon_v0.6.9' will be created in
+                        the input BAM's parent directory and used as output
+                        directory. The output for each sample will be gathered in
+                        a subdirectory of this --out-dir which will be named after
+                        the sample. The output directory may be located on slow
+                        hardware such as a USB drive or a network storage since
+                        everything is stored in --temporary-directory first and
+                        moved after completion of all defined phases of the GC
+                        bias computation.
   -tmp File, --temporary-directory File
                         Directory to which all files will be written as temporary
-                        files in a subdirectory named after the sample (sample id is
-                        extracted from the BAM file name) during processing. Directory
-                        will be created if non-existent. Subdirectory for the sample
-                        will be deleted if it exists initially. If not specified, this
-                        directory is identical to the output of Python's tempfile
-                        module's gettempdir() function. Permanent non-temporary output
-                        files will be MOVED to the --out-dir using shutil's move
-                        function from this directory. The temporary directory should
-                        be located on a high performance hardware (high IOPs)! [
-                        DEFAULT: /tmp ]
-  -np, --no-plots       Flag suppresses creation of fragment length distribution plot
-                        and heatmaps for observed, expected, correction, and
-                        computation mask matrices.Has no effect in --tag-only mode.
+                        files in a subdirectory named after the sample (sample id
+                        is extracted from the BAM file name) during processing.
+                        Directory will be created if non-existent. Subdirectory
+                        for the sample will be deleted if it exists initially. If
+                        not specified, this directory is identical to the output
+                        of Python's tempfile module's gettempdir() function.
+                        Permanent non-temporary output files will be MOVED to the
+                        --out-dir using shutil's move function from this
+                        directory. The temporary directory should be located on a
+                        high performance hardware (high IOPs)! [ DEFAULT: /tmp ]
+  -np, --no-plots       Flag suppresses creation of fragment length distribution
+                        plot and heatmaps for observed, expected, correction, and
+                        computation mask matrices.Has no effect in --tag-only
+                        mode.
   -os, --output-simulations
-                        Optional flag for GC-bias computation for plotting individual
-                        simulation results (simulated fragments and iteration-specific
-                        masks). The simulated fragment attribute distributions and
-                        computation masks are plotted for all simulations then.
+                        Optional flag for GC-bias computation for plotting
+                        individual simulation results (simulated fragments and
+                        iteration-specific masks). The simulated fragment
+                        attribute distributions and computation masks are plotted
+                        for all simulations then.
   -k, --keep-interval-data
-                        Optional flag which can be used to save intermediate data per
-                        genomic interval.
-  -ob, --output-bam     Optional flag to activate writing of the GC-correction-
-                        weights-tagged BAM file AFTER COMPUTING GC BIAS (--tag-only
-                        flag is not set), either using the statistics computed from
-                        the input BAM file or a correction weights matrix specified
-                        via --correction-weights. Is implicit if --tag-only is used.
-                        WARNING: currently, the output BAM won't contain unaligned
-                        reads!
+                        Optional flag which can be used to save intermediate data
+                        per genomic interval.
+  -ob, --output-bam     Optional flag to activate writing of the mappability-
+                        correction and GC-correction-weights-tagged BAM file AFTER
+                        COMPUTING BIASES (--tag-only flag is not set), either
+                        using the statistics computed from the input BAM file or a
+                        correction weights matrix specified via --correction-
+                        weights. Is implicit if --tag-only is used. WARNING: the
+                        output BAM won't contain unaligned reads! If you want to
+                        retain the unaligned reads, set the '--output-unaligned-
+                        reads' flag!
   -our, --output-unaligned-reads
                         Optional flag to activate writing of unaligned reads to a
                         separate BAM file. Per default, unaligned reads are not
@@ -660,236 +666,266 @@ Output options:
                         --output-bam flag was set or GCparagon was started in the
                         --tag-only mode.
   -fp Integer, --float-precision Integer
-                        Optional parameter for GC-bias computation number of digits
-                        after the comma for floating point data to be stored in text-
-                        based matrices, e.g. for correction weights data. Choose
-                        according to expected depth of coverage -> if you would expect
-                        10,000, you can go for 5 or even 6 digits. Otherwise this will
-                        not have an effect. If you compute signals that are sums over
-                        many regions, multiply the expected DoC with how many signals
-                        you sum up to get an estimate of which precision you would
-                        need to definitively be able to rule out any influence by
-                        rounding errors. These should average out though. [ DEFAULT: 6
-                        ]
-  -tg String, --tag-name String
-                        Name of the GC-bias correction weight tag that will be added
-                        to alignments in the BAM file. If none is provided, the
-                        default tag will be used. Must not be longer than 2
+                        Optional parameter for GC-bias computation number of
+                        digits after the comma for floating point data to be
+                        stored in text-based matrices, e.g. for correction weights
+                        data. Choose according to expected depth of coverage -> if
+                        you would expect 10,000, you can go for 5 or even 6
+                        digits. Otherwise this will not have an effect. If you
+                        compute signals that are sums over many regions, multiply
+                        the expected DoC with how many signals you sum up to get
+                        an estimate of which precision you would need to
+                        definitively be able to rule out any influence by rounding
+                        errors. These should average out though. [ DEFAULT: 6 ]
+  -gtg String, --gc-tag-name String
+                        Name of the GC-bias correction weight tag that will be
+                        added to alignments in the BAM file. If none is provided,
+                        the default tag will be used. Must not be longer than 2
                         characters! [ DEFAULT: GC ]
+  -mtg String, --mappability-tag-name String
+                        Name of the mappability bias correction weight tag that
+                        will be added to alignments in the BAM file. If none is
+                        provided, the default tag will be used. Must not be longer
+                        than 2 characters! [ DEFAULT: MP ]
+  -ctg String, --combined-tag-name String
+                        Name of the combined GC bias and mappability correction
+                        weight (GC-bias-correction-weight * mappability-
+                        correction-weight) tag that will be added to alignments in
+                        the BAM file. If none is provided, the default tag will be
+                        used. Must NOT be longer than 2 characters! [ DEFAULT: MG
+                        ]
   -wie, --write-interval-exclusion
-                        Optional flag for writing an updated version of the library
-                        listing intervals marked for exclusion from the analysis. Per
-                        default, genomic intervals are marked for exclusion if drawing
-                        fragments of a specific size repeatedly fails (at least 55
-                        times (for strict reference N base handling, 33 times
-                        otherwise) or 1/3 of number of fragments that need to be
-                        drawn, whichever is higher) due to getting only poly-N
-                        sequences. In general, the frequency of these exclusion events
-                        is dependent on the DoC of the sample, which can be
+                        Optional flag for writing an updated version of the
+                        library listing intervals marked for exclusion from the
+                        analysis. Per default, genomic intervals are marked for
+                        exclusion if drawing fragments of a specific size
+                        repeatedly fails (at least 55 times (for strict reference
+                        N base handling, 33 times otherwise) or 1/3 of number of
+                        fragments that need to be drawn, whichever is higher) due
+                        to getting only poly-N sequences from the reference FastA
+                        sequence. In general, the frequency of these exclusion
+                        events depends on the DoC of the sample, which can be
                         substituted by the number of fragments estimated to be
-                        obtained from all predefined intervals in BAM file in a first
-                        approximation. WARNING: don't mix exclusion-marked interval
-                        libraries computed from different (predefined) interval BED
-                        files! If the user places the output BED file library in the
-                        default directory, the new library will be used per default
-                        for future computations. Genomic intervals will be marked for
-                        exclusion depending on a data set's fragment length
-                        distribution and sequencing depth.
+                        obtained from all predefined intervals in BAM file in a
+                        first approximation. WARNING: don't mix exclusion-marked
+                        interval libraries computed from different (predefined)
+                        interval BED files! If the user places the output BED file
+                        library in the default directory, the new library will be
+                        used per default for future computations. Genomic
+                        intervals will be marked for exclusion depending on a data
+                        set's fragment length distribution and sequencing depth.
   -nfp, --no-focused-plots
-                        Optional flag to deactivate focusing of matrix plots on non-
-                        default values (focus uses a border of up to 10 default
-                        values). Only has an effect if --no-plots flag is not set.
+                        Optional flag to deactivate focusing of matrix plots on
+                        non-default values (focus uses a border of up to 10
+                        default values). Has no effect if the --no-plots flag is
+                        set.
   -sf, --show-figures   Optional flag to display plots in an interactive browser
-                        window in addition to saving them to a file.
+                        window in addition to saving them to a file. Shouldn't be
+                        used on headless servers!
 
 Processing options:
   -p Integer, --preset Integer
-                        Optional parameter preset to use for GC bias computation. Must
-                        be an integer int the rangeof 0-3 (inclusive). A preset value
-                        of 0 leaves parameters at default if not defined differently
-                        by the user (unchanged parameters will match preset 1). Other
-                        integer values from 1 to 3 define presets with increasing
-                        input data usage and required processing time (durations
-                        preset 1-3: 1-3 min, 5-10 min, and ~1h depending on file size.
-                        Maximum across 4 samples and 2 iterations each computed using
-                        12 cores and the profile_command.py script. Maximum memory
-                        consumption for any preset should stay below 4 GiB. If preset
-                        is not zero, any customized parameters conflicting with the
-                        preset will be ignored. A non-zero preset will set the
-                        following parameters: number of simulations, the target number
-                        of processed fragments, minimum number of fragment attribute
-                        combination occurrences, and the options for outlier detection
-                        and smoothing. Noise within the resulting correction weights
-                        is reduced when selecting a higher preset value. Preset 3 will
-                        attempt to process all genomic intervals (target number of
-                        fragments set to 100B) within the limits of the maximum
-                        allowedexclusion marked regions overlap (per default default
-                        ~2.7 Gb of reference are processed). NOTE: the percentage of
-                        total GC bias corrected fragments in the dataset for presets 1
-                        vs. 3 increases only from 99.837% to 99.938% (average across 4
-                        samples). Other fragment weights default to 1.0). The primary
-                        advantage of processing more fragments is the reduction of
-                        noise in computed weights and a better reconstruction of the
-                        reference fragment GC content distribution. It is recommended
-                        to use a higher preset for a 'preprocess-once,analyze often'
-                        scenario and/or when a high bias is expected/observed (e.g.
-                        FastQC average GC percentage). Correction by preset 1, 2, and
-                        3 was found to yield 100.74%, 99.98%, and 99,91% of the raw
-                        fragment count respectively (average percentage across 4
-                        samples). [ DEFAULT: 2 ]
+                        Optional parameter preset to use for GC bias computation.
+                        Must be an integer int the rangeof 0-3 (inclusive). A
+                        preset value of 0 leaves parameters at default if not
+                        defined differently by the user (unchanged parameters will
+                        match preset 1). Other integer values from 1 to 3 define
+                        presets with increasing input data usage and required
+                        processing time (durations preset 1-3: 1-3 min, 5-10 min,
+                        and ~1h depending on file size. Maximum across 4 samples
+                        and 2 iterations each computed using 12 cores and the
+                        profile_command.py script. Maximum memory consumption for
+                        any preset should stay below 4 GiB. If preset is not zero,
+                        any customized parameters conflicting with the preset will
+                        be ignored. A non-zero preset will set the following
+                        parameters: number of simulations, the target number of
+                        processed fragments, minimum number of fragment attribute
+                        combination occurrences, and the options for outlier
+                        detection and smoothing. Noise within the resulting
+                        correction weights is reduced when selecting a higher
+                        preset value. Preset 3 will attempt to process all genomic
+                        intervals (target number of fragments set to 100B) within
+                        the limits of the maximum allowedexclusion marked regions
+                        overlap (per default default ~2.7 Gb of reference are
+                        processed). NOTE: the percentage of total GC bias
+                        corrected fragments in the dataset for presets 1 vs. 3
+                        increases only from 99.837% to 99.938% (average across 4
+                        samples). Other fragment weights default to 1.0). The
+                        primary advantage of processing more fragments is the
+                        reduction of noise in computed weights and a better
+                        reconstruction of the reference fragment GC content
+                        distribution. It is recommended to use a higher preset for
+                        a 'preprocess-once,analyze often' scenario and/or when a
+                        high bias is expected/observed (e.g. FastQC average GC
+                        percentage). Correction by preset 1, 2, and 3 was found to
+                        yield 100.74%, 99.98%, and 99,91% of the raw fragment
+                        count respectively (average percentage across 4 samples).
+                        [ DEFAULT: 2 ]
   -to, --tag-only       Optional flag which makes the software switch to tag-only
-                        mode. A correction weights matrix must be specified in this
-                        case via the '--correction-weights' flag. A valid samtools
-                        path must be available via the system path variable or
-                        provided using --samtools-path. Be mindful of setting the
-                        temporary directory correctly for your system! (e.g. should be
-                        set to output of 'echo $TEMP' on HPC clusters)
+                        mode. A correction weights matrix must be specified in
+                        this case via the '--correction-weights' flag. A valid
+                        samtools path must be available via the system path
+                        variable or provided using --samtools-path. Be mindful of
+                        setting the temporary directory correctly for your system!
+                        (e.g. should be set to output of 'echo $TEMP' on HPC
+                        clusters)
   -rep Integer, --repetition-of-simulation Integer
                         (PRESET precedence if specified) This value can be left at
                         default if the target number of processed fragments is
-                        sufficiently high (e.g. >=5M). The lower the number of target
-                        fragments, the stronger is the effect of increasing the number
-                        of simulation rounds. Increasing this value increases the
-                        computation time almost accordingly (scales linearly). [
-                        DEFAULT: 6 ]
+                        sufficiently high (e.g. >=5M). The lower the number of
+                        target fragments, the stronger is the effect of increasing
+                        the number of simulation rounds. Increasing this value
+                        increases the computation time almost accordingly (scales
+                        linearly). [ DEFAULT: 6 ]
   -mafl Integer, --maximum-fragment-length Integer
                         Defines upper length limit for fragments which should be
                         included in computation. This parameter does not impact
                         computation speed. It only increases plotting times for
-                        matrices by a few seconds and memory consumption. [ DEFAULT:
-                        550bp ]
+                        matrices by a few seconds and memory consumption. [
+                        DEFAULT: 550bp ]
   -mifl Integer, --minimum-fragment-length Integer
                         Defines lower length limit for fragments which should be
                         included in computation. Must be positive integer. A value
-                        below the sequenceable fragment length of the device used to
-                        create the dataset is not recommended. [ DEFAULT: 20bp ]
+                        below the sequenceable fragment length of the device used
+                        to create the dataset is not recommended. [ DEFAULT: 20bp
+                        ]
   -t Integer, --threads Integer
-                        Total number of threads to be used for BAM processing. If the
-                        --single-thread-processes flag was set, this number
+                        Total number of threads to be used for BAM processing. If
+                        the --single-thread-processes flag was set, this number
                         corresponds to the number of processes spawned for BAM
-                        processing. For BAM tagging, multiple threads are used for the
-                        sort/merge operations so fewer processes might be used
+                        processing. For BAM tagging, multiple threads are used for
+                        the sort/merge operations so fewer processes might be used
                         simultaneously. Should be lower than the total number of
-                        logical cores available on the hardware. Will be reduced to
-                        max. available number of logical cores if is set higher by the
-                        user. [ DEFAULT: 12 ]
+                        logical cores available on the hardware. Will be reduced
+                        to max. available number of logical cores if is set higher
+                        by the user. [ DEFAULT: 12 ]
   -rs Integer, --random-seed Integer
-                        Optional random seed to be used for genomic sampling patterns.
-                        Warning: the notion that all computed numbers will turn out
-                        identical when using the same random seed using different
-                        interpreters or different machines should be discarded right
-                        away. Might only be useful when repeatedly running the script
-                        within the same python interpreter instance! [ DEFAULT: 99
-                        (randomly drawn from 0-999) ]
+                        Optional random seed to be used for genomic sampling
+                        patterns. Warning: the notion that all computed numbers
+                        will turn out identical when using the same random seed
+                        using different interpreters or different machines should
+                        be discarded right away. Might only be useful when
+                        repeatedly running the script within the same python
+                        interpreter instance! [ DEFAULT: 173 (randomly drawn from
+                        0-999) ]
   -sp File, --samtools-path File
-                        Optional input: path to specific samtools executable. A valid
-                        path is required for creating the tagged BAM output. By
-                        default, this path will be used: '/home/benjamin/mambaforge-
-                        pypy3/envs/GCparagon/bin/samtools' (empty or None if path is
-                        not found). Code tested with samtools version 1.16.1 using
-                        htslib 1.16 [ PARAMETER REQUIRED IF DEFAULT VALUE IS
+                        Optional input: path to specific samtools executable. A
+                        valid path is required for creating the tagged BAM output.
+                        By default, this path will be used:
+                        '/home/YOURUSER/YOURCONDA/envs/GCparagon/bin/samtools' (empty or None if path
+                        is not found). Code tested with samtools version 1.16.1
+                        using htslib 1.16 [ PARAMETER REQUIRED IF DEFAULT VALUE IS
                         EMPTY/NONE ]
   -nf Integer, --target-fragment-number Integer
-                        (PRESET precedence if specified) GC-bias computation will stop
-                        after surpassing this threshold for processed fragments. Still
-                        running subprocesses will be finished and results included so
-                        usually this value is overshot by up to several million
-                        fragments depending on the amount of processes chosen and the
-                        DoC inside defined bins. Increasing this value will reduce the
-                        noise in computed weights. Concerning the number of corrected
-                        fragments, processing more than 5 million fragments will only
+                        (PRESET precedence if specified) GC-bias computation will
+                        stop after surpassing this threshold for processed
+                        fragments. Still running subprocesses will be finished and
+                        results included so usually this value is overshot by up
+                        to several million fragments depending on the amount of
+                        processes chosen and the DoC inside defined bins.
+                        Increasing this value will reduce the noise in computed
+                        weights. Concerning the number of corrected fragments,
+                        processing more than 5 million fragments will only
                         increase the number of corresponding computed weights only
                         miniscule. Doubling the target processed fragment amount
-                        typically leads only to an increase in corrected fragments by
-                        less than one percent. Five million fragments (preset 1)
-                        should be enough to correct between 99.5% and 99.9% of all DNA
-                        fragments observed in the dataset based on GC content and
-                        fragment length. To reach >99.9% of corrected fragments, this
-                        parameter should be increased. [ DEFAULT: 5,000,000 ]
+                        typically leads only to an increase in corrected fragments
+                        by less than one percent. Five million fragments (preset
+                        1) should be enough to correct between 99.5% and 99.9% of
+                        all DNA fragments observed in the dataset based on GC
+                        content and fragment length. To reach >99.9% of corrected
+                        fragments, this parameter should be increased. [ DEFAULT:
+                        5,000,000 ]
   -mf Integer, --minimum-fragment-occurrences Integer
-                        (PRESET precedence if specified) This parameter defines the
-                        minimum number of fragment occurrences for a specific
+                        (PRESET precedence if specified) This parameter defines
+                        the minimum number of fragment occurrences for a specific
                         length/GC-content attribute combination to be regarded in
                         correction weights computation (= mask definition). Higher
-                        values result in less extreme weight outliers, especially for
-                        the low-GC-content mononucleosomal fragment length range. The
-                        absolute lowest supported value is 2 based on visual
-                        inspection of resulting weights matrices for different
-                        samples. If this value is too low (e.g. 1), strong 'salt-and-
-                        pepper'-type noise was observed for rare attribute
-                        combinations along with very high weight outliers. A value of
-                        10 here means that a particular attribute combination must
-                        occur at least once per million fragments in the dataset for a
-                        '--number-of-fragments-to-process' value of 10,000,000. As a
-                        rule of thumb, one can set this to number of million target
-                        fragments (i.e. set to 10 for the target value of 10M
-                        processed fragments as in the example above) [ DEFAULT: 3 ]
+                        values result in less extreme weight outliers, especially
+                        for the low-GC-content mononucleosomal fragment length
+                        range. The absolute lowest supported value is 2 based on
+                        visual inspection of resulting weights matrices for
+                        different samples. If this value is too low (e.g. 1),
+                        strong 'salt-and-pepper'-type noise was observed for rare
+                        attribute combinations along with very high weight
+                        outliers. A value of 10 here means that a particular
+                        attribute combination must occur at least once per million
+                        fragments in the dataset for a '--number-of-fragments-to-
+                        process' value of 10,000,000. As a rule of thumb, one can
+                        set this to number of million target fragments (i.e. set
+                        to 10 for the target value of 10M processed fragments as
+                        in the example above) [ DEFAULT: 3 ]
   -anf, --allow-n-base-fragments
-                        Per default, any fragment containing N-bases (as determined
-                        from the read alignment positions and the reference genome
-                        sequence) is excluded from the analysis. This parameter was
-                        not found to cause any problems for Illumina NovaSeq data. If
-                        such fragments have to be included, this flag can be set to
-                        allow for up to 1/3 N-bases for fragments. Parameter mainly
-                        influences the simulation step and how many times random
-                        fragment drawing must be repeated for individual genomic
-                        intervals. Also can lead to fewer intervals being discarded
-                        (and marked as bad genomic interval) if flag is set.
+                        Per default, any fragment containing N-bases (as
+                        determined from the read alignment positions and the
+                        reference genome sequence) is excluded from the analysis.
+                        This parameter was not found to cause any problems for
+                        Illumina NovaSeq data. If such fragments have to be
+                        included, this flag can be set to allow for up to 1/3
+                        N-bases for fragments. Parameter mainly influences the
+                        simulation step and how many times random fragment drawing
+                        must be repeated for individual genomic intervals. Also
+                        can lead to fewer intervals being discarded (and marked as
+                        bad genomic interval) if flag is set.
   -ucmaf Float, --unclipped-min-aln-fraction Float
-                        This parameter defines the minimum unclipped fraction of an
-                        alignment to be counted in the observed fragment attributes
-                        matrix O_gc. This might affect how many small fragments are
-                        observed and effectively corrected. [ DEFAULT: 0.75 ]
+                        This parameter defines the minimum unclipped fraction of
+                        an alignment to be counted in the observed fragment
+                        attributes matrix O_gc. This might affect how many small
+                        fragments are observed and effectively corrected. [
+                        DEFAULT: 0.75 ]
   -dw DEFAULT_FRAGMENT_WEIGHT, --default-weight DEFAULT_FRAGMENT_WEIGHT
-                        Parameter redefines the weight which is assigned to fragments
-                        with fragment length + GC base count combinations that lie
-                        outside of the non-default range of the (computed) weights
-                        matrix. Should be 1.0 for GCparagon. Can be e.g. 0.0 for other
-                        algorithms like Griffin. Choose according to the source of
-                        your weights matrix! [ DEFAULT: 1.0 ]
+                        Parameter redefines the weight which is assigned to
+                        fragments with fragment length + GC base count
+                        combinations that lie outside of the non-default range of
+                        the (computed) weights matrix. Should be 1.0 for
+                        GCparagon. Can be e.g. 0.0 for other algorithms like
+                        Griffin. Choose according to the source of your weights
+                        matrix! [ DEFAULT: 1.0 ]
   -reto UNALIGNED_EXTRACTION_TIMEOUT, --reads-extraction-timeout UNALIGNED_EXTRACTION_TIMEOUT
                         Sets the timout in seconds for unaligned reads extraction.
-                        Only has an effect if '--output-bam' or '--tag-only' and '--
-                        output-unaligned-reads' is set. [ DEFAULT: 1800 seconds ]
+                        Only has an effect if '--output-bam' or '--tag-only' and '
+                        --output-unaligned-reads' is set. [ DEFAULT: 1800 seconds
+                        ]
 
 Post-processing options:
   -do, --detect-outliers
-                        (PRESET precedence if specified) If this flag is set, extreme
-                        outliers will be detected and limited to a threshold value
-                        that is computed from the fragment weights. The default method
-                        to detect outliers is Q3 + 8x inter-quartile range (IQR).
-                        Values above this threshold will be limited to the threshold.
-                        It is highly recommended to detect and limit outliers.
+                        (PRESET precedence if specified) If this flag is set,
+                        extreme outliers will be detected and limited to a
+                        threshold value that is computed from the fragment
+                        weights. The default method to detect outliers is Q3 + 8x
+                        inter-quartile range (IQR). Values above this threshold
+                        will be limited to the threshold. It is highly recommended
+                        to detect and limit outliers.
   -odm String, --outlier-detection-method String
-                        (PRESET precedence if specified) If the --detect-outliers flag
-                        is set, the detection method can be set here. Either a method
-                        based on the inter-quartile range or a method based on
-                        standard deviation can be selected. Must be one of {'IQR',
-                        'SD'}. [ DEFAULT: IQR ]
+                        (PRESET precedence if specified) If the --detect-outliers
+                        flag is set, the detection method can be set here. Either
+                        a method based on the inter-quartile range or a method
+                        based on standard deviation can be selected. Must be one
+                        of {'IQR', 'SD'}. [ DEFAULT: IQR ]
   -ods Integer, --outlier-detection-stringency Integer
-                        (PRESET precedence if specified) If the --detect-outliers flag
-                        is set, this parameter defines how stringent the outlier
-                        detection threshold is set. Must be an integer in the range of
-                        1-7 (inclusive). [ DEFAULT: 2 ]
-  -sw, --smooth         (PRESET precedence if specified) If this flag is set, computed
-                        weights will also be smoothed. An additional matrix is output
-                        containing these post-processed values. If plotting is set to
-                        true, also a visualisation of the smoothed weights will be
-                        created.It is recommended to smooth weights if not the entire
-                        dataset is processed (like is done in preset 3).
+                        (PRESET precedence if specified) If the --detect-outliers
+                        flag is set, this parameter defines how stringent the
+                        outlier detection threshold is set. Must be an integer in
+                        the range of 1-7 (inclusive). [ DEFAULT: 2 ]
+  -sw, --smooth         (PRESET precedence if specified) If this flag is set,
+                        computed weights will also be smoothed. An additional
+                        matrix is output containing these post-processed values.
+                        If plotting is set to true, also a visualisation of the
+                        smoothed weights will be created.It is recommended to
+                        smooth weights if not the entire dataset is processed
+                        (like is done in preset 3).
   -sk String, --smooth-kernel String
                         (PRESET precedence if specified) If the '--smooth' flag is
-                        set, the type of kernel used in the 2D convolution operation
-                        can be set here. In general, a Gaussian kernel makes more
-                        sense because it assigns directly adjacent values a higher
-                        weight in computing the smoothed value of the current
-                        position. Must be one of {'gauss', 'constant'}. [ DEFAULT:
-                        gauss ]
+                        set, the type of kernel used in the 2D convolution
+                        operation can be set here. In general, a Gaussian kernel
+                        makes more sense because it assigns directly adjacent
+                        values a higher weight in computing the smoothed value of
+                        the current position. Must be one of {'gauss',
+                        'constant'}. [ DEFAULT: gauss ]
   -si Integer, --smoothing-intensity Integer
                         (PRESET precedence if specified) If the '--smooth' flag is
                         set, the smoothing intensity defines the range of the 2D
-                        kernel used in the smoothing operation. Must be an integer in
-                        the range of 1-10 (inclusive). [ DEFAULT: 5 ]
+                        kernel used in the smoothing operation. Must be an integer
+                        in the range of 1-10 (inclusive). [ DEFAULT: 5 ]
 ```
 
 
@@ -938,8 +974,8 @@ for GC bias computation also increases. This also allows for a better representa
 combination of weight matrices computed from individual preseleted genomic intervals.
 
 When applied to multiple transcription start sites (TSSs) of genes which are generally expected to be inactive in adult 
-humans ([975 genes](accessory_files/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
-and active genes ([1179 "housekeeping" genes](accessory_files/TSSs/HK.txt)), GC bias manifests as changes in the average
+humans ([975 genes](src/GCparagon-AccessoryFiles/TSSs/PAU.txt) as derived from the [protein atlas](https://www.proteinatlas.org/)),
+and active genes ([1179 "housekeeping" genes](src/GCparagon-AccessoryFiles/TSSs/HK.txt)), GC bias manifests as changes in the average
 central 61 bp fragment depth of coverage (cDoC) across these 5' -> 3' oriented sites. Active genes are expected 
 to show a nucleosome depleted region (unprotected -> decrease in coverage) slightly upstream to the TSS, whereas 
 unexpressed or lowly expressed genes should show an almost flat cDoC profile.
@@ -1012,10 +1048,10 @@ Default outputs are:
 ### Genomic Region Preselection
 
 The code uses up to 2,342 
-[preselected 1 Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed) of 
+[preselected 1 Mb genomic intervals](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed) of 
 hg38 reference genome for processing (2,204 regions for hg19).
 Preselection was carried on the basis of an 
-[exclusion listed regions BED file](accessory_files/hg38_GCcorrection_ExclusionList.merged.sorted.bed) to:
+[exclusion listed regions BED file](src/GCparagon-AccessoryFiles/hg38_GCcorrection_ExclusionList.merged.sorted.bed) to:
 - reduce the overlap of 1 Mb genomic intervals with regions found to be problematic for short read sequencing or sequence alignment
 - minimize inclusion of assembly gaps and errors
 - slightly optimize the placement of intervals along the genome while ensuring preselection of only non-overlapping regions
@@ -1023,9 +1059,9 @@ Preselection was carried on the basis of an
 implemented)
 
 Creation of the exclusion listed regions BED file, starting from the 
-[ENCODE exclusion listed regions v2 BED file](accessory_files/bad_regions/hg38-ENCODE_blacklist.v2.bed),
-is documented [here](accessory_files/GC_correction_exclusion_list_creation.info).
-The hg19 version is documented [here](accessory_files/GC_correction_exclusion_list_hg19_creation.info).
+[ENCODE exclusion listed regions v2 BED file](src/GCparagon-AccessoryFiles/bad_regions/hg38-ENCODE_blacklist.v2.bed),
+is documented [here](src/GCparagon-AccessoryFiles/GC_correction_exclusion_list_creation.info).
+The hg19 version is documented [here](src/GCparagon-AccessoryFiles/GC_correction_exclusion_list_hg19_creation.info).
 The final GRCh38 exclusion list includes 385,022,382 reference positions (=12.68% of GRCh38).
 
 Currently, only a preselection of GRCh38 and hg19 genomic 1 Mb regions is available. To specify the genome 
@@ -1048,25 +1084,25 @@ some of these files need to be passed to GCparagon via the following commandline
 
 These files can be created using the following code/scripts in ascending order:
  - [reference genome build download instructions](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh)
- - [Exclusion list creation info](accessory_files/GC_correction_exclusion_list_hg19_creation.info)
- - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
+ - [Exclusion list creation info](src/GCparagon-AccessoryFiles/GC_correction_exclusion_list_hg19_creation.info)
+ - [01-GI-preselection_test_Mbp_genomic intervals_against_ExclusionList_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/01-GI-preselection_test_Mbp_intervals_against_ExclusionList_hg19.py) 
 (creation of equal-sized genomic intervals, intersected with the exclusion marked regions list)
- - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
+ - [02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/02-GI-preselection_select_low_scoring_regions_from_overlapping_hg19.py) 
 (selection of least-exclusion-list-overlapping regions)
- - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
+ - [03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/03-GI-preselection_compute_genomic_interval_fragment_GC_content_hg19.py) 
 (computing fragment GC content distributions (FGCDs) for each preselected genomic interval (GI);
 also detects bad simulation intervals and writes them to a separate BED file 
 '<GENOME_BUILD>_genomic_intervals_failed_fragment_drawing.bed')
- - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
+ - [04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/04-GI-preselection_simulate_genomewide_reference_FGCD_hg19.py) 
 (computing the genome-wide reference fragment GC content distribution = "reference FGCD" based on the reference 
 fragment length distribution).
 
  - Optionally,
 the diversity of fragment GC content distributions among preselected genomic intervals can be visualized using 
-[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](accessory_files/genomic_interval_preselection-shifted16x_hg19/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
+[05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
 
 
-![hg19_GI_preselection](https://github.com/BGSpiegl/GCparagon/blob/dev-hg19ExclusionList/accessory_files/genomic_interval_preselection-shifted16x_hg19/hg19_FGCD_intervals_vs_reference/GC_content_reference_genome_vs_preselected_intervals.51bins.png?raw=true)
+![hg19_GI_preselection](https://github.com/BGSpiegl/GCparagon/blob/dev-hg19ExclusionList/src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/hg19_FGCD_intervals_vs_reference/GC_content_reference_genome_vs_preselected_intervals.51bins.png?raw=true)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
 The size of preselected genomic intervals should be uniform and fit the application (i.e., larger genomic intervals for 
@@ -1079,9 +1115,9 @@ The gap track must match the genome build of interest!
 Gap tracks can be downloaded using the UCSC table browser [UCSC Table Browser][table browser].
 
 An IGV screenshot visualizing the distribution of 
-[hg38 preselected 1Mb genomic intervals](accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed)
+[hg38 preselected 1Mb genomic intervals](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed)
 across the whole genome, and additionally for two chromosomes, is provided 
-[here](accessory_files/genomic_interval_preselection-shifted16x_hg19/IGV_composite_preselected_intervals_hg38.png).
+[here](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/IGV_composite_preselected_intervals_hg38.png).
 
 
 ### Optimization of Combining Results from Preselected Regions

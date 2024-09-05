@@ -111,16 +111,16 @@ DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
 DEFAULT_GENOME_BUILD = 'hg38'
 EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = {'hg38': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit',
                                           'hg19': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg19.2bit'}
-PREDEFINED_1MBP_INTERVALS_TO_PROCESS = {'hg38': SOURCE_CODE_ROOT_PATH.parent.parent /
-                                        'accessory_files/hg38_minimalExclusionListOverlap_1Mbp_intervals_'
+PREDEFINED_1MBP_INTERVALS_TO_PROCESS = {'hg38': SOURCE_CODE_ROOT_PATH.parent /
+                                        'GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_'
                                         '33pcOverlapLimited.FGCD.bed',
-                                        'hg19': SOURCE_CODE_ROOT_PATH.parent.parent /
-                                        'accessory_files/hg19_minimalExclusionListOverlap_1Mbp_intervals_'
+                                        'hg19': SOURCE_CODE_ROOT_PATH.parent /
+                                        'GCparagon-AccessoryFiles/hg19_minimalExclusionListOverlap_1Mbp_intervals_'
                                         '33pcOverlapLimited.FGCD.bed'}
-DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION = {'hg38': SOURCE_CODE_ROOT_PATH.parent.parent /
-                                                           'accessory_files/hg38_reference_GC_content_distribution.tsv',
-                                                           'hg19': SOURCE_CODE_ROOT_PATH.parent.parent /
-                                                           'accessory_files/hg19_reference_GC_content_distribution.tsv'}
+DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION = {'hg38': SOURCE_CODE_ROOT_PATH.parent /
+                                                           'GCparagon-AccessoryFiles/hg38_reference_GC_content_distribution.tsv',
+                                                           'hg19': SOURCE_CODE_ROOT_PATH.parent /
+                                                           'GCparagon-AccessoryFiles/hg19_reference_GC_content_distribution.tsv'}
 TIMESTAMP_FORMAT = '%Y-%m-%d_%H-%M-%S'
 BAD_INTERVALS_FILE_PATTERN_AS_PATH = Path(f'bad_intervals_{TIMESTAMP_FORMAT}.bed')
 
@@ -230,11 +230,11 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  'have been selected based on minimal overlap with exclusion-masked regions of the '
                                  'reference genome build used for read alignment earlier (i.e., creation of --bam). '
                                  'Since v0.5.6, the table also contains expected GC content counts which should be '
-                                 "computed using the fragment length distribution from 'accessory_files/"
+                                 "computed using the fragment length distribution from 'src/GCparagon-AccessoryFiles/"
                                  "reference_fragment_lenght_distribution.tsv'. The GC content distributions are used "
                                  "to create an optimized consolidated weight matrix using a weighted mean. The weights "
                                  "for each region are selected such that the reference GC content distribution in "
-                                 "'accessory_files/hg38_reference_GC_content_distribution.tsv' is approximated better "
+                                 "'src/GCparagon-AccessoryFiles/hg38_reference_GC_content_distribution.tsv' is approximated better "
                                  "than by naive averaging region GC content distributions. This optimization is might "
                                  "fail in cases where the majority of preselected genomic regions are used to estimate "
                                  "GC bias. In these cases, the naive approach is used as a fallback option. "
@@ -247,13 +247,13 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "GC) as relative frequencies of these percentage bins (summing up to 1). If a "
                                  "custom reference genome is used, this file should be created anew from the simulated "
                                  "genome-wide ideal fragment GC content as simulated assuming a fragment length "
-                                 "distribution as the one stored in 'accessory_files/"
+                                 "distribution as the one stored in 'src/GCparagon-AccessoryFiles/"
                                  "plasmaSeq_ccfDNA_reference_fragment_length_distribution.tsv'! "
                                  "The provided information is used to optimize the combination of correction weight "
                                  "matrices from different genomic intervals to achieve a linear combination of these "
                                  "regions which resembles the reference GC content distribution defined here. This "
                                  "file can be computed following the instructions of gGenomic intervals preselection "
-                                 "script 4: 'accessory_files/genomic_interval_preselection-shifted16x_hg38/"
+                                 "script 4: 'src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg38/"
                                  "04-GI-preselection_simulate_genomewide_reference_FGCD_hg38.py'. [ DEFAULT: "
                                  f"'{DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[DEFAULT_GENOME_BUILD]}' ]",
                             metavar='File')
@@ -472,7 +472,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'not exist. Make sure that it is empty if it exists, otherwise the whole directory '
                                   'will be deleted before writing to it in the GC-bias computation step! '
                                   'If none is provided, a new subdirectory named '
-                                  f"'GC_bias_correction_GCparagon{VERSION_STRING}' will be created in the input BAM's "
+                                  f"'GC_bias_correction_GCparagon_{VERSION_STRING}' will be created in the input BAM's "
                                   'parent directory and used as output directory. The output for each sample will be '
                                   'gathered in a subdirectory of this --out-dir which will be named after the sample. '
                                   'The output directory may be located on slow hardware such as a USB drive or a '
@@ -3098,7 +3098,7 @@ def main() -> int:
             if not output_directory or output_directory == str(input_bam_parent_path):
                 print_warnings.append('Output directory is either input BAM parent directory or was None. Setting '
                                       "it to subdirectory of input BAM parent directory: 'GC_correction_output'")
-                output_directory = str(input_bam_parent_path / f'GC_bias_correction_GCparagon{VERSION_STRING}')
+                output_directory = str(input_bam_parent_path / f'GC_bias_correction_GCparagon_{VERSION_STRING}')
             # set up target output directory and logfile
             start_time = time.localtime()
             sample_out_dir_path = Path(output_directory) / sample_id

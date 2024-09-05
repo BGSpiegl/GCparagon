@@ -137,7 +137,7 @@ You can create the environment using the following command:
 #### Singularity container
 As an alternative, a singularity image can be either downloaded or created (using the singularity executable 
 from the aforementioned conda environment from OUTSIDE conda) using the 
-[gcparagon.def](singularity_definition_file/gcparagon.def) singularity definitions file. 
+[gcparagon.def](singularity_definition_file/gcparagon-mainBranch.def) singularity definitions file. 
 A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
@@ -177,7 +177,7 @@ and `\var\tmp`. To make an inaccessible path available to the GCparagon image, f
 
 An example of using your local directories under `/mnt` would be:
 
-`singularity run -B /mnt:/mnt gcparagon.sif <YOUR PARAMETERS HERE INCLUDING PATHS UNDER MNT>` 
+`singularity run -B /mnt gcparagon.sif <YOUR PARAMETERS HERE INCLUDING PATHS UNDER MNT>` 
 
 
 ### Hardware Requirements

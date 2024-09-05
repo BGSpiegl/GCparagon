@@ -267,7 +267,7 @@ See here: [Singularity container](#singularity-container)
 First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
 repository:
 
-`git clone https://github.com/BGSpiegl/GCparagon`
+`git clone -b main --single-branch https://github.com/BGSpiegl/GCparagon`
 
 After making sure that conda is available on your system and up to date, move inside the cloned repository
 

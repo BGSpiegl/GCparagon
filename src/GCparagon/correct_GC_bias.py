@@ -37,7 +37,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 8
+PATCH_NUMBER = 10
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -2175,6 +2175,8 @@ def samtools_cat_bams(list_of_bams: List[str], samtools_path: OneOf[str, Path],
         exit_message = f"Concatenated BAM file '{output_bam}' not found. Terminating main.."
         try_clear_temp_dir_and_exit(tmp_dir=tmp_dir, exit_code=1, message=exit_message)
     # index final BAM file
+    log(message=f"Indexing merged BAM file '{output_bam}' ..",
+        log_level=logging.INFO, logger_name=LOGGER)
     create_bam_index(bam_path=output_bam, samtools_path=samtools_path, check_success=True)
     # remove temp dir
     if not keep_input:

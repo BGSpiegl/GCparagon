@@ -12,6 +12,12 @@ from typing import Optional
 # project imports
 from utilities.gc_logging import log
 
+# fix for /tmp environment not being available to user (e.g., on very restrictive HPC environments) ----------
+import plotly.io as pio
+pio.kaleido.scope.chromium_args = tuple(
+    [arg for arg in pio.kaleido.scope.chromium_args if arg != "--disable-dev-shm-usage"])  # remove flag
+# ------------------------------------------ END FIX ---------------------------------------------------------
+
 # DEFINE COLOR SCALE FOR MATRIX PLOTS HERE!!!
 USE_CONTINUOUS_COLOR_SCALE = 'turbo'  # also nice: 'thermal', 'agsunset', 'rainbow', 'plotly3', or 'blackbody'
 # (better for grayscale conversion) earlier default was 'viridis'; others: 'matter', 'greys'

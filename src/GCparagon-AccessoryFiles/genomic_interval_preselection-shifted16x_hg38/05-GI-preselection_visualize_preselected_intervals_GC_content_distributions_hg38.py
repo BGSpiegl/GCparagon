@@ -8,6 +8,12 @@ from typing import Union as OneOf, Dict, Tuple
 from pathlib import Path
 # from correct_GC_bias import create_region_label
 
+# fix for /tmp environment not being available to user (e.g., on very restrictive HPC environments) ----------
+import plotly.io as pio
+pio.kaleido.scope.chromium_args = tuple(
+    [arg for arg in pio.kaleido.scope.chromium_args if arg != "--disable-dev-shm-usage"])  # remove flag
+# ------------------------------------------ END FIX ---------------------------------------------------------
+
 # DEFINITIONS
 # intervals (opaque -> 0.01; we have ~1,700 of these for hg38; use already available functions!)
 

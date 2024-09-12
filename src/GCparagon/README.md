@@ -84,7 +84,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.10
+Latest version is v0.6.11
 
 
 ### How to use cfDNA fragment weights
@@ -141,8 +141,8 @@ from the aforementioned conda environment from OUTSIDE conda) using the
 A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.10-ubuntu-22_04-container:latest && 
-singularity verify gcparagon_0.6.10-ubuntu-22_04-container_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.11-ubuntu-22_04-container:latest && 
+singularity verify gcparagon_0.6.11-ubuntu-22_04-container_latest.sif`
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
 
@@ -486,7 +486,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                                                              
 -----------------------------------------------------------------------------
                                                                              
-             GCparagon (v0.6.10) maintained by @BGSpiegl
+             GCparagon (v0.6.11) maintained by @BGSpiegl
                  Copyright (c) 2023 Benjamin Spiegl
             GitHub: https://github.com/BGSpiegl/GCparagon
 
@@ -616,7 +616,7 @@ Output options:
                         the whole directory will be deleted before writing to it
                         in the GC-bias computation step! If none is provided, a
                         new subdirectory named
-                        'GC_bias_correction_GCparagon_v0.6.10' will be created in
+                        'GC_bias_correction_GCparagon_v0.6.11' will be created in
                         the input BAM's parent directory and used as output
                         directory. The output for each sample will be gathered in
                         a subdirectory of this --out-dir which will be named after

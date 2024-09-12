@@ -2,6 +2,7 @@
 
 # full imports
 import os
+import re
 import gc
 import sys
 import time
@@ -37,7 +38,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 10
+PATCH_NUMBER = 11
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -1894,7 +1895,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                                        tagging_intervals_list: List[str], reference_lengths: Dict[str, int],
                                        sender_connection: mp_connection.Connection, parent_logger: str,
                                        default_weight: float = 1.0, tag_name=DEFAULT_GC_TAG_NAME,
-                                       ref_interval_loading_size: int = 500000, annotation_str=None):
+                                       ref_interval_loading_size: int = 500000):
     """
 
     :param default_weight:
@@ -1902,7 +1903,6 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
     :param gc_bases_offset: this is the offset for the weights matrix column required for weights retrieval
     :param parent_logger:
     :param two_bit_reference_path:
-    :param annotation_str:
     :param bam_path:
     :param correction_weights:
     :param temp_dir:
@@ -1925,9 +1925,9 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
             chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
             tagged_bam_file = str(Path(temp_dir) /
                                   '.'.join(Path(bam_path).name.split('.')[:-2] +
-                                           [f"{Path(bam_path).name.split('.')[-2]}"  # anno str will be None
-                                            f"+{chromosome}-{start_coord}-{stop_coord}.GCcorr"] +
-                                           ([annotation_str, 'bam'] if annotation_str else ['bam'])))
+                                           [f"{Path(bam_path).name.split('.')[-2]}"
+                                            f"+GcPaRa+{chromosome}-GcPaRa-{start_coord}-GcPaRa-{stop_coord}"
+                                            f".GCcorr.bam"]))
             with silently_open_alignment_file(tagged_bam_file, mode='wb', template=input_bam_file) as f_gc_tagged:
                 # reference scaffold handle management:
                 # ______________________________________________________________________________________________________
@@ -2201,7 +2201,13 @@ def order_bams(bam_list: List[str]) -> List[str]:
     # if the provided value is not in the header
     bam_paths_with_locus = []
     for bam_nm in bam_list:
-        chrm, strt, stp, *_ = Path(bam_nm).name.split('.GCcorr.bam')[0].split('+')[-1].split('-')  # chrom-start-stop
+        bam_locus_part = '.GCcorr.bam'.join(Path(bam_nm).name.split('.GCcorr.bam')[:-1])
+        locus_info = re.match(r'^.*\+GcPaRa\+(?P<CONTIG>.*?)-GcPaRa-(?P<START>.*?)-GcPaRa-(?P<_STOP>.*?)$',
+                              bam_locus_part,
+                              flags=re.DOTALL)  # dot matches anything
+        assert locus_info is not None  # if this is None, this means that the locus info was not found! -> unexpected!
+        chrm = locus_info.group('CONTIG')
+        strt = locus_info.group('START')
         bam_paths_with_locus.append(((chrm, int(strt)), str(bam_nm)))
     return [bam_path for _, bam_path in
             sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))]
@@ -2297,7 +2303,11 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                            for cid, chrms in enumerate(intervals_per_proc)]), log_level=logging.DEBUG, logger_name=LOGGER)
     # start unaligned reads extraction
     worker_output_path = Path(temporary_directory_sample) / 'scaffold_BAMs_pre-merging'
-    worker_output_path.mkdir(parents=True, exist_ok=True)
+    try:
+        worker_output_path.mkdir(parents=True, exist_ok=False)
+    except FileExistsError:
+        shutil.rmtree(worker_output_path)
+        worker_output_path.mkdir(parents=True, exist_ok=False)
     unaligned_bam = None
     unaligned_extraction_handle = None
     if output_unaligned:
@@ -2335,6 +2345,8 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
     if len(tagged_scaffold_bam_files) == 0:
         log(message="Did not get any scaffold/contig-wise BAM files for merging. Cannot proceed. Terminating..",
             log_level=logging.ERROR, close_handlers=True, logger_name=LOGGER)
+        if worker_output_path.is_dir():
+            shutil.rmtree(worker_output_path)
         sys.exit(3)
     # define final output path
     tagged_bam_file_path = Path(temporary_directory_sample) / \

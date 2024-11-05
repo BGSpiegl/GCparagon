@@ -38,7 +38,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 11
+PATCH_NUMBER = 12
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -2260,7 +2260,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
     :return:
     """
     gc_start = gc_base_limits.start  # this is the offset for the weights matrix column required for weights retrieval
-    n_processes = threads - 1  # 1 process for extracting unaligned reads
+    n_processes = max(threads - 1, 1)  # 1 process for extracting unaligned reads
     # prepare parallel processes for alignment correction
     receivers = []
     senders = []
@@ -3075,6 +3075,16 @@ def main() -> int:
                               f'of available logical cores is only {available_logical_cores}. Setting to '
                               f'{int(available_logical_cores/4*3)} (= 75%).')
         total_number_threads = int(available_logical_cores/4*3)
+    elif total_number_threads < 4:
+        if max_efficiently_usable_physical_cores * 2 < 4:
+            print_warnings.append('GCparagon requires at least 4 logical cores for being able to run. Only '
+                                  f'{total_number_threads} were set and only '
+                                  f'{max_efficiently_usable_physical_cores * 2} are available. Exiting..')
+            exit_after_warnings = 1
+        else:
+            print_warnings.append('GCparagon requires at least 4 logical cores for being able to run. Only '
+                                  f'{total_number_threads} were set. Resetting to 4 instead.')
+            total_number_threads = 4
     # check unfixable parameters
     two_bit_reference_file_path = Path(two_bit_reference_file)
     if not two_bit_reference_file_path.is_file():
@@ -3307,7 +3317,7 @@ def main() -> int:
             for hdlr in current_logger.handlers:
                 hdlr.flush()
                 if hdlr in current_logger.handlers:
-                    current_logger.removeHandler(hdlr)  # local variable 'hdlr' referenced before assignment
+                    current_logger.removeHandler(hdlr)
                 hdlr.close()
             # delete empty log files
             for lg_fl in (log_file, error_log):

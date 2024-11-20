@@ -7,7 +7,7 @@ channels:
 dependencies:
   - bedtools
   - python=3.10
-  - pip
+  - pip=24.2   # someone reported a problem with this version: october 2024 - for Ubuntu 23
   - numpy
   - samtools
   - pysam

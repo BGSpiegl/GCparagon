@@ -49,6 +49,7 @@ chr10	126946300	126954579	Low Mappability,Ngap
 chr10	131597031	131597130	scaffoldgap
 chr10	132288546	132419318	HG-2462_Category_Clone_Problem_Status_Open
 chr10	133625800	133797422	HG-1449_Category_Gap_Status_Awaiting_Exptl_Data,HG-190_Category_Missing_sequence_Status_Awaiting_Exptl_Data,High Signal Region,scaffoldgap,telomere
+chr10_KI270825v1_alt	0	188315	contamination
 chr10_ML143355v1_fix	0	41219	HG-2331_Category_Clone_Problem_Status_Open
 chr11	0	356450	HG-1702_Category_Gap_Status_Stalled,HG-2549_Category_Unknown_Status_Under_Review,Low Mappability,contiggap,telomere
 chr11	518900	520700	Low Mappability
@@ -84,7 +85,7 @@ chr11	116710952	116888286	HG-2411_Category_Clone_Problem_Status_Under_Review
 chr11	121175000	121187000	High Signal Region
 chr11	131679500	131681500	High Signal Region
 chr11	135075600	135086622	High Signal Region,telomere
-chr11_KI270721v1_random	0	100315	nonstd
+chr11_KI270721v1_random	0	100316	false_duplication,nonstd
 chr12	0	77800	High Signal Region,telomere
 chr12	371800	422400	High Signal Region
 chr12	2254900	2257000	High Signal Region
@@ -130,9 +131,9 @@ chr13	18358107	18408106	contiggap
 chr13	18447860	18607043	HG-1514_Category_Gap_Status_Awaiting_Exptl_Data
 chr13	32231912	32398469	HG-2497_Category_Unknown_Status_Awaiting_External_Info
 chr13	57140500	57172500	High Signal Region
-chr13	86202980	86252979	contiggap
+chr13	86202980	86269524	contiggap,false_duplication
 chr13	109423200	109425200	High Signal Region
-chr13	111703856	111753855	scaffoldgap
+chr13	111703856	111793441	false_duplication,scaffoldgap
 chr13	111793442	111843441	contiggap
 chr13	113673021	113723020	contiggap
 chr13	113964616	113970538	Ngap
@@ -226,7 +227,7 @@ chr16	18214026	18625646	HG-1946_Category_Gap_Status_Stalled,contiggap
 chr16	21176309	22760988	HG-2425_Category_Unknown_Status_Under_Review,HG-960_Category_Clone_Problem_Status_Awaiting_External_Info
 chr16	29430800	29566900	Low Mappability
 chr16	32285193	33585107	HG-1587_Category_Path_Problem_Status_Under_Review,HG-2302_Category_Gap_Status_Stalled,HG-2303_Category_Gap_Status_Stalled,scaffoldgap
-chr16	34057508	46474682	HG-1460_Category_Gap_Status_Stalled,HG-517_Category_Gap_Status_Continuing_Investigation,HG-519_Category_Gap_Status_Continuing_Investigation,High Signal Region,Low Mappability,Ngap,centromere,contiggap,heterochromatin,scaffoldgap
+chr16	34057508	46474682	HG-1460_Category_Gap_Status_Stalled,HG-517_Category_Gap_Status_Continuing_Investigation,HG-519_Category_Gap_Status_Continuing_Investigation,High Signal Region,Low Mappability,Ngap,centromere,contiggap,false_duplication,heterochromatin,scaffoldgap
 chr16	88355778	88360445	Ngap
 chr16	88372321	88372975	Ngap
 chr16	88986310	89130142	HG-994_Category_Unknown_Status_Awaiting_External_Info
@@ -414,7 +415,7 @@ chr22	50337013	50818468	HG-1574_Category_Unknown_Status_Awaiting_Exptl_Data,High
 chr22_KI270731v1_random	0	150754	HG-1972_Category_Localization_Problem_Status_Open,nonstd
 chr22_KI270732v1_random	0	41543	HG-1971_Category_Localization_Problem_Status_Open,nonstd
 chr22_KI270733v1_random	0	179772	HG-1970_Category_Localization_Problem_Status_Open,nonstd
-chr22_KI270734v1_random	0	165049	nonstd
+chr22_KI270734v1_random	0	165050	false_duplication,nonstd
 chr22_KI270735v1_random	0	42811	HG-1968_Category_Localization_Problem_Status_Open,nonstd
 chr22_KI270736v1_random	0	181919	nonstd,scaffoldgap
 chr22_KI270737v1_random	0	103837	nonstd,scaffoldgap
@@ -840,7 +841,7 @@ chr9	38756303	63548000	HG-1683_Category_Localization_Problem_Status_Awaiting_Ele
 chr9	63761400	64027300	High Signal Region,contiggap
 chr9	64135000	68515931	HG-1340_Category_Path_Problem_Status_Open,HG-1503_Category_Path_Problem_Status_Under_Review,HG-608_Category_Gap_Status_Continuing_Investigation,High Signal Region,contiggap,scaffoldgap
 chr9	70037200	70039600	High Signal Region
-chr9	70684147	70832880	HG-1689_Category_Variation_Status_Under_Review
+chr9	70684147	70832880	HG-1689_Category_Variation_Status_Under_Review,false_duplication
 chr9	76174300	76176200	High Signal Region
 chr9	83222900	83226900	High Signal Region
 chr9	85071600	85075100	High Signal Region
@@ -980,7 +981,7 @@ chrUn_KI270748v1	0	93321	HG-1912_Category_Localization_Problem_Status_Stalled,no
 chrUn_KI270749v1	0	158759	HG-1914_Category_Localization_Problem_Status_Stalled,nonstd
 chrUn_KI270750v1	0	148850	HG-1964_Category_Localization_Problem_Status_Stalled,nonstd
 chrUn_KI270751v1	0	150742	HG-1918_Category_Localization_Problem_Status_Stalled,nonstd
-chrUn_KI270752v1	0	27744	nonstd
+chrUn_KI270752v1	0	27745	contamination,nonstd
 chrUn_KI270753v1	0	62944	HG-1966_Category_Localization_Problem_Status_Stalled,nonstd
 chrUn_KI270754v1	0	40191	HG-2011_Category_Localization_Problem_Status_Stalled,nonstd
 chrUn_KI270755v1	0	36723	HG-2012_Category_Localization_Problem_Status_Stalled,nonstd
@@ -1040,6 +1041,7 @@ chrX	31077600	31082600	High Signal Region
 chrX	31511400	31535800	High Signal Region
 chrX	34416800	34425900	High Signal Region
 chrX	36465200	36471200	High Signal Region
+chrX	37085008	37099262	false_duplication
 chrX	37099263	37285837	contiggap
 chrX	37628400	37633500	High Signal Region
 chrX	42872300	42910700	High Signal Region

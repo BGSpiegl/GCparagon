@@ -3329,4 +3329,4 @@ def main() -> int:
 
 
 if __name__ == "__main__":
-    sys.exit(main())
+    sys.exit(main())  # exits with 1 if cmdline checks failed

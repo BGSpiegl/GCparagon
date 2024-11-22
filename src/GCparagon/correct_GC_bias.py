@@ -3102,8 +3102,8 @@ def main() -> int:
             bad_genomic_intervals_bed=exclude_genomic_intervals_bed_file)
         ref_gc_dist = read_gc_distribution(ref_table_path=ref_gc_dist_path)
         # read the interval list (should be >=150Mbp in total)
-        generally_processable_intervals_with_score, interval_gc_content_distributions = read_scored_regions_bed_file(
-            bed_path=genomic_intervals_bed_file)
+        generally_processable_intervals_with_score, interval_gc_content_distributions = \
+            read_scored_regions_bed_file(bed_path=genomic_intervals_bed_file)
 
     # process all input BAM files sequentially
     for input_bam in input_bams:
@@ -3232,6 +3232,10 @@ def main() -> int:
                     log(message="The number of predefined genomic intervals is low! You might consider decreasing "
                                 "the size of your intervals and increase their number.",
                         log_level=logging.WARNING, logger_name=LOGGER)
+                # TODO: fix the genomic interval preselection (optimization part)!
+                #       instead of multiplying the FGCD of a GI, compute the "raw" AES (to ref FGCD) and
+                #       compute weighted mean based on the AESs of selected regions with weights selected
+                #       according to the region's AES (weights: 1 to 10)
                 target_genomic_intervals_with_weights, _reconstruction_error = preselect_genomic_intervals(
                     genomic_intervals_sorted=sorted_eligible_genomic_intervals,  # = (chrom, start, end)
                     reference_fgcd=ref_gc_dist, bam_file=input_bam, target_fragment_number=process_n_fragments,

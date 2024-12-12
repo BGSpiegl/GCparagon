@@ -84,7 +84,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.12
+Latest version is v0.6.13
 
 
 ### How to use cfDNA fragment weights

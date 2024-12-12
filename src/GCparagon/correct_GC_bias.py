@@ -38,7 +38,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 12
+PATCH_NUMBER = 13
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -2164,7 +2164,9 @@ def get_unaligned_reads(bam_path: OneOf[str, Path], output_dir: OneOf[str, Path]
 
 def samtools_cat_bams(list_of_bams: List[str], samtools_path: OneOf[str, Path],
                       tmp_dir: OneOf[str, Path], output_bam: Path, keep_input=False):
-    concatenation_command = [str(samtools_path), 'cat', '-o', str(output_bam), '--no-PG', '--threads', '4'] + list_of_bams
+    concatenation_command = [str(samtools_path), 'cat', '-o', str(output_bam), '--no-PG'] + list_of_bams
+    # ['--threads', '4'] removed since this parameter was removed somewhere between samtools 1.19 and 1.21
+    # (even though the man pages still state the parameter exists)
     called_concatenation_command = sp.run(concatenation_command)
     try:
         called_concatenation_command.check_returncode()

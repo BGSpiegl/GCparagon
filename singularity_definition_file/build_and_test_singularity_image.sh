@@ -1,7 +1,10 @@
 # WARNING: it is recommended to pull the latest version of GCparagon container from cloud.sylabs.io instead of
 # building the current code into a container (newer changes might not be reflected in the def file)
 
-# build image using def file
+# pull the latest image from cloud.sylabs.io (recommended; requires installed singularity)
+singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.13-ubuntu-22_04-container
+
+# build image using def file (not recommended)
 sudo singularity build gcparagon_0.6.13.sif gcparagon-mainBranch.def
 
 # test with home paths only

@@ -1154,7 +1154,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     deleted_rows, deleted_columns = range(0), range(0)
     if plot_result:
         # plot fragment length distribution
-        plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],
+        plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],  # TODO: DEBUG issue #19 - try out passing the matrix itself here not the file
                                    out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True, show_figure=False,
                                    strip_xaxis_end_zeros=True, parent_logger=LOGGER, sample_id=sample_id)
         if focus_nondefault_values is not None:  # create focused plots

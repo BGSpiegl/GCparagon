@@ -15,6 +15,25 @@ accessory_files/hg38.analysisSet_claretbio_novaseqCBM_GC_content_distribution.ts
  + use of softlink and making gcparagon correct_GC_bias.py executable
    [UPDATED README.md; CHANGED script path resolving in correct_GC_bias.py]
    [UPDATED the genomic interval selection message such that users won't get confused with GC bias correction vs. the set of GIs used to compute the bias]
- + run using default hg38 ref, both using the python3 call via softlink AND the singularity image
+ + run using default hg38 ref, both using the python3 call [FAILed] via softlink AND the singularity image
  + run using the new ref
  + think about which other files have to be changed and which scripts have to be used to create a custom ref (use the BAM file from egenomics)
+
+ Traceback (most recent call last):
+  File "/home/servitorbeta/mambaforge-pypy3/envs/GCparagon/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/home/servitorbeta/mambaforge-pypy3/envs/GCparagon/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/bin/gcparagon", line 1913, in bam_tagging_worker_single_interval
+    chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
+KeyError: 'chr1_KI270766v1_alt'
+Process Process-5:
+Traceback (most recent call last):
+  File "/home/servitorbeta/mambaforge-pypy3/envs/GCparagon/lib/python3.10/multiprocessing/process.py", line 314, in _bootstrap
+    self.run()
+  File "/home/servitorbeta/mambaforge-pypy3/envs/GCparagon/lib/python3.10/multiprocessing/process.py", line 108, in run
+    self._target(*self._args, **self._kwargs)
+  File "/usr/local/bin/gcparagon", line 1913, in bam_tagging_worker_single_interval
+    chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
+KeyError: 'chr1_KI270762v1_alt'
+

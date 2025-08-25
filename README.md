@@ -100,24 +100,24 @@ using a Python3.10 conda environment.
 #### Conda installation
 This software environment can be installed using the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
 
-Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
-  - samtools=1.16
-  - bedtools=2.30
+Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, the following dependencies will be installed into the conda env named `GCparagon`:
+  - samtools
+  - bedtools
   - python=3.10
-  - pip=22.3
-  - numpy=1.23
-  - pysam=0.19
-  - natsort=8.2
-  - py2bit=0.3
-  - cycler=0.11
-  - pandas=1.5
-  - scipy=1.9
-  - ucsc-fatotwobit=377
-  - twobitreader=3.1
-  - plotly_express=0.4
-  - python-kaleido=0.2
-  - psutil=5.9
-  - requests=2.28
+  - pip
+  - numpy
+  - pysam
+  - natsort
+  - py2bit
+  - cycler
+  - pandas
+  - scipy
+  - ucsc-fatotwobit
+  - twobitreader
+  - plotly_express
+  - python-kaleido
+  - psutil
+  - requests
   - memory_profiler
   - pybedtools
   - polars
@@ -134,7 +134,7 @@ As an alternative, a singularity image can be created (using the singularity exe
 environment from OUTSIDE conda) using the [gcparagon.def](singularity_definition_file/gcparagon.def) singularity 
 definitions file, OR pulled from cloud.sylabs.io and verified using:
 
-`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && singularity verify gcparagon-ubuntu-22_04-container_latest.sif`
+`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon_0.6.13-ubuntu-22_04-container:latest && singularity verify gcparagon_0.6.13-ubuntu-22_04-container_latest.sif`
 
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
@@ -143,7 +143,7 @@ Note: this requires a working installation of singularity. The easiest way to us
 
 GCparagon can then be run from the singularity container file like this:
 
-`singularity run gcparagon-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
+`singularity run gcparagon_0.6.13-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
 
 NOTE: do not run singularity commands from within the conda environment!
 Rather use the absolute path to the singularity executable from outside conda:
@@ -263,13 +263,22 @@ Activate the new environment:
 Download the 2bit reference files - if `pip .` install is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
 already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`!
 
-Run `pip` to make GCparagon directly executable from the 
-console:
+After successful setup, you should be able to run GCparagon via `python3 src/GCparagon/correct_GC_bias.py`.
 
-`pip install .`
+Make the python script executable: `chmod +x src/GCparagon/correct_GC_bias.py`
 
-After successful setup, GCparagon should be available via the `gcparagon` command. For a detailed help, type:
+To be able to run GCparagon without the path definition, you can make a softlink in your user's binary directory with the following command:
+`ln -s /ABSOLUTE_PATH_TO/src/GCparagon/correct_GC_bias.py /usr/local/bin/gcparagon`
+(replace `/ABSOLUTE_PATH_TO/` with the actual path to your GCparagon repo clone)
+
+The softlink should be in a directory registered in your PATH variable.
+You can check which directories are available with: `echo $PATH`
+
+For a detailed help, you should now be able to just type:
 `gcparagon --help`
+
+Note: it is not recommended to run the pip installation because it breaks the paths to default reference files!
+The setup.py script and the gcparagon.TOML file exist for the sole purpose of creating the singularity image file.  
 
 See [Usage](#usage) for a complete explanation of commandline options.
 Default output created by GCparagon is described [here](#result-of-gc-bias-correction).

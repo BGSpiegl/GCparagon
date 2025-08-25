@@ -1,4 +1,7 @@
 new ref file:
+
+# FIRST make sure the code itself works as described in the README.md
+
 accessory_files/hg38.analysisSet_claretbio_novaseqCBM_GC_content_distribution.tsv
  - the distribution sums up to 100 (new custom ref) instead of 1 (accessory_files/hg38_reference_GC_content_distribution.tsv; original GCparagon ref)
    |-> this is irrelevant because elements of distribution are normalized (forced to sum up to 1.0)
@@ -12,3 +15,6 @@ accessory_files/hg38.analysisSet_claretbio_novaseqCBM_GC_content_distribution.ts
  + use of softlink and making gcparagon correct_GC_bias.py executable
    [UPDATED README.md; CHANGED script path resolving in correct_GC_bias.py]
    [UPDATED the genomic interval selection message such that users won't get confused with GC bias correction vs. the set of GIs used to compute the bias]
+ + run using default hg38 ref, both using the python3 call via softlink AND the singularity image
+ + run using the new ref
+ + think about which other files have to be changed and which scripts have to be used to create a custom ref (use the BAM file from egenomics)

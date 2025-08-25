@@ -103,7 +103,7 @@ DEFAULT_OUTLIER_DETECTION_METHOD = 'IQR'
 # random numbers:
 RANDOM_SEED = random.randint(1, 999)
 # PATH DEFINITIONS:
-SOURCE_CODE_ROOT_PATH = Path(__file__).parent
+SOURCE_CODE_ROOT_PATH = Path(__file__).resolve().parent
 sys.path.append(str(SOURCE_CODE_ROOT_PATH))  # to enable relative imports
 SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
@@ -2791,7 +2791,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
 
     elapsed_time_ns = time.perf_counter_ns() - start_time
     if residual_error > initial_re:
-        log(message=f"Could not achieve a reduction of the initial reconstruction error of {initial_re:.2%} "
+        log(message=f"Genomic interval selection: could not achieve a reduction of the initial reconstruction error of {initial_re:.2%} "
                     f"(elapsed time: {elapsed_time_ns / 10**6:,.2f} ms). Will average results from genomic intervals "
                     f"instead of using a weighted mean.",
             log_level=logging.INFO, logger_name=LOGGER)
@@ -2799,7 +2799,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
         for comp in fallback_weights_per_component.keys():
             fallback_weights_per_component[comp] = 1 / n_components
         return fallback_weights_per_component, initial_re, False, 1
-    log(message=f"Successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
+    log(message=f"Genomic interval selection: successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
                 f"{residual_error:.3f} (took {elapsed_time_ns / 10**6:,.2f} ms).", log_level=logging.INFO,
         logger_name=LOGGER)
     if verbose:

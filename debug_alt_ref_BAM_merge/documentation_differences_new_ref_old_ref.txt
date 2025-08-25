@@ -1,0 +1,14 @@
+new ref file:
+accessory_files/hg38.analysisSet_claretbio_novaseqCBM_GC_content_distribution.tsv
+ - the distribution sums up to 100 (new custom ref) instead of 1 (accessory_files/hg38_reference_GC_content_distribution.tsv; original GCparagon ref)
+   |-> this is irrelevant because elements of distribution are normalized (forced to sum up to 1.0)
+ + the singularity image cannot be pulled: singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest && singularity verify gcparagon-ubuntu-22_04-container_latest.sif
+   FATAL:   While pulling library image: error fetching image: image does not exist in the library: bgspiegl/gcparagon/gcparagon-ubuntu-22_04-container:latest (amd64)
+   REASON: the latest version is 0.6.13:
+   singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon_0.6.13-ubuntu-22_04-container:latest && singularity verify gcparagon_0.6.13-ubuntu-22_04-container_latest.sif
+   [UPDATED in README.md; the command works now out of the box]
+ + the automated reference definition does not work (directly used gcparagon command after installation, not the image; the code itself works)
+   [REMOVED pip installation from README.md]
+ + use of softlink and making gcparagon correct_GC_bias.py executable
+   [UPDATED README.md; CHANGED script path resolving in correct_GC_bias.py]
+   [UPDATED the genomic interval selection message such that users won't get confused with GC bias correction vs. the set of GIs used to compute the bias]

@@ -34,8 +34,6 @@ from typing import Union, Dict, List, Tuple, Optional, Any
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 OneOf = Union
 
-# TODO: add hg19 cmdline flag specifying hg19 resources instead of hg38
-
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
@@ -1080,9 +1078,9 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     simulated_attributes_matrix_downscaled = simulated_attributes_matrices_sum / n_sims  # genome-wide averaged counts
     save_matrix_to_txt(matrix=simulated_attributes_matrix_downscaled, float_data_precision=precision, verbose=True,
                        filename=f'{sample_id}_simulated_attributes_matrix.txt.gz', output_dir=tmp_dir, gzipped=True,
-                       max_frag_length=max_frag_len, min_frag_length=min_frag_len)
+                       max_frag_length=max_frag_len, min_frag_length=min_frag_len)  # 115 kb for precision = 6
     observed_attributes_matrix_sum_path = save_matrix_to_txt(
-        matrix=observed_attributes_matrices_sum, output_dir=tmp_dir, gzipped=True, verbose=True,
+        matrix=observed_attributes_matrices_sum, output_dir=tmp_dir, gzipped=True, verbose=True,   # RUN: observed_attributes_matrices_sum.sum() = 5037771.0
         filename=f'{sample_id}_observed_attributes_matrix.txt.gz', float_data_precision=precision,
         report_saved_path=True, max_frag_length=max_frag_len, min_frag_length=min_frag_len)  # there is 1 row too many!
     if output_all:
@@ -1154,7 +1152,8 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     deleted_rows, deleted_columns = range(0), range(0)
     if plot_result:
         # plot fragment length distribution
-        plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],  # TODO: DEBUG issue #19 - try out passing the matrix itself here not the file
+        # using matrix_file_list because function was adapted to support plotting multiple fragment length distributions in one plot
+        plot_fragment_length_dists(matrix_file_list=[observed_attributes_matrix_sum_path],
                                    out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True, show_figure=False,
                                    strip_xaxis_end_zeros=True, parent_logger=LOGGER, sample_id=sample_id)
         if focus_nondefault_values is not None:  # create focused plots
@@ -2929,9 +2928,14 @@ def main() -> int:
         print_warnings.append(f"Custom reference genome file specified. Thought we would use the "
                               f"'{reference_genome_build}' reference genome build but will use user-defined file "
                               f"instead. The 2bit reference genome file is specified by default via the "
-                              f"-rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version of "
+                              f"-rgb/--reference-genome-build flag for hg19 and hg38 "
+                              f"(GCA_000001405.15_GRCh38, converted to UCSC formats meaning standard "
+                              f"chromosomes are named 'chr1' etc, not '1'). Make sure the build version of "
                               f"your custom reference genome file matches the specifications for -c/--intervals-bed "
-                              f"and -rgcd/--reference-gc-content-distribution-table!")
+                              f"and -rgcd/--reference-gc-content-distribution-table! "
+                              f"Any added/missing scaffolds/alt contigs and mismatches in names will cause "
+                              f"GCparagon to fail, at least during the tagging procedure when these contigs "
+                              f"are reached and not found in the 2bit reference genome file.")
     if genomic_intervals_bed_file is None:
         if not PREDEFINED_1MBP_INTERVALS_TO_PROCESS[reference_genome_build].is_file():
             print("cannot proceed - no genomic intervals BED file defined and default expected file not present under "

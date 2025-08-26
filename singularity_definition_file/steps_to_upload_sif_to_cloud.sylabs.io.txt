@@ -1,0 +1,18 @@
+# first you need to sign the image:
+singularity sign <YOUR_IMAGE_NAME>.sif
+
+# in your remote endpoint, an active (not expired!) access token must exist!
+# go to your remote endpoint, log in and check it! (like https://cloud.sylabs.io/tokens)
+# tokens created on sylabs.io are valid for 30 days only. So you will likely have to create a new one.
+# to activate the token for your remote endpoint locally, run:
+singularity remote login
+# then say you want to replace he token, if any already exists (might be expired) by typing:
+y
+# then paste the created access token using ctrl + v and press enter to confirm!
+
+# In case no remote endpoint is available/has never been defined, you can add a remote endpoint using:
+ singularity remote add <REMOTE_ENDPOINT>
+# and follow other instructions on the command line. Don't forget to add an authentication token!
+
+# Now, you should be able to push the sif to your remote endpoint (which must be active):
+ singularity push gcparagon_<VERSION>-ubuntu-22_04-container_latest.sif library://bgspiegl/gcparagon/gcparagon_<VERSION>-ubuntu-22_04-container:latest

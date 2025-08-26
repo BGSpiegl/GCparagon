@@ -268,7 +268,7 @@ After successful setup, you should be able to run GCparagon via `python3 src/GCp
 Make the python script executable: `chmod +x src/GCparagon/correct_GC_bias.py`
 
 To be able to run GCparagon without the path definition, you can make a softlink in your user's binary directory with the following command:
-`ln -s /ABSOLUTE_PATH_TO/src/GCparagon/correct_GC_bias.py /usr/local/bin/gcparagon`
+`sudo ln -s /ABSOLUTE_PATH_TO/src/GCparagon/correct_GC_bias.py /usr/local/bin/gcparagon`
 (replace `/ABSOLUTE_PATH_TO/` with the actual path to your GCparagon repo clone)
 
 The softlink should be in a directory registered in your PATH variable.

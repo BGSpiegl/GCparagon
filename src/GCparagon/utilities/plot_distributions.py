@@ -51,6 +51,8 @@ def get_cmdline_args():
 
 def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
     fragment_occurrences_per_sample = None
+    fragment_occurrences_per_sample_list = []
+    sample_names = []
     for matrix_file in file_list:
         sample_id = '_'.join(Path(matrix_file).stem.split('_')[:2])
         try:
@@ -59,31 +61,12 @@ def load_txt_to_dataframe(file_list: List[str]) -> pd.DataFrame:
                 continue
         except AttributeError:  # first sample -> fragment_occurrences_per_sample = None
             pass
+        sample_names.append(sample_id)
         pd_matrix, frag_len_range = load_txt_to_matrix_with_meta(filename=matrix_file, loading_logger=None)
-        len_max = frag_len_range.stop  # 550 bp default
-        try:
-            total_max = max(len_max, fragment_occurrences_per_sample.index.stop)
-        except AttributeError:  # first sample
-            total_max = len_max
-        # check if first sample
-        if fragment_occurrences_per_sample is None:
-            fragment_occurrences_per_sample = pd.DataFrame(np.zeros(len_max), columns=[sample_id])
-            fragment_occurrences_per_sample[sample_id] = pd.Series(
-                list(pd_matrix.sum(axis=1)), index=range(frag_len_range.start, len_max + 1))  # include max. f-length!
-            fragment_occurrences_per_sample = fragment_occurrences_per_sample.fillna(0)
-            continue
-        # check if new sample has more fragment length entries than current DataFrame and append values if necessary
-        if fragment_occurrences_per_sample.index.stop + 1 < len_max:  # update
-            additional_flengths = {}.fromkeys(fragment_occurrences_per_sample.columns)
-            for sample_name in additional_flengths.keys():
-                additional_flengths[sample_name] = np.zeros(len_max-fragment_occurrences_per_sample.index.stop)
-            fragment_occurrences_per_sample.append(pd.DataFrame(additional_flengths), ignore_index=True)  # + zero rows
-        # add additional sample values (new column)
-        new_sample_values = pd.DataFrame(np.zeros(total_max), columns=[sample_id])
-        new_sample_values[sample_id] = pd.Series(
-            list(pd_matrix.sum(axis=1)), index=range(frag_len_range.start, len_max + 1))  # include max. f-length!
-        new_sample_values = new_sample_values.fillna(0)
-        fragment_occurrences_per_sample[sample_id] = new_sample_values
+        fragment_occurrences_per_sample_list.append(pd.Series(
+            list(pd_matrix.sum(axis=1)), index=range(frag_len_range.start, frag_len_range.stop + 1)))
+    fragment_occurrences_per_sample = pd.concat(fragment_occurrences_per_sample_list, axis=1)
+    fragment_occurrences_per_sample.columns = sample_names
     return fragment_occurrences_per_sample
 
 
@@ -124,12 +107,12 @@ def load_txt_to_matrix_with_meta(filename: OneOf[str, Path], loading_logger: Opt
     return statistic_matrix, fragment_lengths
 
 
-def plot_fragment_length_dists(matrix_data_frame: Optional[pd.DataFrame], sample_id: Optional[str],
-                               matrix_file_list: Optional[List[OneOf[str, Path]]], out_dir_path: Path, image_formats=('png',),
+def plot_fragment_length_dists(matrix_file_list: Optional[List[OneOf[str, Path]]], sample_id: Optional[str],
+                               out_dir_path: Path, matrix_data_frame: Optional[pd.DataFrame] = None, image_formats=('png',),
                                parent_logger: Optional[str] = None, fig_width=1500, fig_height=1000, fig_fontsize=24,
                                expected_fragment_lengths=(167, 167+149), normalize_to_dataset_size=True,
                                strip_xaxis_end_zeros=True, show_figure=False):
-    if matrix_data_frame is None:  # load from file list!
+    if matrix_data_frame is None:  # in this case, load from file list
         if matrix_file_list is None:
             log(message="either a matrix in pd.DataFrame format or a list of matrix file paths must be "
                         "supplied.", log_level=logging.ERROR, logger_name=parent_logger, flush=True, close_handlers=True)

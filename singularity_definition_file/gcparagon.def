@@ -15,12 +15,14 @@ From: ubuntu:22.04
 
     # downloading GCparagon
     mkdir /opt/github && cd /opt/github
-    git clone https://github.com/BGSpiegl/GCparagon.git && cd GCparagon
+    git clone -b main --single-branch https://github.com/BGSpiegl/GCparagon.git && cd GCparagon
     conda env create -f conda_env/GCparagon_py3.10_env.yml -y
     conda activate GCparagon
-    two_bit_ref_url="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.2bit"
+    two_bit_ref_url_hg38="https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/hg38.analysisSet.2bit"
+    two_bit_ref_url_hg19="https://hgdownload.soe.ucsc.edu/goldenPath/hg19/bigZips/hg19.2bit"
     cd src/GCparagon/2bit_reference/
-    curl -O "${two_bit_ref_url}"
+    curl -O "${two_bit_ref_url_hg38}"
+    curl -O "${two_bit_ref_url_hg19}"
     cd /opt/github/GCparagon
     python -m pip install .
 

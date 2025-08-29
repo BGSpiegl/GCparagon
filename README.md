@@ -80,7 +80,7 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.7
+Latest version is v0.6.14
 
 
 ### How to use cfDNA fragment weights
@@ -134,7 +134,7 @@ As an alternative, a singularity image can be created (using the singularity exe
 environment from OUTSIDE conda) using the [gcparagon.def](singularity_definition_file/gcparagon.def) singularity 
 definitions file, OR pulled from cloud.sylabs.io and verified using:
 
-`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon_0.6.13-ubuntu-22_04-container:latest && singularity verify gcparagon_0.6.13-ubuntu-22_04-container_latest.sif`
+`singularity pull --arch amd64 library://bgspiegl/gcparagon/gcparagon_0.6.14-ubuntu-22_04-container:latest && singularity verify gcparagon_0.6.14-ubuntu-22_04-container_latest.sif`
 
 
 Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
@@ -143,7 +143,7 @@ Note: this requires a working installation of singularity. The easiest way to us
 
 GCparagon can then be run from the singularity container file like this:
 
-`singularity run gcparagon_0.6.13-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
+`singularity run gcparagon_0.6.14-ubuntu-22_04-container_latest.sif <YOUR PARAMETERS HERE>` 
 
 NOTE: do not run singularity commands from within the conda environment!
 Rather use the absolute path to the singularity executable from outside conda:
@@ -370,7 +370,7 @@ Concerning the time to output of the correction or bias table,
 **GCparagon was up to 144x but at least 62 times faster than Griffin**.
 When comparing Griffin table output time to duration of GCparagon bias computation and tagged BAM output, 
 GCparagon was up to 31x but at least 18x faster than Griffin.
-The update to GCparagon v0.6.0 resulted in increased FGCD correction and cDoC to Griffin results
+The update to GCparagon v0.6.0 resulted in increased FGCD correction and cDoC (Griffin results comparison)
 but also slightly increased the computation time compared to the v0.5.4 benchmark. 
 
 The GC bias computation time depends linearly on the portion of the input data which is processed.
@@ -469,7 +469,7 @@ Output options:
   -o File, --out-dir File
                         Path to which output is moved from --temporary-directory after each processing step (GC-bias computation, BAM tagging). The directory will be created if it does not
                         exist. Make sure that it is empty if it exists, otherwise the whole directory will be deleted before writing to it in the GC-bias computation step! If none is provided,
-                        a new subdirectory named 'GC_bias_correction_GCparagonv0.6.5' will be created in the input BAM's parent directory and used as output directory. The output for each
+                        a new subdirectory named 'GC_bias_correction_GCparagonv0.6.14' will be created in the input BAM's parent directory and used as output directory. The output for each
                         sample will be gathered in a subdirectory of this --out-dir which will be named after the sample. The output directory may be located on slow hardware such as a USB
                         drive or a network storage since everything is stored in --temporary-directory first and moved after completion of all defined phases of the GC bias computation.
   -tmp File, --temporary-directory File

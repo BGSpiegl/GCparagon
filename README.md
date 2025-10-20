@@ -1,5 +1,3 @@
-# GCparagon
-
 ```
 _____________________________________________________________________________
 v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
@@ -29,25 +27,33 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 -----------------------------------------------------------------------------
 ```
 
-## Contents:
+# Contents:
 
 -------------------------------------------------------------------------------------------------------------------
 - [Description](#description)
-  - [How to use cfDNA fragment weights](#how-to-use-cfdna-fragment-weights)
-  - [Software Dependencies](#software-dependencies)
-    - [Conda installation](#conda-installation)
-    - [Singularity container](#singularity-container)
+  - [How to use cfDNA Fragment Weights](#how-to-use-cfdna-fragment-weights)
+  - [Installation](#installation)
+    - [Cloning the Repository](#cloning-the-repository) 
+    - [Software Environment](#software-environment)
+      - [RECOMMENDED - Using the Singularity Container](#recommended---using-the-singularity-container)
+        - [Installing Singularity](#installing-singularity)
+        - [Recommended - Downloading the GCparagon Singularity Image](#recommended---downloading-the-gcparagon-singularity-image)
+        - [Not Recommended - Building the GCparagon Singularity Image](#not-recommended---building-the-gcparagon-singularity-image)
+        - [Running GCparagon as a Singularity Container](#running-gcparagon-as-a-singularity-container)
+        - [Granting Access to Folders](#granting-access-to-folders)
+      - [NOT RECOMMENDED - Conda Installation](#not-recommended---conda-installation)
+        - [Conda Installation - Required Accessory Files](#conda-installation---required-accessory-files)
+      - [Optional Files](#optional-files)
   - [Hardware Requirements](#hardware-requirements)
   - [Repository Structure](#repository-structure)
-  - [Required Files](#required-files)
-
-
-- [Installation](#installation)
-  - [Singularity Installation Procedure](#singularity-installation-procedure)
-  - [Conda Installation Procedure](#conda-installation-procedure)
 
 - [Usage](#usage)
   - [Examples](#examples)
+    - [Basic](#basic)
+    - [Output Tagged BAM File](#output-tagged-bam-file)
+    - [Select Reference Genome Build](#select-reference-genome-build)
+    - [Temporary Directory](#temporary-directory)
+    - [Further Options](#further-options)
   - [Performance](#performance)
   - [Full Commandline Description](#full-commandline-description)
   - [Parameter Presets](#parameter-presets)
@@ -55,15 +61,17 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 - [Result of GC Bias Correction](#result-of-gc-bias-correction)
   - [Output](#output)
   - [Genomic Region Preselection](#genomic-region-preselection)
-  - [Optimization of Combining Preselected Regions](#optimization-of-combining-results-from-preselected-regions)
-  - [Validation](#validation-v060)
+  - [Optimization of Combining Results from Preselected Regions](#optimization-of-combining-results-from-preselected-regions)
+  - [Validation v0.6.0+](#validation-v060)
 
 - [Copyright](#copyright)
+
 - [Software License](#software-license)
+
 - [Contributors](#contributors)
 
 
-## Description
+# Description
 
 -------------------------------------------------------------------------------------------------------------------
 
@@ -84,10 +92,10 @@ The latter can be loaded in Python using the `numpy.loadtxt()` function or the `
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.13
+Latest version is v0.6.14
 
 
-### How to use cfDNA fragment weights
+## How to use cfDNA Fragment Weights
 Instead of counting fragment occurrences or their attributes, the user can sum the GC bias correction weights of these 
 fragments to obtain an unbiased result for signal extraction. An example could be depth of coverage computation for 
 specific groups of transcription start sites as shown for samples B01, C01, P01, and H01 in the section 
@@ -95,15 +103,128 @@ specific groups of transcription start sites as shown for samples B01, C01, P01,
 To this end, Faruk Kapidzic created a Pysam fork which can directly use the tags.
 
 
-### Software Dependencies
+# Installation
 
-- UNIX system (server or HPC cluster recommended)
+-------------------------------------------------------------------------------------------------------------------
+
+GCparagon can be run from the repository code `python3 GCparagon.py` using an appropriate Python 3.10+ 
+software environment containing the [dependencies](#software-dependencies).
+
+The easiest way to set up the software environent is by useing singularity: [Using the Singularity container](#using-the-singularity-container)
+
+IF someone does not want to or cannot use the singularity image, the software environment can also be set up via the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file in the 
+[conda_env](conda_env) subdirectory by following the installation steps described [below](#not-recommended---conda-installation).
+
+NOTE: several issues with the conda installation have been reported on different systems and with different versions of conda. 
+The maintainer provides a singularity image which should work out of the box. 
+Thus, to avoid troubles with the installation, it is highly recommended to use the singularity image for running GCparagon and NOT to directly run it in the conda environment!
+
+An issue was reported for Ubuntu 20 where the conda/mamba solvers could not create the environment by 
+directly using the YAML file.
+If you experience the same issue, it can possibly be solved by manually installing dependencies one-by-one.
+
+For the conda installation, the author recommends to use [miniconda][miniconda install].
+
+For a detailed list of dependencies (manual installation, not recommended!) please see 
+[Software Environment](#software-environment)
+
+
+## Cloning The Repository
+First, move into the directory where you want to download the GCparagon code to and clone the [GitHub][github repo] 
+repository:
+
+`git clone -b main --single-branch https://github.com/BGSpiegl/GCparagon`
+
+After making sure that conda is available on your system and up to date, move inside the cloned repository
+
+`cd GCparagon`
+
+and create the GCparagon software environment using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) 
+file:
+
+`conda env create -f conda_env/GCparagon_py3.10_env.yml` 
+
+This environment contains the recommended singularity software for running GCparagon as a singularity container.
+For more details see [RECOMMENDED - Using the Singularity Container](#recommended---using-the-singularity-container).
+
+## Software Environment
+To run GCparagon, use a UNIX-based system (server or HPC cluster recommended).
 
 The GCparagon commandline tool was tested on an Ubuntu 20.04.5 LTS and Ubuntu 22.04.4 LTS operating systems,
-using a Python3.10 conda environment.
+using the Python3.10 conda environment described further down.
+It is highly recommended to use GCparagon through the singularity image (see below).
 
-#### Conda installation
-This software environment can be installed using the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
+
+### RECOMMENDED - Using the Singularity Container
+It is recommended to run GCparagon within a singularity container (another software similar to singularity would be "Apptainer").
+
+#### Installing Singularity
+This requires a working installation of singularity. Singularity can be easily installed via a conda:
+
+`conda install singularity`
+
+You can create a symlink to the singularity executable in your local bin folder:
+
+`sudo ln -s /home/<USERNAME>/miniconda/bin/singularity /usr/local/bin`
+
+After that, singularity is available via the expected `singularity` command.
+
+#### Recommended - Downloading the GCparagon Singularity Image
+A singularity container is started from a singularity image.
+A singularity image of the latest version is created by the maintainer using the [gcparagon.def](singularity_definition_file/gcparagon-mainBranch.def) definitions file. 
+The tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
+directory and verified using a functioning singularity installation:
+
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14-ubuntu-22_04-container:latest && 
+singularity verify gcparagon_0.6.14-ubuntu-22_04-container_latest.sif`
+
+If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
+it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
+use the `remote` command to specify cloud.sylabs.io as remote endpoint to be able to pull the latest GCparagon container 
+(see [here][singularity_remotes]).
+
+#### Not Recommended - Building the GCparagon Singularity Image
+Although NOT recommended, it can be used to build the singularity image anew by the user (e.g., for the purpose of testing in software development).
+
+#### Running GCparagon as a Singularity Container
+GCparagon can then be run WITH RESTRICED ACCESS to your system from the singularity image file like this 
+(from within the image's parent directory):
+
+`singularity run gcparagon.sif <YOUR PARAMETERS HERE>` 
+
+NOTE: do not run singularity commands with the activated conda environment that includes singularity!
+Rather use the absolute path to the singularity executable from with deactivated conda like this:
+
+`/home/<USERNAME>/miniconda/bin/singularity run ...`
+
+Use a soft link like described above to make singularity available on your machine's path.
+
+See [Usage](#usage) for a complete explanation of commandline options.
+
+The default output created by GCparagon is described [here](#result-of-gc-bias-correction).
+There are several options available to alter plotting behaviour or to keep intermediate data created during
+simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output**.
+To deactivate output of the tagged BAM file, use the `--dont-output-bam` flag.
+
+Be mindful of setting the `--temporary-directory` to a reasonable path!
+(i.e. high IOPS hardware if available +
+sufficient storage space available for tagged BAM)
+
+
+#### Granting Access to Folders
+IMPORTANT: programs run from inside Apptainer/SingularityCE images (i.e., GCparagon) do not have access to all 
+directories of your file system per default. Examples of exceptions are the user's `$HOME` directory, `\sys`, `\proc`, 
+and `\var\tmp`. To make an inaccessible path available to the GCparagon image, follow the steps detailed in the 
+[Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
+(see the `--bind` Examples).
+
+An example of using your local directories under `/mnt` would be:
+
+`singularity run -B /mnt gcparagon.sif <YOUR PARAMETERS HERE INCLUDING PATHS UNDER MNT>` 
+
+
+### NOT RECOMMENDED - Conda Installation
+Although not recommended, the software environment for running GCparagon in can be installed using the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
 
 Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
   - samtools=1.16
@@ -130,57 +251,55 @@ Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, t
   - matplotlib
   - singularity
 
-You can create the environment using the following command:
+Inside the GCparagon repository directory, you can create the environment using the following command:
 
-`conda env create -f GCparagon_py3.10_env.yml`
+`conda env create -f conda_env/GCparagon_py3.10_env.yml`
 
-#### Singularity container
-As an alternative, a singularity image can be either downloaded or created (using the singularity executable 
-from the aforementioned conda environment from OUTSIDE conda) using the 
-[gcparagon.def](singularity_definition_file/gcparagon-mainBranch.def) singularity definitions file. 
-A tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
-directory and verified using a functioning singularity installation:
+Activate the new environment:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.12-ubuntu-22_04-container:latest && 
-singularity verify gcparagon_0.6.12-ubuntu-22_04-container_latest.sif`
-
-Note: this requires a working installation of singularity. The easiest way to use singularity is via conda:
-
-`conda install singularity`
-
-If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
-it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
-use the `remote` command to specify cloud.sylabs.io as remote endpoint to be able to pull the latest GCparagon container 
-(see [here][singularity_remotes]).
-
-GCparagon can then be run from the singularity container file like this 
-(from within the singularity image file's parent directory):
-
-`singularity run gcparagon.sif <YOUR PARAMETERS HERE>` 
-
-NOTE: do not run singularity commands with the activated conda environment that includes singularity!
-Rather use the absolute path to the singularity executable from outside conda like this:
-
-`/home/<USERNAME>/miniforge-pypy3/bin/singularity run ...`
-
-As a workaround, you can create a symlink to that executable in your local bin folder:
-
-`sudo ln -s /home/<USERNAME>/miniforge-pypy3/bin/singularity /usr/local/bin`
-
-After that, singularity is available via the expected `singularity` command.
-
-IMPORTANT: programs run from inside Apptainer/SingularityCE images (i.e., GCparagon) do not have access to all 
-directories of your file system per default. Examples of exceptions are the user's `$HOME` directory, `\sys`, `\proc`, 
-and `\var\tmp`. To make an inaccessible path available to the GCparagon image, follow the steps detailed in the 
-[Apptainer documentation][apptainer_files_doc] or the [SingularityCE documentation][singularity_binds_and_mounts_doc] 
-(see the `--bind` Examples).
-
-An example of using your local directories under `/mnt` would be:
-
-`singularity run -B /mnt gcparagon.sif <YOUR PARAMETERS HERE INCLUDING PATHS UNDER MNT>` 
+`conda activate GCparagon`
 
 
-### Hardware Requirements
+#### Conda Installation - Required Accessory Files
+If the user decides to not use the singularity image, the following accessory files have to be downloaded.
+GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
+specification conforming input BAM file. All contigs/scaffolds that are present in the input BAM file MUST be present in the 2bit reference file!
+
+The hg38 standard analysis set reference genome (linear) can be downloaded using the 
+[EXECUTE_reference_download_hg38.sh](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) bash script.
+It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
+[https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
+
+WARNING: if you use any other version like additional scaffolds/contigs like HLA, you need to create a 2bit version of 
+that reference (linear!) and pass it to the script via the commandline parameter `-rtb/--two-bit-reference-genome`!
+GCparagon will crash during alignment tagging if it encounters a scaffold/contig in your input BAM file which is not contained in the 2bit reference.
+
+Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
+containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
+(execute [EXECUTE_reference_download_hg19.sh](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download.sh) to download the hg19 2bit reference)
+
+GCparagon uses preselected genomic regions for GC bias computation. These are provided for hg38 
+via the [BED file](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
+Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
+
+
+### Optional Files
+To gain access to the four BAM files used in the publication, go to EGA, create an account and ask for access to dataset
+[EGAS00001006963].
+
+To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
+first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
+
+After downloadingthe hg38 reference genome (see installation), you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
+**within the activated conda environment**:
+
+`bash driver_scripts/drv_compute_GC_presets.sh`
+
+You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
+50 minutes per sample.
+
+
+## Hardware Requirements
 
 - 12 cores are used per default; more cores are better; can be run on a single core
 - for 12 cores: \> 8.5 GiB of RAM, 16 GB recommended (max. observed memory usage for the preset 2 computation was 8.5 GiB @ 24 cores. 
@@ -191,7 +310,7 @@ tagging procedure
 Computation time might increase significantly if hardware requirements are not met.
 Computation may terminate if drive space and/or RAM size requirements are not met!
 
-### Repository Structure
+## Repository Structure
 
 Instructions for FastA reference genome sequence download can be found 
 [here](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) [and here for hg19](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download_hg19.sh).
@@ -219,125 +338,15 @@ Results from the [profile_command.py](src/GCparagon/profile_command.py) script a
 [preset_computation/benchmark_results](preset_computation/benchmark_results).
 
 
-### Required Files
-
-GCparagon requires a 2bit version of the reference genome sequence which was used to create the aligned, SAM format 
-specification conforming input BAM file.
-The reference genome used to create the 4 BAM files in plots can be downloaded using the 
-[EXECUTE_reference_download_hg38.sh](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) bash script.
-It downloads the hg38 lowercase-masked standard analysis set reference file in 2bit format from 
-[https://hgdownload.soe.ucsc.edu][hg38_std_analysis_set].
-
-Alternatively, you can download a hg38 reference genome file in FastA.gz format which is converted into the 2bit format
-containing decoys from NCBI's FTP server at [ftp.ncbi.nlm.nih.gov][hg38_decoy_analysis_set]
-(execute 
-[EXECUTE_reference_download_hg19.sh](src/GCparagon/2bit_reference/EXECUTE_hg19_reference_download.sh) to download the hg19 2bit reference)
-
-GCparagon uses preselected genomic regions for GC bias computation. These are provided for hg19 and for hg38 
-via [BED file](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed).
-Please see [Genomic Region Preselection](#genomic-region-preselection) section for more information.
-
-
-
-
-## Installation
-
--------------------------------------------------------------------------------------------------------------------
-
-GCparagon can be used out of the box by running `python3 GCparagon.py` using an appropriate Python 3.10+ 
-software environment with all [dependencies](#software-dependencies) installed. It is recommended though to install 
-software dependencies via the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file in the 
-[conda_env](conda_env) subdirectory by following the installation steps described below.
-
-NOTE: an issue was reported for Ubuntu 20 where the conda/mamba solvers could not create the environment by 
-directly using the YAML file.
-If you experience the same issue, it can possibly be solved by manually installing dependencies one-by-one.
-
-The author recommends to use [mamba/micromamba][mamba install] for environment creation/resolving of dependencies.
-In case you are using conda version 22 or above, your installation can be easily upgraded with the [mamba solver][libmamba solver].
-Mamba can be added to an older existing [conda installation][conda install].
-
-For a detailed list of dependencies (manual installation, not recommended!) please go to 
-[Software Dependencies](#software-dependencies)
-
-### Singularity Installation Procedure
-See here: [Singularity container](#singularity-container)
-
-### Conda Installation Procedure
-First, move into the directory where you want to store the GCparagon code and clone the [GitHub][github repo] 
-repository:
-
-`git clone -b main --single-branch https://github.com/BGSpiegl/GCparagon`
-
-After making sure that conda is available on your system and up to date, move inside the cloned repository
-
-`cd GCparagon`
-
-and create the GCparagon software environment using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) 
-file:
-
-`mamba env create -f conda_env/GCparagon_py3.10_env.yml` 
-
-OR
-
-`conda env create -f conda_env/GCparagon_py3.10_env.yml`
-
-Activate the new environment:
-
-`conda activate GCparagon`
-
-Download the 2bit reference files - if `pip install .` is used in the next step, both the hg19 and the hg38 2bit reference files MUST be 
-already available! Download them using the information provided in `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg38.sh` 
-and `src/GCparagon/2bit_reference/EXECUTE_reference_download_hg19.sh`!
-
-Run `pip` to make GCparagon directly executable from the 
-console:
-
-`pip install .`
-
-After successful setup, GCparagon should be available via the `gcparagon` command. For a detailed help, type:
-`gcparagon --help`
-
-This will be added to the setup in a future version, if possible.
-
-See [Usage](#usage) for a complete explanation of commandline options.
-Default output created by GCparagon is described [here](#result-of-gc-bias-correction).
-There are several options available to alter plotting behaviour or to keep intermediate data created during
-simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output**.
-To activate BAM output, use the `--output-bam` flag.
-
-Be mindful of setting the `--temporary-directory` to a reasonable path!
-(I.e. high IOPS hardware if available +
-sufficient storage space available for tagged BAM etc.)
-
-To gain access to the four BAM files used in the publication, go to EGA, create an account and ask for access to dataset
-[EGAS00001006963].
-
-To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
-first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
-The hg38 reference genome used to create the 4 BAM files in plots can be downloaded using the 
-[EXECUTE_reference_download.sh](src/GCparagon/2bit_reference/EXECUTE_hg38_reference_download.sh) bash script:
-
-`bash src/GCparagon/2bit_reference/EXECUTE_reference_download.sh`
-
-After the download has finished, you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
-**within the activated conda environment**:
-
-`bash driver_scripts/drv_compute_GC_presets.sh`
-
-You might want to do this inside a tmux session from which you can detach. Preset 3 computations will take around 
-50 minutes for each sample.
-
-
-## Usage
+# Usage
 
 -------------------------------------------------------------------------------------------------------------------
 Run the GCparagon.py script with installed [dependencies](#software-dependencies) using an appropriate Python3.10+ 
 interpreter.
 
-### Examples
+## Examples
 
-#### Basic
+### Basic
 The most basic call after downoading the 2bit version of the reference genome is as follows:
 
 `python3 src/GCparagon/correct_GC_bias.py --bam <INPUT_BAM>`
@@ -350,12 +359,12 @@ OR:
 This minimalistic setup uses the parent directory of the input BAM fle as output directory.
 The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
 
-#### Output tagged BAM file
+### Output Tagged BAM File
 To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
 
 `gcparagon --bam <INPUT_BAM> --output-bam`
 
-#### Select reference genome build
+### Select Reference Genome Build
 To use hg19 reference genome-specific files for the bias computation, set the `-rgb`/`--reference-genome-build` parameter:
 
 `gcparagon --bam <INPUT_BAM> --reference-genome-build hg19`
@@ -367,7 +376,7 @@ The option sets the following three parameters:
 
 These parameters can be redefined separately.
 
-#### Temporary directory
+### Temporary Directory
 It is recommended to set `--temporary-directory` to be located on SSD hardware:
 
 `gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
@@ -376,7 +385,7 @@ If not set, the temporary directory will default to the output of Python's `temp
 are saved to the temporary directory first before being moved to the output directory after successful
 script execution. 
 
-#### Further options
+### Further Options
 Rich customization options are available:
 To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
 
@@ -389,7 +398,7 @@ To get a quick estimate of the GCbias, the user can set a lower preset
 The `--preset 2` setup is recommended though.
 
 
-### Performance
+## Performance
 
 A benchmark of GCparagon, preset2 (v0.5.5) against the Griffin algorithm highlighted the superior computation speed of GCparagon:
 
@@ -442,7 +451,7 @@ Always make sure that there is enough space on the drive(s) containing the tempo
 directory before running GCparagon with `--output-bam`!
 
 
-### Full Commandline Description
+## Full Commandline Description
 
 ```
 The following argument is required: -b/--bam
@@ -486,7 +495,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                                                              
 -----------------------------------------------------------------------------
                                                                              
-             GCparagon (v0.6.12) maintained by @BGSpiegl
+             GCparagon (v0.6.14) maintained by @BGSpiegl
                  Copyright (c) 2023 Benjamin Spiegl
             GitHub: https://github.com/BGSpiegl/GCparagon
 
@@ -929,7 +938,7 @@ Post-processing options:
 ```
 
 
-### Parameter Presets
+## Parameter Presets
 Parameter presets are defined using `-p`/`--preset`.
 The following table shows pre-defined parameters for each preset along with the average computation time across the 4 
 samples from [EGAS00001006963].
@@ -944,7 +953,7 @@ samples from [EGAS00001006963].
 *depends on DoC of BAM file
 
 
-## Result of GC Bias Correction
+# Result of GC Bias Correction
 
 -------------------------------------------------------------------------------------------------------------------
 GC bias correction results using default parameter preset 2 (5–10 min) of two human cfDNA samples (paired-end WGS, 
@@ -1006,7 +1015,7 @@ for samples showing a positive/negative GC bias (P01/B01) with the most extreme 
 of P01 which shows the most intense GC bias (+5.0% GC).
 
 
-### Output
+## Output
 
 Default outputs are:
 
@@ -1045,7 +1054,7 @@ Default outputs are:
 ![p01_w_gc_ol_sm](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/preset_computation/target_output-preset2/P01/P01.W_gc_outliers_removed_smoothed.heatmap.png?raw=true)
 
 
-### Genomic Region Preselection
+## Genomic Region Preselection
 
 The code uses up to 2,342 
 [preselected 1 Mb genomic intervals](src/GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_33pcOverlapLimited.FGCD.bed) of 
@@ -1102,7 +1111,7 @@ the diversity of fragment GC content distributions among preselected genomic int
 [05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/05-GI-preselection_visualize_preselected_intervals_GC_content_distributions_hg19.py)
 
 
-![hg19_GI_preselection](https://github.com/BGSpiegl/GCparagon/blob/dev-hg19ExclusionList/src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/hg19_FGCD_intervals_vs_reference/GC_content_reference_genome_vs_preselected_intervals.51bins.png?raw=true)
+![hg19_GI_preselection](https://github.com/BGSpiegl/GCparagon/blob/main/src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/hg19_FGCD_intervals_vs_reference/GC_content_reference_genome_vs_preselected_intervals.51bins.png?raw=true)
 
 It is recommended to use at least the ENCODE exclusion list to restrict genomic interval preselection.
 The size of preselected genomic intervals should be uniform and fit the application (i.e., larger genomic intervals for 
@@ -1120,7 +1129,7 @@ across the whole genome, and additionally for two chromosomes, is provided
 [here](src/GCparagon-AccessoryFiles/genomic_interval_preselection-shifted16x_hg19/IGV_composite_preselected_intervals_hg38.png).
 
 
-### Optimization of Combining Results from Preselected Regions
+## Optimization of Combining Results from Preselected Regions
 From v0.6.0 on, fragment attribute counts from preselected genomic intervals are combined using a linear combination 
 such that their simulated cfDNA fragment GC content distribution approximates the FGCD of the reference genome without 
 dropping information gathered from individual regions. The range of weights from which the linear combination of 
@@ -1139,7 +1148,7 @@ a naive combination of GC correction weights:
 ![p01_recons_GC](https://github.com/BGSpiegl/GCparagon/blob/including_EGAS00001006963_results/validation/00_result_plots_preset2_for_readme/P01.GCcontent_RefVsReconstructed.png?raw=true)
 
 
-### Validation v0.6.0+
+## Validation v0.6.0+
 Access the validation code via the [including_EGAS00001006963_results][validation branch]!
 
 To recreate the presented GC correction results, run [this driver script](driver_scripts/drv_compute_GC_presets.sh) 
@@ -1170,20 +1179,20 @@ Some of the validation template scripts must be completed with the appropriate d
 called (see "TODO" comments at the beginning of scripts).
 
 
-## Copyright
+# Copyright
 
 -------------------------------------------------------------------------------------------------------------------
 - Original work on GCparagon.py and accessory code Copyright (c) 2023 Benjamin Spiegl
 - Original work on profile_command.py Copyright (c) 2023 Marharyta Papakina and Benjamin Spiegl
 
-## Software license
+# Software license
 
 -------------------------------------------------------------------------------------------------------------------
 [MIT License](src/GCparagon/LICENSE)
 
 Intended for research use only.
 
-## Contributors
+# Contributors
 
 -------------------------------------------------------------------------------------------------------------------
 - Benjamin Spiegl ([BGSpiegl][github user])
@@ -1213,7 +1222,7 @@ GCparagon uses resources from the [UCSC Genome browser][genome browser]
 [molbiomed graz]: https://www.medunigraz.at/en/research-centers-and-institutes/diagnostic-and-research-center-for-molecular-biomedicine
 [humgen graz]: https://humangenetik.medunigraz.at/en/
 [mug]: https://www.medunigraz.at/en/
-[mamba install]: https://mamba.readthedocs.io/en/latest/installation.html
+[miniconda install]: https://www.anaconda.com/docs/getting-started/miniconda/install
 [conda install]: https://docs.conda.io/projects/conda/en/latest/user-guide/install/linux.html
 [hg38_std_analysis_set]: https://hgdownload.soe.ucsc.edu/goldenPath/hg38/bigZips/analysisSet/
 [hg38_decoy_analysis_set]: https://ftp.ncbi.nlm.nih.gov/genomes/all/GCA/000/001/405/GCA_000001405.15_GRCh38/seqs_for_alignment_pipelines.ucsc_ids/

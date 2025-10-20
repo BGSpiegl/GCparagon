@@ -5,7 +5,7 @@ from setuptools import setup, find_namespace_packages
 
 setup(
     name='GCparagon',
-    version='0.6.13',
+    version='0.6.14',
     description='commandline tool to correct GC bias in cfDNA WGS data',
     author='Benjamin Spiegl',
     author_email='benjamin.spiegl@medunigraz.at',

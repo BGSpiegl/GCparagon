@@ -38,7 +38,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 13
+PATCH_NUMBER = 14
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -499,13 +499,10 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                   'attribute distributions and computation masks are plotted for all simulations then.')
     output_args.add_argument('-k', '--keep-interval-data', dest='keep_interval_data', action='store_true',
                              help='Optional flag which can be used to save intermediate data per genomic interval.')
-    output_args.add_argument('-ob', '--output-bam', dest='output_corrected_bam', action='store_true',
-                             help='Optional flag to activate writing of the mappability-correction and GC-correction-'
-                                  'weights-tagged BAM file AFTER COMPUTING BIASES (--tag-only flag is not set), either '
-                                  'using the statistics computed from the input BAM file or a correction weights '
-                                  'matrix specified via --correction-weights. Is implicit if --tag-only is used. '
-                                  "WARNING: the output BAM won't contain unaligned reads! If you want to retain the "
-                                  "unaligned reads, set the '--output-unaligned-reads' flag!")
+    output_args.add_argument('-dob', '--dont-output-bam', dest='dont_output_corrected_bam', action='store_true',
+                             help='Optional flag to deactivate writing of the GC-correction-weights-tagged BAM file '
+                                  'AFTER COMPUTING BIASES (--tag-only flag is not set). Is implicit if --tag-only is '
+                                  "used.")
     output_args.add_argument('-our', '--output-unaligned-reads', dest='output_unaligned_reads', action='store_true',
                              help='Optional flag to activate writing of unaligned reads to a separate BAM file. '
                                   'Per default, unaligned reads are not output. Setting this flag '
@@ -2929,7 +2926,7 @@ def main() -> int:
     plot_result = cmd_args.plot_result
     output_simulation_results = cmd_args.output_simulation_results
     keep_interval_data = cmd_args.keep_interval_data
-    output_corrected_bam = cmd_args.output_corrected_bam
+    output_corrected_bam = not cmd_args.dont_output_corrected_bam
     floating_point_precision = cmd_args.floating_point_precision
     gc_tag_name = cmd_args.gc_tag_name
     write_updated_bad_intervals_library = cmd_args.write_updated_bad_intervals_library

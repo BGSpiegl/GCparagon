@@ -405,9 +405,17 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
     processing_args.add_argument('-ucmaf', '--unclipped-min-aln-fraction', dest='min_unclipped_aln_fraction',
                                  default=DEFAULT_MIN_UNCLIPPED_ALN_FRACTION, type=float, metavar='Float',
                                  help='This parameter defines the minimum unclipped fraction of an alignment to be '
-                                      'counted in the observed fragment attributes matrix O_gc. This might affect how '
-                                      'many small fragments are observed and effectively corrected. [ DEFAULT: '
-                                      f'{DEFAULT_MIN_UNCLIPPED_ALN_FRACTION} ]')
+                                      'counted in the observed fragment attributes matrix O_gc. This affects if '
+                                      'extensively (soft-)clipped small fragments are observed and effectively '
+                                      'also if they are corrected. In case the fragment length distribution does '
+                                      'not look like you would expect for shorter fragments, you might want to '
+                                      'lower this value (or correctly trim technical sequences from your reads). '
+                                      'In case your read length is much higher than the shortest fragment you '
+                                      'want to include in your analysis, please look at overrepresented sequences '
+                                      'and try to trim these properly before alignment. Otherwise, GCparagon might '
+                                      'automatically ignore them because they become indistinguishable from '
+                                      'template-switching artifacts (chimeric reads). '
+                                      f'[ DEFAULT: {DEFAULT_MIN_UNCLIPPED_ALN_FRACTION} ]')
     processing_args.add_argument('-dw', '--default-weight', default=DEFAULT_WEIGHT, type=float,
                                  dest='default_fragment_weight',
                                  help='Parameter redefines the weight which is assigned to fragments with fragment '

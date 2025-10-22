@@ -3278,7 +3278,7 @@ def main() -> int:
                 if compute_bias:  # add separation line in this case for prettier output
                     log(message="---------------------------------------------------------------------------------",
                         log_level=logging.INFO, logger_name=LOGGER)
-                log(message='GCparagon (adding weights to BAM file) Tagging Started.',
+                log(message='GCparagon Tagging (adding weights to BAM file) Started.',
                     log_level=logging.INFO, logger_name=LOGGER)
                 default_flen_range = range(lower_limit_fragment_length, upper_limit_fragment_length)
                 weights_matrix_for_tagging, flen_range, gc_bas_range = reduce_weights_for_tagging(
@@ -3297,7 +3297,7 @@ def main() -> int:
                 # compute duration of execution and message user
                 computation_end_time = time.localtime()
                 elapsed_time = datetime.timedelta(seconds=time.mktime(computation_end_time) - time.mktime(start_time))
-                log(message='GCparagon (adding weights to BAM file) Finished Successfully. '
+                log(message='GCparagon Tagging (adding weights to BAM file) Finished Successfully. '
                             f"Elapsed time: {elapsed_time} (h:mm:ss)", log_level=logging.INFO, logger_name=LOGGER)
             # # after BAM has been processed successfully, close logger handlers
             # current_logger = logging.getLogger(LOGGER)

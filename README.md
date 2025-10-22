@@ -112,8 +112,9 @@ software environment containing the [dependencies](#software-dependencies).
 
 The easiest way to set up the software environent is by useing singularity: [Using the Singularity container](#using-the-singularity-container)
 
-IF someone does not want to or cannot use the singularity image, the software environment can also be set up via the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file in the 
+IF someone does not want to or cannot use the singularity image, the software environment can also be set up via the provided [GCparagon_py3.10_env_lenient.yml](conda_env/GCparagon_py3.10_env_lenient.yml) file in the 
 [conda_env](conda_env) subdirectory by following the installation steps described [below](#not-recommended---conda-installation).
+(if you are experiencing problems with building your environment or are using Ubuntu 22, it is recommended to use the env file [GCparagon_Ubuntu22_py3.10_for_sif_creation.yml](conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml) instead):
 
 NOTE: several issues with the conda installation have been reported on different systems and with different versions of conda. 
 The maintainer provides a singularity image which should work out of the box. 
@@ -139,10 +140,10 @@ After making sure that conda is available on your system and up to date, move in
 
 `cd GCparagon`
 
-and create the GCparagon software environment using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) 
-file:
+and create the GCparagon software environment using the [GCparagon_py3.10_env_lenient.yml](conda_env/GCparagon_py3.10_env_lenient.yml) 
+file (if you are experiencing problems with building your environment or are using Ubuntu 22, it is recommended to use the env file [GCparagon_Ubuntu22_py3.10_for_sif_creation.yml](conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml) instead):
 
-`conda env create -f conda_env/GCparagon_py3.10_env.yml` 
+`conda env create -f conda_env/GCparagon_py3.10_env_lenient.yml`
 
 This environment contains the recommended singularity software for running GCparagon as a singularity container.
 For more details see [RECOMMENDED - Using the Singularity Container](#recommended---using-the-singularity-container).
@@ -224,37 +225,40 @@ An example of using your local directories under `/mnt` would be:
 
 
 ### NOT RECOMMENDED - Conda Installation
-Although not recommended, the software environment for running GCparagon in can be installed using the provided [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file.
+Although not recommended, the software environment for running GCparagon in can be installed using the provided [GCparagon_py3.10_env_lenient.yml](conda_env/GCparagon_py3.10_env_lenient.yml) file.
+(if you are experiencing problems with building your environment or are using Ubuntu 22, it is recommended to use the env file [GCparagon_Ubuntu22_py3.10_for_sif_creation.yml](conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml) instead)
 
-Using the [GCparagon_py3.10_env.yml](conda_env/GCparagon_py3.10_env.yml) file, the following dependencies will be installed into the conda env named `GCparagon_py3.10`:
-  - samtools=1.16
-  - bedtools=2.30
+Using the [GCparagon_py3.10_env_lenient.yml](conda_env/GCparagon_py3.10_env_lenient.yml) file, the following dependencies from the conda-forge, bioconda, and plotly channels will be installed into the conda env named `GCparagon_py3.10`:
+  - bedtools
   - python=3.10
   - pip=22.3
-  - numpy=1.23
-  - pysam=0.19
-  - natsort=8.2
-  - py2bit=0.3
-  - cycler=0.11
-  - pandas=1.5
-  - scipy=1.9
-  - ucsc-fatotwobit=377
-  - twobitreader=3.1
+  - numpy
+  - samtools
+  - pysam
+  - natsort
+  - py2bit
+  - cycler
+  - pandas
+  - scipy
+  - ucsc-fatotwobit
+  - twobitreader
   - plotly_express=0.4
   - python-kaleido=0.2
-  - psutil=5.9
-  - requests=2.28
+  - psutil
+  - requests
   - memory_profiler
   - pybedtools
   - polars
   - scikit-learn
   - matplotlib
+  - pyranges
   - singularity
 
 Inside the GCparagon repository directory, you can create the environment using the following command:
 
-`conda env create -f conda_env/GCparagon_py3.10_env.yml`
+`conda env create -f conda_env/GCparagon_py3.10_env_lenient.yml`
 
+(if you are experiencing problems with building your environment or are using Ubuntu 22, it is recommended to use the env file [GCparagon_Ubuntu22_py3.10_for_sif_creation.yml](conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml) instead):
 Activate the new environment:
 
 `conda activate GCparagon`

@@ -7,7 +7,7 @@ channels:
 dependencies:
   - bedtools
   - python=3.10
-  - pip=24.2   # someone reported a problem with this version: october 2024 - for Ubuntu 23
+  - pip=22.3   # someone reported a problem with this version: october 2024 - for Ubuntu 23
   - numpy
   - samtools
   - pysam
@@ -18,8 +18,8 @@ dependencies:
   - scipy
   - ucsc-fatotwobit
   - twobitreader
-  - plotly_express
-  - python-kaleido
+  - plotly_express=0.4
+  - python-kaleido=0.2
   - psutil
   - requests
   - memory_profiler

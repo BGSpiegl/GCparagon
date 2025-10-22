@@ -50,7 +50,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
 - [Usage](#usage)
   - [Examples](#examples)
     - [Basic](#basic)
-    - [Output Tagged BAM File](#output-tagged-bam-file)
+    - [Don't Output Tagged BAM File](#dont-output-tagged-bam-file)
     - [Select Reference Genome Build](#select-reference-genome-build)
     - [Temporary Directory](#temporary-directory)
     - [Further Options](#further-options)
@@ -86,9 +86,10 @@ GCparagon uses the observed template length (TLEN column in BAM) to estimate fra
 (Preferably TLEN#1 as shown in [SAMv1.pdf][samtools_spec]).
 
 The algorithm assigns weight values to cfDNA fragments based on their length and GC base count. Weights can either
-be read as 'GC'-tags from alignments in the output BAM file (enable tagged BAM writing using the `--output-bam` flag),
+be read as 'GC'-tags from alignments in the output BAM file,
 or from one of the `*_gc_weights_*.txt.gz` output files.
-The latter can be loaded in Python using the `numpy.loadtxt()` function or the `load_txt_to_matrix_with_meta()` function 
+To disable tagged BAM writing use the `--dont-output-bam` flag.
+The gc_weights matrix can be loaded in Python using the `numpy.loadtxt()` function or the `load_txt_to_matrix_with_meta()` function 
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
@@ -176,8 +177,10 @@ A singularity image of the latest version is created by the maintainer using the
 The tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14-ubuntu-22_04-container:latest && 
-singularity verify gcparagon_0.6.14-ubuntu-22_04-container_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14:latest && singularity verify gcparagon_0.6.14_latest.sif`
+
+If this would not work, you can also try to pull the sif file by its unique ID:
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.14_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
 
 If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
 it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
@@ -363,10 +366,10 @@ OR:
 This minimalistic setup uses the parent directory of the input BAM fle as output directory.
 The `-b`/`--bam` parameter is always required (BAM file path to hg38 aligned cfDNA paired-end sequencing reads).
 
-### Output Tagged BAM File
-To output a GC correction weights tagged BAM file, set the `--output-bam` flag:
+### Don't Output Tagged BAM File
+GCparagon now outputs a tagged BAM file per default. If you do not want a tagged BAM file, set the `--dont-output-bam` flag:
 
-`gcparagon --bam <INPUT_BAM> --output-bam`
+`gcparagon --bam <INPUT_BAM> --dont-output-bam`
 
 ### Select Reference Genome Build
 To use hg19 reference genome-specific files for the bias computation, set the `-rgb`/`--reference-genome-build` parameter:
@@ -383,7 +386,7 @@ These parameters can be redefined separately.
 ### Temporary Directory
 It is recommended to set `--temporary-directory` to be located on SSD hardware:
 
-`gcparagon --bam <INPUT_BAM> --output-bam --temporary-directory <PATH_TO_TEMP_DIR>`
+`gcparagon --bam <INPUT_BAM> --temporary-directory <PATH_TO_TEMP_DIR>`
 
 If not set, the temporary directory will default to the output of Python's `tempfile.gettempdir()`. All created files 
 are saved to the temporary directory first before being moved to the output directory after successful
@@ -393,11 +396,11 @@ script execution.
 Rich customization options are available:
 To increase the number of logical cores used by GCparagon, use the `-t`/`--threads` flag:
 
-`gcparagon --bam <INPUT_BAM> --output-bam --threads 24`
+`gcparagon --bam <INPUT_BAM> --threads 24`
 
-To get a quick estimate of the GCbias, the user can set a lower preset
+To get a quick estimate of the GCbias, the user can set a lower preset and disable BAM output:
 
-`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1`
+`gcparagon --bam <INPUT_BAM> --threads 24 --preset 1 --dont-output-bam`
 
 The `--preset 2` setup is recommended though.
 
@@ -452,7 +455,7 @@ computation itself. A test run using 12 cores and parameter preset 1 for a 30 GB
 (computing GC weights + writing tagged BAM file).
 
 Always make sure that there is enough space on the drive(s) containing the temporary directory and the final output 
-directory before running GCparagon with `--output-bam`!
+directory before running GCparagon! (if `--dont-output-bam` was specified, the local storage usage is minimal)
 
 
 ## Full Commandline Description
@@ -668,9 +671,8 @@ Output options:
   -our, --output-unaligned-reads
                         Optional flag to activate writing of unaligned reads to a
                         separate BAM file. Per default, unaligned reads are not
-                        output. Setting this flag only has an effect if either
-                        the --output-bam flag was set or GCparagon was started in
-                        the --tag-only mode.
+                        output. Setting this flag does not have an effect if GCparagon 
+                        was started with the --dont-output-bam flag.
   -fp Integer, --float-precision Integer
                         Optional parameter for GC-bias computation number of
                         digits after the comma for floating point data to be
@@ -903,9 +905,8 @@ Processing options:
                         matrix! [ DEFAULT: 1.0 ]
   -reto UNALIGNED_EXTRACTION_TIMEOUT, --reads-extraction-timeout UNALIGNED_EXTRACTION_TIMEOUT
                         Sets the timout in seconds for unaligned reads
-                        extraction. Only has an effect if '--output-bam' or '--
-                        tag-only' and '--output-unaligned-reads' is set. [
-                        DEFAULT: 1800 seconds ]
+                        extraction. Only has an effect if '--tag-only' and 
+                        '--output-unaligned-reads' is set. [DEFAULT: 1800 seconds ]
 
 Post-processing options:
   -do, --detect-outliers

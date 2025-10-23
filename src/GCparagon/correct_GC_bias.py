@@ -31,7 +31,7 @@ from natsort import humansorted
 from pysam import AlignmentFile  # coordinates in pysam are always 0-based (following python convention)
 from scipy.optimize import minimize
 from twobitreader import TwoBitFile, TwoBitSequence
-from typing import Union, Dict, List, Tuple, Optional, Any
+from typing import Union, Dict, List, Tuple, Optional, Any, Set
 from argparse import ArgumentParser, RawDescriptionHelpFormatter
 OneOf = Union
 
@@ -110,8 +110,11 @@ SOURCE_CODE_ROOT_DIR = str(SOURCE_CODE_ROOT_PATH)
 DEFAULT_SAMTOOLS_PATH = shutil.which('samtools')
 DEFAULT_TEMPORARY_DIRECTORY = tempfile.gettempdir()
 DEFAULT_GENOME_BUILD = 'hg38'
-EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = {'hg38': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit',
-                                          'hg19': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg19.2bit'}
+EXPECTED_TWO_BIT_REFERENCE_GENOME_PATH = {
+    'hg38': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.2bit',
+    'hg19': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg19.2bit'}
+CHROMOSOME_SIZES_FILES = {'hg38': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg38.analysisSet.chrom.sizes',
+                          'hg19': SOURCE_CODE_ROOT_PATH / '2bit_reference/hg19.chrom.sizes'}
 PREDEFINED_1MBP_INTERVALS_TO_PROCESS = {'hg38': SOURCE_CODE_ROOT_PATH.parent /
                                         'GCparagon-AccessoryFiles/hg38_minimalExclusionListOverlap_1Mbp_intervals_'
                                         '33pcOverlapLimited.FGCD.bed',
@@ -258,6 +261,24 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "04-GI-preselection_simulate_genomewide_reference_FGCD_hg38.py'. [ DEFAULT: "
                                  f"'{DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[DEFAULT_GENOME_BUILD]}' ]",
                             metavar='File')
+    input_args.add_argument('-csf', '--chromosome-sizes-file' ,dest='chromosome_sizes_file', type=Path,
+                            default=CHROMOSOME_SIZES_FILES[DEFAULT_GENOME_BUILD],
+                            help='Path to a TSV text file containing chromosome/scaffold names '
+                                 '(first column) of the 2bit reference genome file and their scaffold length '
+                                 'in the second column. This file is used for checking the scaffold names '
+                                 'and lengths between the reference file GCparagon uses and the input BAM '
+                                 'file. The scaffold names and lengths must match the 2bit reference used '
+                                 'during bias computation. While only the human standard chromosomes '
+                                 'chr1-22, chrM, chrX, chrY are enforced to match in name and length, '
+                                 'scaffolds from the BAM file that do not match the scaffolds of the 2bit '
+                                 'reference are not corrected! (they receive a correction weigth of 1.0 '
+                                 'because their sequence cannot be retrieved from the 2bit reference file '
+                                 "during tagging for calculation of a fragment's GC bias). If a custom "
+                                 '2bit reference genome file is provided, make sure to also provide the '
+                                 'corresponding chromosome sizes file! The chromosome sizes file can be '
+                                 'easily computed from the reference index file (fai) like this: '
+                                 "'cut -f1,2 genome.fa.fai > genome.chrom.sizes'. "
+                                 f'[ DEFAULT: {CHROMOSOME_SIZES_FILES[DEFAULT_GENOME_BUILD]} ]')
     input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
@@ -652,11 +673,13 @@ def create_region_label(chrm: str, start: int, end: int):
     return f"{chrm}_{start:,}-{end:,}"
 
 
-def read_scored_regions_bed_file(bed_path: str):
+def read_scored_regions_bed_file(bed_path: OneOf[str, Path]):
     scored_regions = []
     region_gc_content_distributions = {}
+    all_chromosomes_for_bias_computation = set()
     try:
         for chrm, strt, stp, meta_info in read_bed_file(bed_path=bed_path, header=True):
+            all_chromosomes_for_bias_computation.update((chrm,))
             scored_regions.append((chrm, strt, stp, int(meta_info[0])))
             # process meta_info
             assert len(meta_info[1:]) == 101
@@ -664,7 +687,7 @@ def read_scored_regions_bed_file(bed_path: str):
             component_counts = np.array(list(map(lambda s: int(s), meta_info[1:])))
             region_gc_content_distributions[create_region_label(chrm=chrm, start=strt, end=stp)] = \
                 component_counts / component_counts.sum()  # NORMALIZE TO 1!!!
-        return scored_regions, region_gc_content_distributions
+        return scored_regions, region_gc_content_distributions, all_chromosomes_for_bias_computation
     except ValueError:  # not enough values to unpack (expected 4, got X)
         log(message=f"Could not load scored regions from BED file '{bed_path}' (requires column 4 to contain values "
                     "that can be cast to int!). Terminating ..", log_level=logging.ERROR, logger_name=LOGGER)
@@ -2568,9 +2591,12 @@ def create_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str]
             sys.exit(2)
 
 
-def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str], silent=True):
+def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str], silent=True) -> Dict[str, int]:
     with AlignmentFile(bam_path, 'rb') as f_aln:
         try:
+            bam_scaffolds = {}.fromkeys(f_aln.references)
+            for scaff in bam_scaffolds.keys():
+                bam_scaffolds[scaff] = f_aln.get_reference_length(reference=scaff)
             f_aln.get_index_statistics()  # check_index(self) could also be used
         except ValueError:  # ValueError: mapping information not recorded in index or index not available
             # create missing index
@@ -2582,6 +2608,7 @@ def fix_bam_index(bam_path: OneOf[Path, str], samtools_path: OneOf[Path, str], s
             log(message=f"input BAM file is actually a SAM file. Code requires a BAM file. Terminating ..",
                 log_level=logging.ERROR, close_handlers=True, logger_name=LOGGER)
             sys.exit(2)
+    return bam_scaffolds
 
 
 def manage_bad_intervals(bad_genomic_intervals_bed: Optional[str]) \
@@ -2890,6 +2917,23 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                      for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
 
+  # TODO: IMPLEMENT!
+def load_chrom_sizes(chrom_sizes_path: Path) -> Dict[str, int]:  # TODO: IMPLEMENT!
+    raise NotImplementedError
+
+
+  # TODO: IMPLEMENT!
+def check_scaffold_setup(  # TODO: IMPLEMENT!
+                reference_scaffolds: Dict[str, int],  # this are all scaffolds from the 2bit reference; ideally, all are
+                # identical between the 2bit reference and the BAM file while only the standard chromosomes
+                # absolutely must be identical (chr1-22, chrX, chrY, chrM)
+                scaffolds_to_process: Set[str],  # set: these scaffolds must be present in the BAM
+                # file and come from preselected genomic intervals of the 2bit reference genome
+                # (so this is a subset of the reference_scaffolds)
+                bam_scaffolds:  Dict[str, int])
+    raise NotImplementedError
+
+
 def main() -> int:
     global LOGGER  # commandline logging only
 
@@ -2903,6 +2947,7 @@ def main() -> int:
     two_bit_reference_file = cmd_args.two_bit_reference_file
     genomic_intervals_bed_file = cmd_args.genomic_intervals_bed_file
     exclude_genomic_intervals_bed_file = cmd_args.exclude_genomic_intervals_bed_file
+    chromosome_sizes_file = cmd_args.chromosome_sizes_file
     correction_weights_matrix_path = cmd_args.correction_weights
     mask_path = cmd_args.weights_mask
     ref_gc_dist_path = cmd_args.ref_gc_dist_path
@@ -2978,6 +3023,20 @@ def main() -> int:
                               f"the -rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version "
                               f"of your custom reference genome file matches the specifications for "
                               f"-rtb/--two-bit-reference-genome and -rgcd/--reference-gc-content-distribution-table!")
+    if chromosome_sizes_file is None:
+        if not CHROMOSOME_SIZES_FILES[reference_genome_build].is_file():
+            print("cannot proceed - no reference scaffold sizes TSV file defined and default expected file "
+                  f"not present under {CHROMOSOME_SIZES_FILES[reference_genome_build]}. Terminating ..")
+            sys.exit(3)
+        genomic_intervals_bed_file = CHROMOSOME_SIZES_FILES[reference_genome_build]
+    elif chromosome_sizes_file != CHROMOSOME_SIZES_FILES[reference_genome_build]:
+        print_warnings.append(
+            f"Custom reference scaffold sizes TSV file specified. Thought we would use the file for the "
+            f"'{reference_genome_build}' reference genome build but will use user-defined file "
+            f"instead. The reference scaffold sizes TSV file is specified by default via "
+            f"the -rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version "
+            f"of your custom reference genome file matches the specifications for "
+            f"-rtb/--two-bit-reference-genome and -rgcd/--reference-gc-content-distribution-table!")
     if ref_gc_dist_path is None:
         if not DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build].is_file():
             print("cannot proceed - no reference genome GC content distribution file defined and default expected file "
@@ -3104,12 +3163,14 @@ def main() -> int:
                                 f"'{str(ref_gc_dist_path)}'!")
 
     if compute_bias:  # load information that needs to be loaded only once
+        # load the reference scaffolds and their lengths from the chromosome sizes file
+        ref_scaffs = load_chrom_sizes(chrom_sizes_path=chromosome_sizes_file)
         # choose the most recent bad intervals library version if multiple versions are present in the parent directory
         bad_intervals, exclude_genomic_intervals_bed_file = manage_bad_intervals(
             bad_genomic_intervals_bed=exclude_genomic_intervals_bed_file)
         ref_gc_dist = read_gc_distribution(ref_table_path=ref_gc_dist_path)
         # read the interval list (should be >=150Mbp in total)
-        generally_processable_intervals_with_score, interval_gc_content_distributions = \
+        generally_processable_intervals_with_score, interval_gc_content_distributions, scaffs_to_process = \
             read_scored_regions_bed_file(bed_path=genomic_intervals_bed_file)
 
     # process all input BAM files sequentially
@@ -3174,7 +3235,17 @@ def main() -> int:
                 sample_temp_dir_path = Path(sample_out_dir) / 'GC_correction_tmp'  # required for BAM merging (samtools)
             sample_temp_dir = str(sample_temp_dir_path)
             # check if index is there. if not, create it!
-            fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
+            bam_scaffolds = fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
+            check_scaffold_setup(  # TODO: IMPLEMENT!
+                reference_scaffolds=ref_scaffs,  # this are all scaffolds from the 2bit reference; ideally, all are
+                # identical between the 2bit reference and the BAM file while only the standard chromosomes
+                # absolutely must be identical (chr1-22, chrX, chrY, chrM)
+                scaffolds_to_process=scaffs_to_process,  # set: these scaffolds must be present in the BAM
+                # file and come from preselected genomic intervals of the 2bit reference genome
+                # (so this is a subset of the reference_scaffolds)
+                bam_scaffolds=bam_scaffolds)  # if a tagged BAM file shall be output,
+            # all stdandard chromosomes (chr1-22, chrX, chrY, chrM) from the reference must be present with
+            # same name and length in the BAM file; GCparagon exits with error otherwise
             # get reference scaffolds and lengths
             reference_contig_lengths = get_reference_contig_lengths(bam=input_bam)  # stderr enabled for AlignmentFile
             # TASK 1: compute the GC bias present in the BAM file of the current sample

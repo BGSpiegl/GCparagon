@@ -261,24 +261,6 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                  "04-GI-preselection_simulate_genomewide_reference_FGCD_hg38.py'. [ DEFAULT: "
                                  f"'{DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[DEFAULT_GENOME_BUILD]}' ]",
                             metavar='File')
-    input_args.add_argument('-csf', '--chromosome-sizes-file' ,dest='chromosome_sizes_file', type=Path,
-                            default=CHROMOSOME_SIZES_FILES[DEFAULT_GENOME_BUILD],
-                            help='Path to a TSV text file containing chromosome/scaffold names '
-                                 '(first column) of the 2bit reference genome file and their scaffold length '
-                                 'in the second column. This file is used for checking the scaffold names '
-                                 'and lengths between the reference file GCparagon uses and the input BAM '
-                                 'file. The scaffold names and lengths must match the 2bit reference used '
-                                 'during bias computation. While only the human standard chromosomes '
-                                 'chr1-22, chrM, chrX, chrY are enforced to match in name and length, '
-                                 'scaffolds from the BAM file that do not match the scaffolds of the 2bit '
-                                 'reference are not corrected! (they receive a correction weigth of 1.0 '
-                                 'because their sequence cannot be retrieved from the 2bit reference file '
-                                 "during tagging for calculation of a fragment's GC bias). If a custom "
-                                 '2bit reference genome file is provided, make sure to also provide the '
-                                 'corresponding chromosome sizes file! The chromosome sizes file can be '
-                                 'easily computed from the reference index file (fai) like this: '
-                                 "'cut -f1,2 genome.fa.fai > genome.chrom.sizes'. "
-                                 f'[ DEFAULT: {CHROMOSOME_SIZES_FILES[DEFAULT_GENOME_BUILD]} ]')
     input_args.add_argument('-ec', '--exclude-intervals', dest='exclude_genomic_intervals_bed_file',
                             help='Path to library file (BED-like) holding DoC-specific definition of bad intervals '
                                  '(intervals must be exact genomic locus match for exclusion, DO NOT expect bedtools '
@@ -1195,7 +1177,7 @@ def consolidate_results(observed_attributes_matrices_sum: np.array, simulated_at
     deleted_rows, deleted_columns = range(0), range(0)
     if plot_result:
         # plot fragment length distribution
-        plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],  # TODO: DEBUG issue #19 - try out passing the matrix itself here not the file
+        plot_fragment_length_dists(matrix_data_frame=None, matrix_file_list=[observed_attributes_matrix_sum_path],
                                    out_dir_path=Path(tmp_dir), normalize_to_dataset_size=True, show_figure=False,
                                    strip_xaxis_end_zeros=True, parent_logger=LOGGER, sample_id=sample_id)
         if focus_nondefault_values is not None:  # create focused plots
@@ -2917,12 +2899,6 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                      for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
 
-  # TODO: IMPLEMENT!
-def load_chrom_sizes(chrom_sizes_path: Path) -> Dict[str, int]:  # TODO: IMPLEMENT!
-    raise NotImplementedError
-
-
-  # TODO: IMPLEMENT!
 def check_scaffold_setup(  # TODO: IMPLEMENT!
                 reference_scaffolds: Dict[str, int],  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
@@ -2930,8 +2906,63 @@ def check_scaffold_setup(  # TODO: IMPLEMENT!
                 scaffolds_to_process: Set[str],  # set: these scaffolds must be present in the BAM
                 # file and come from preselected genomic intervals of the 2bit reference genome
                 # (so this is a subset of the reference_scaffolds)
-                bam_scaffolds:  Dict[str, int])
-    raise NotImplementedError
+                bam_scaffolds:  Dict[str, int],
+        compute_gc_bias: bool, output_tagged_bam_file: bool, bam_name: str) -> Tuple[str, ...]:
+    # check 1: are the scaffolds that we need for processing present in the BAM file? (only relevant if compute_gc_bias)
+    absent_preselected_interval_scaffolds = [preselected_scaff
+                                             for preselected_scaff in scaffolds_to_process
+                                             if bam_scaffolds.get(preselected_scaff) is None]
+    all_processing_present_in_bam = len(absent_preselected_interval_scaffolds)
+    processing_scaffold_message = (f"{len(absent_preselected_interval_scaffolds):,} "
+                                   f"scaffold{'' if len(absent_preselected_interval_scaffolds) == 1 else 's'} of "
+                                   f"pre-selected genomic intervals "
+                                   f"{'was' if len(absent_preselected_interval_scaffolds) == 1 else 'were'} not "
+                                   f"present in the input BAM file '{bam_name}'!")
+    # check 2: are all scaffolds from the input BAM file present in the reference
+    all_bam_present_in_ref = all([reference_scaffolds.get(bam_scaff) is not None
+                                  for bam_scaff in bam_scaffolds])
+    # check 3: mitochondrial reference naming
+    mito_matches = False
+    for mito_scaff in ('chrM', 'chrMT', 'M', 'MT'):
+        if bam_scaffolds.get(mito_scaff) is not None:
+            mito_matches = reference_scaffolds.get(mito_scaff) is not None
+            break
+    # check 4: check if the longest (up to) 24 scaffolds of the BAM file are present in the reference AND same length
+    longest_24 = sorted([(chrm, sz) for chrm, sz in reference_scaffolds.items()], reverse=True, key=lambda t: t[1])[:24]
+    long_scaffolds_present_same_length = True
+    try:
+        for long_ref_scaff, ref_scaff_length in longest_24:
+            bam_scaff_length = bam_scaffolds[long_ref_scaff]
+            if bam_scaff_length != ref_scaff_length:
+                long_scaffolds_present_same_length = False
+                break
+    except KeyError:
+        long_scaffolds_present_same_length = False
+    # depending on the analysis type (GC bias computation/correction via tagged BAM file output), issue warnings or
+    # errors; longest 24 scaffolds have to be present
+    msg_start = '*** '
+    msg_end = ' ***'
+    if not all_processing_present_in_bam:
+        complete_message_lines = [f"Pre-Selected genomic intervals vs BAM: {processing_scaffold_message}",
+                                  f"These were:"] + \
+                                 [f" - '{agis}'" for agis in absent_preselected_interval_scaffolds]
+        longest_line = max([len(msg_l) for msg_l complete_message_lines])
+        decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
+        complete_message = '\n'.join([decorator_line] +
+                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+                                      for ln in complete_message_lines] + [decorator_line])
+        if compute_gc_bias:
+            log(message=complete_message, log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
+            sys.exit(2)
+        else:
+            log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER, close_handlers=False)
+    if not mito_matches:  # TODO: continue implementation!
+        warning_message = f"*** Mitochondrial scaffold name mismatch: {mito_mismatch_message} ***"
+        complete_message = '\n' + '*' * len(warning_message) + '\n' + \
+                           f"{warning_message}\n" + \
+                           '*' * len(warning_message)
+        log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER, close_handlers=False)
+    return do_not_correct_missing_scaffolds
 
 
 def main() -> int:
@@ -2947,7 +2978,6 @@ def main() -> int:
     two_bit_reference_file = cmd_args.two_bit_reference_file
     genomic_intervals_bed_file = cmd_args.genomic_intervals_bed_file
     exclude_genomic_intervals_bed_file = cmd_args.exclude_genomic_intervals_bed_file
-    chromosome_sizes_file = cmd_args.chromosome_sizes_file
     correction_weights_matrix_path = cmd_args.correction_weights
     mask_path = cmd_args.weights_mask
     ref_gc_dist_path = cmd_args.ref_gc_dist_path
@@ -3023,20 +3053,6 @@ def main() -> int:
                               f"the -rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version "
                               f"of your custom reference genome file matches the specifications for "
                               f"-rtb/--two-bit-reference-genome and -rgcd/--reference-gc-content-distribution-table!")
-    if chromosome_sizes_file is None:
-        if not CHROMOSOME_SIZES_FILES[reference_genome_build].is_file():
-            print("cannot proceed - no reference scaffold sizes TSV file defined and default expected file "
-                  f"not present under {CHROMOSOME_SIZES_FILES[reference_genome_build]}. Terminating ..")
-            sys.exit(3)
-        genomic_intervals_bed_file = CHROMOSOME_SIZES_FILES[reference_genome_build]
-    elif chromosome_sizes_file != CHROMOSOME_SIZES_FILES[reference_genome_build]:
-        print_warnings.append(
-            f"Custom reference scaffold sizes TSV file specified. Thought we would use the file for the "
-            f"'{reference_genome_build}' reference genome build but will use user-defined file "
-            f"instead. The reference scaffold sizes TSV file is specified by default via "
-            f"the -rgb/--reference-genome-build flag for hg19 and hg38. Make sure the build version "
-            f"of your custom reference genome file matches the specifications for "
-            f"-rtb/--two-bit-reference-genome and -rgcd/--reference-gc-content-distribution-table!")
     if ref_gc_dist_path is None:
         if not DEFAULT_REFERENCE_GENOME_TARGET_GC_CONTENT_DISTRIBUTION[reference_genome_build].is_file():
             print("cannot proceed - no reference genome GC content distribution file defined and default expected file "
@@ -3162,9 +3178,9 @@ def main() -> int:
         raise FileNotFoundError(f"the reference GC content distribution file could not be found/accessed at "
                                 f"'{str(ref_gc_dist_path)}'!")
 
-    if compute_bias:  # load information that needs to be loaded only once
+    if compute_bias:  # load data that needs to be loaded only once for multiple samples
         # load the reference scaffolds and their lengths from the chromosome sizes file
-        ref_scaffs = load_chrom_sizes(chrom_sizes_path=chromosome_sizes_file)
+        ref_scaffs = TwoBitFile(str(two_bit_reference_file)).sequence_sizes()
         # choose the most recent bad intervals library version if multiple versions are present in the parent directory
         bad_intervals, exclude_genomic_intervals_bed_file = manage_bad_intervals(
             bad_genomic_intervals_bed=exclude_genomic_intervals_bed_file)
@@ -3240,13 +3256,13 @@ def main() -> int:
                 reference_scaffolds=ref_scaffs,  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
                 # absolutely must be identical (chr1-22, chrX, chrY, chrM)
-                scaffolds_to_process=scaffs_to_process,  # set: these scaffolds must be present in the BAM
-                # file and come from preselected genomic intervals of the 2bit reference genome
-                # (so this is a subset of the reference_scaffolds)
-                bam_scaffolds=bam_scaffolds)  # if a tagged BAM file shall be output,
-            # all stdandard chromosomes (chr1-22, chrX, chrY, chrM) from the reference must be present with
-            # same name and length in the BAM file; GCparagon exits with error otherwise
-            # get reference scaffolds and lengths
+                scaffolds_to_process=scaffs_to_process,  # set: these scaffolds come from preselected genomic intervals
+                # of the 2bit reference genome (so this is a subset of the reference_scaffolds) and must be present in
+                # the input BAM file
+                bam_scaffolds=bam_scaffolds, compute_gc_bias=compute_bias, bam_name=input_bam.name,
+                output_tagged_bam_file=output_corrected_bam or only_tag_bam)  # if a tagged BAM file shall be output, all stdandard chromosomes
+            # (chr1-22, chrX, chrY, chrM) from the reference must be present with same name and length in the BAM file;
+            # GCparagon exits with error otherwise get reference scaffolds and lengths
             reference_contig_lengths = get_reference_contig_lengths(bam=input_bam)  # stderr enabled for AlignmentFile
             # TASK 1: compute the GC bias present in the BAM file of the current sample
             #         WARNING: don't use multi-sample/run BAM files!)

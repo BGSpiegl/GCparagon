@@ -1904,6 +1904,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                                        fragment_length_range: range, two_bit_reference_path: OneOf[str, Path],
                                        tagging_intervals_list: List[str], reference_lengths: Dict[str, int],
                                        sender_connection: mp_connection.Connection, parent_logger: str,
+                                       dont_correct_scaffolds: Tuple[str, ...],
                                        default_weight: float = 1.0, tag_name=DEFAULT_GC_TAG_NAME,
                                        ref_interval_loading_size: int = 500000):
     """
@@ -1921,6 +1922,9 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
     :param sender_connection:
     :param tag_name:
     :param ref_interval_loading_size:
+    :param dont_correct_scaffolds: fragments in these scaffolds won't receive a correction weight because these are
+    not present in the 2bit reference and would cause GCparagon to crash (these are not part of the largest 24
+    scaffolds of the reference and the input BAM file)
     :return:
     """
     # get chromosome sequence handle
@@ -1931,6 +1935,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
     tagged_bam_files = []
     with silently_open_alignment_file(bam_path, mode='rb') as input_bam_file:
         for c_idx, (chromosome, start_coord, stop_coord, _ch_len) in enumerate(tagging_intervals_list):
+            dont_correct = chromosome in dont_correct_scaffolds
             scaffold_length = reference_lengths[chromosome]
             chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
             tagged_bam_file = str(Path(temp_dir) /
@@ -1985,81 +1990,93 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                     input_bam_file.fetch(chromosome, start_coord, stop_coord, multiple_iterators=True))
                 # iterate over alignments from specified reference scaffolds
                 aln_buffer = []  # (re-) set alignment buffer
-                for aln_seg in alignments_mapped_to_interval:
-                    try:
-                        frag_size = abs(aln_seg.template_length)
-                        if frag_size < min_frag_len:
-                            raise IndexError
-                        correction_weights_row = correction_weights[frag_size - min_frag_len]
-                    except TypeError:  # this should not occur at all! -> unaligned are filtered and are only extracted
-                        # if the --output-unaligned flag was set by another process!
-                        # in case of unaligned segment or mate: '<' not supported between instances of
-                        # 'NoneType' and 'int'
-                        aln_seg.set_tag(tag_name, value=0.,  # give unaligned reads a GC weight of 0.
-                                        value_type="f", replace=True)  # should not occur when fetching intervals
-                        aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
-                        continue
-                    except IndexError:  # fragment length not in reduced weight matrix -> use default value
-                        aln_seg.set_tag(tag_name, value=default_weight,
-                                        value_type="f", replace=True)
-                        aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
-                        continue
-                    if frag_size <= abs(aln_seg.query_alignment_length):  # get sequence from aligned read portion
-                        frag_seq = aln_seg.query_alignment_sequence.upper()
-                        # ^-- This is now a substring of query_sequence, excluding flanking bases that were soft clipped
-                    else:  # get fragment sequence from reference genome
-                        frag_start_scaffold = min(aln_seg.reference_start, aln_seg.next_reference_start)
-                        target_interval_index = frag_start_scaffold // ref_interval_loading_size
-                        if target_interval_index >= len(loaded_ref_intervals):  # required interval not loaded -> load!
-                            try:
-                                ref_interval_sequences, loaded_ref_intervals = extend_intervals_for_index(
-                                    target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
-                                    parent_logger=parent_logger, loaded_intervals=loaded_ref_intervals,
-                                    chrom_handle=chromosome_handle, scaffold_name=chromosome, max_loaded=10,
-                                    interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
-                            except AttributeError:
-                                log(message=f"Error occurred when trying to load a downstream interval. Cannot continue "
-                                            f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
-                                    log_level=logging.ERROR, logger_name=parent_logger)
-                                sender_connection.send(-1)
-                                sender_connection.close()
-                                return -1
-                        elif not loaded_ref_intervals[target_interval_index]:
-                            try:  # interval in range but was unloaded/not loaded (shouldn't be necessary)
-                                ref_interval_sequences, loaded_ref_intervals = load_specific_interval(
-                                    target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
-                                    loaded_intervals=loaded_ref_intervals, chrom_handle=chromosome_handle,
-                                    max_loaded=10, scaffold_name=chromosome, parent_logger=parent_logger,
-                                    interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
-                            except AttributeError:
-                                log(message="Error occurred when trying to load an unloaded/intermediate interval. "
-                                            f"Cannotcontinue processing scaffold '{chromosome}'. "
-                                            "Exiting BAM tagging worker..",
-                                    log_level=logging.ERROR, logger_name=parent_logger)
-                                sender_connection.send(-1)
-                                sender_connection.close()
-                                return -1
-                        frag_start_interval = frag_start_scaffold % ref_interval_loading_size
-                        frag_seq = ref_interval_sequences[target_interval_index][
-                                   frag_start_interval:frag_start_interval + frag_size].upper()
-                    try:  # to retrieve correction weight
-                        gc_column_index = frag_seq.count('G') + frag_seq.count('C') \
-                                          - gc_bases_offset  # shift back by trimmed columns!
-                        if gc_column_index < 0:
-                            raise IndexError
-                        corr_factor = correction_weights_row[gc_column_index]
-                    except IndexError:  # also: for not-in-proper-pair alns (across breakpoints) or alns mapping..
-                        corr_factor = default_weight  # ..far apart due to deletion; also for fragment lengths + GC ..
-                        # ..bases pointing to columns/rows that exclusively contain the default corr-factor and were
-                        # trimmed (weights matrix is trimmed -> index errors)
-                    aln_seg.set_tag(tag_name, value=corr_factor, value_type="f", replace=True)
-                    aln_buffer.append(aln_seg)
-                    if len(aln_buffer) > 10000:
+                if dont_correct:
+                    for aln_seg in alignments_mapped_to_interval:
+                        aln_seg.set_tag(tag_name, value=corr_factor, value_type="f", replace=True)
+                        aln_buffer.append(aln_seg)
+                        if len(aln_buffer) > 10000:
+                            _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer),
+                                      maxlen=0)  # overwrites existing tags
+                            aln_buffer = []
+                        # write remaining buffer elements
+                    if len(aln_buffer):
                         _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
-                        aln_buffer = []
-                # write remaining buffer elements
-                if len(aln_buffer):
-                    _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
+                else:
+                    for aln_seg in alignments_mapped_to_interval:
+                        try:
+                            frag_size = abs(aln_seg.template_length)
+                            if frag_size < min_frag_len:
+                                raise IndexError
+                            correction_weights_row = correction_weights[frag_size - min_frag_len]
+                        except TypeError:  # this should not occur at all! -> unaligned are filtered and are only extracted
+                            # if the --output-unaligned flag was set by another process!
+                            # in case of unaligned segment or mate: '<' not supported between instances of
+                            # 'NoneType' and 'int'
+                            aln_seg.set_tag(tag_name, value=0.,  # give unaligned reads a GC weight of 0.
+                                            value_type="f", replace=True)  # should not occur when fetching intervals
+                            aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
+                            continue
+                        except IndexError:  # fragment length not in reduced weight matrix -> use default value
+                            aln_seg.set_tag(tag_name, value=default_weight,
+                                            value_type="f", replace=True)
+                            aln_buffer.append(aln_seg)  # no need to check aln buffer; will be written in non-default case
+                            continue
+                        if frag_size <= abs(aln_seg.query_alignment_length):  # get sequence from aligned read portion
+                            frag_seq = aln_seg.query_alignment_sequence.upper()
+                            # ^-- This is now a substring of query_sequence, excluding flanking bases that were soft clipped
+                        else:  # get fragment sequence from reference genome
+                            frag_start_scaffold = min(aln_seg.reference_start, aln_seg.next_reference_start)
+                            target_interval_index = frag_start_scaffold // ref_interval_loading_size
+                            if target_interval_index >= len(loaded_ref_intervals):  # required interval not loaded -> load!
+                                try:
+                                    ref_interval_sequences, loaded_ref_intervals = extend_intervals_for_index(
+                                        target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
+                                        parent_logger=parent_logger, loaded_intervals=loaded_ref_intervals,
+                                        chrom_handle=chromosome_handle, scaffold_name=chromosome, max_loaded=10,
+                                        interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
+                                except AttributeError:
+                                    log(message=f"Error occurred when trying to load a downstream interval. Cannot continue "
+                                                f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
+                                        log_level=logging.ERROR, logger_name=parent_logger)
+                                    sender_connection.send(-1)
+                                    sender_connection.close()
+                                    return -1
+                            elif not loaded_ref_intervals[target_interval_index]:
+                                try:  # interval in range but was unloaded/not loaded (shouldn't be necessary)
+                                    ref_interval_sequences, loaded_ref_intervals = load_specific_interval(
+                                        target_index=target_interval_index, loaded_sequences=ref_interval_sequences,
+                                        loaded_intervals=loaded_ref_intervals, chrom_handle=chromosome_handle,
+                                        max_loaded=10, scaffold_name=chromosome, parent_logger=parent_logger,
+                                        interval_loading_size=ref_interval_loading_size, scaffold_length=scaffold_length)
+                                except AttributeError:
+                                    log(message="Error occurred when trying to load an unloaded/intermediate interval. "
+                                                f"Cannotcontinue processing scaffold '{chromosome}'. "
+                                                "Exiting BAM tagging worker..",
+                                        log_level=logging.ERROR, logger_name=parent_logger)
+                                    sender_connection.send(-1)
+                                    sender_connection.close()
+                                    return -1
+                            frag_start_interval = frag_start_scaffold % ref_interval_loading_size
+                            frag_seq = ref_interval_sequences[target_interval_index][
+                                       frag_start_interval:frag_start_interval + frag_size].upper()
+                        try:  # to retrieve correction weight
+                            gc_column_index = frag_seq.count('G') + frag_seq.count('C') \
+                                              - gc_bases_offset  # shift back by trimmed columns!
+                            if gc_column_index < 0:
+                                raise IndexError
+                            corr_factor = correction_weights_row[gc_column_index]
+                        except IndexError:  # also: for not-in-proper-pair alns (across breakpoints) or alns mapping..
+                            corr_factor = default_weight  # ..far apart due to deletion; also for fragment lengths + GC ..
+                            # ..bases pointing to columns/rows that exclusively contain the default corr-factor and were
+                            # trimmed (weights matrix is trimmed -> index errors)
+                        aln_seg.set_tag(tag_name, value=corr_factor, value_type="f", replace=True)
+                        aln_buffer.append(aln_seg)
+                        if len(aln_buffer) > 10000:
+                            _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
+                            aln_buffer = []
+                    # write remaining buffer elements
+                    if len(aln_buffer):
+                        _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
             # append created BAM file to return list
             tagged_bam_files.append(tagged_bam_file)
     # report the path to new BAM file
@@ -2251,6 +2268,7 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                                              threads: int, correction_matrix: np.array, frag_len_range: range,
                                              bam_path: str, ref_lengths: Dict[str, int],
                                              temporary_directory_sample: str, gc_base_limits: range,
+                                             dont_correct_scaffolds: Tuple[str, ...],
                                              output_unaligned=False, default_fragment_weight: float = 1.,
                                              tag_name=DEFAULT_GC_TAG_NAME, samtools_path=DEFAULT_SAMTOOLS_PATH):
     """
@@ -2337,7 +2355,8 @@ def tag_bam_with_correction_weights_parallel(sample_output_dir: str, two_bit_gen
                                     'reference_lengths': ref_lengths,
                                     'parent_logger': LOGGER,
                                     'gc_bases_offset': gc_start,
-                                    'default_weight': default_fragment_weight}
+                                    'default_weight': default_fragment_weight,
+                                    'dont_correct_scaffolds': dont_correct_scaffolds}
     # create worker processes
     bam_tagging_workers = [mp.Process(target=bam_tagging_worker_single_interval, kwargs=worker_kwargs)
                            for worker_kwargs in all_worker_kwargs]
@@ -2859,22 +2878,25 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
 
 def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, int]], reference_fgcd: np.array,
                                 interval_fgcds, bam_file: OneOf[str, Path], target_fragment_number: int,
-                                temporary_directrory: OneOf[str, Path],
+                                temporary_directrory: OneOf[str, Path], skip_scaffolds: Tuple[str, ...],
                                 fragment_length_range: range, output_path: OneOf[str, Path], sample_name: str,
                                 show_figures: bool = False) -> Tuple[List[Tuple[float, Tuple[str, int, int]]], float]:
     # infer the number of required intervals based on # of fragments in ~10 intervals
     inferred_number_of_required_intervals = infer_intervals_for_n_fragments(
         intervals=genomic_intervals_sorted, bam_path=bam_file, target_fragment_count=target_fragment_number,
         flength_range=fragment_length_range, repetitions=3, estimate_from_n_intervals=8, temp_dir=temporary_directrory)
-    log(message=f"Will use {inferred_number_of_required_intervals:,} genomic intervals for GC bias computation.",
-        log_level=logging.INFO, logger_name=LOGGER)
+    log(message=f"Trying to select {inferred_number_of_required_intervals:,} genomic intervals for GC bias "
+                f"computation...", log_level=logging.INFO, logger_name=LOGGER)
     # select genomic intervals
-    preselected_intervals = genomic_intervals_sorted[:inferred_number_of_required_intervals]
+    #preselected_intervals = genomic_intervals_sorted[:inferred_number_of_required_intervals]
     # create interval FGCD subset
     preselected_interval_fgcds = {}
     interval_order = []
     ordered_intervals = []
-    for pi_c, pi_s, pi_e, *rest in preselected_intervals:  # the rest should be empty...
+    selected_intervals = 0
+    for pi_c, pi_s, pi_e, *rest in genomic_intervals_sorted:  # the rest should be empty...
+        if pi_c in skip_scaffolds:
+            continue
         region_id = create_region_label(chrm=pi_c, start=pi_s, end=pi_e)
         interval_order.append(region_id)
         if not rest:  # expect this to be an empty list: []
@@ -2884,13 +2906,27 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
         try:
             preselected_interval_fgcds[region_id] = interval_fgcds[region_id]
         except KeyError:
-            log(message=f"There was no precomputed FGCD available for region '{region_id}'. Recompute!",
-                log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
+            log(message=f"There was no precomputed FGCD available for region '{region_id}'. Recompute the reference "
+                        f"file 'hg38_reference_GC_content_distribution.tsv' for the intervals that you use "
+                        f"(matching your reference build)!", log_level=logging.ERROR, logger_name=LOGGER,
+                close_handlers=True)
             sys.exit(2)  # TODO: compute the interval instead of terminating !!
+        selected_intervals += 1
+        if selected_intervals == inferred_number_of_required_intervals:
+            break
+    # check if we could rech the target number
+    if selected_intervals == inferred_number_of_required_intervals:
+        log(message=f"Successfully selected {inferred_number_of_required_intervals:,} genomic intervals for GC bias "
+                    f"computation.", log_level=logging.INFO, logger_name=LOGGER)
+    else:  # this clause should not be entered currently as we do not allow computation of bias if the longest 24
+        # scaffolds do not match in name and length between the reference and the BAM file
+        log(message=f"Could select only {selected_intervals:,} instead of {inferred_number_of_required_intervals:,} "
+                    f"genomic intervals for GC bias computation because of inconsistent genomic interval names/length "
+                    f"between the input and the reference.", log_level=logging.INFO, logger_name=LOGGER)
     # create the linear combination for best reference FGCD representation of each component
     interval_weights_per_component, reconstruction_residual, reg_comb_optimized, max_region_weight = \
         reconstruct_distribution(target_distribution=reference_fgcd, components=preselected_interval_fgcds,
-                                 component_order=interval_order, verbose=False)  # supress additional debugging info output
+                                 component_order=interval_order, verbose=False)  # suppress additional debugging output
     if reg_comb_optimized:
         visualize_weights(region_weights=np.array(list(interval_weights_per_component.values()), dtype=float),
                           sample_label=sample_name, out_dir=output_path, compute_skew=True, compute_curtosis=True,
@@ -2899,7 +2935,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                      for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
 
-def check_scaffold_setup(  # TODO: IMPLEMENT!
+def check_scaffold_setup(  # TODO: TEST!
                 reference_scaffolds: Dict[str, int],  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
                 # absolutely must be identical (chr1-22, chrX, chrY, chrM)
@@ -2908,7 +2944,8 @@ def check_scaffold_setup(  # TODO: IMPLEMENT!
                 # (so this is a subset of the reference_scaffolds)
                 bam_scaffolds:  Dict[str, int],
         compute_gc_bias: bool, output_tagged_bam_file: bool, bam_name: str) -> Tuple[str, ...]:
-    # check 1: are the scaffolds that we need for processing present in the BAM file? (only relevant if compute_gc_bias)
+    # check 1 (CRITICAL for bias computation): are the scaffolds that we need for processing present in the BAM file?
+    # (only relevant if compute_gc_bias)
     absent_preselected_interval_scaffolds = [preselected_scaff
                                              for preselected_scaff in scaffolds_to_process
                                              if bam_scaffolds.get(preselected_scaff) is None]
@@ -2918,35 +2955,81 @@ def check_scaffold_setup(  # TODO: IMPLEMENT!
                                    f"pre-selected genomic intervals "
                                    f"{'was' if len(absent_preselected_interval_scaffolds) == 1 else 'were'} not "
                                    f"present in the input BAM file '{bam_name}'!")
-    # check 2: are all scaffolds from the input BAM file present in the reference
-    all_bam_present_in_ref = all([reference_scaffolds.get(bam_scaff) is not None
-                                  for bam_scaff in bam_scaffolds])
-    # check 3: mitochondrial reference naming
-    mito_matches = False
-    for mito_scaff in ('chrM', 'chrMT', 'M', 'MT'):
-        if bam_scaffolds.get(mito_scaff) is not None:
-            mito_matches = reference_scaffolds.get(mito_scaff) is not None
-            break
-    # check 4: check if the longest (up to) 24 scaffolds of the BAM file are present in the reference AND same length
-    longest_24 = sorted([(chrm, sz) for chrm, sz in reference_scaffolds.items()], reverse=True, key=lambda t: t[1])[:24]
+
+    # check 2 (CRITICAL for tagging): check if the longest (up to) 24 scaffolds of the BAM file are present in the 
+    # reference AND have the same length (redundant to check 1 if bias is computed BUT in that case a failed check 1 
+    # will trigger GCparagon to exit; if tagging only mode is chosen, if this check fails, GCparagon will exit)
+    largest_24_ref = sorted([(chrm, sz) for chrm, sz in reference_scaffolds.items()],
+                            reverse=True, key=lambda t: t[1])[:24]
+    largest_24_bam = sorted([(chrm, sz) for chrm, sz in bam_scaffolds.items()], reverse=True, key=lambda t: t[1])[:24]
     long_scaffolds_present_same_length = True
-    try:
-        for long_ref_scaff, ref_scaff_length in longest_24:
-            bam_scaff_length = bam_scaffolds[long_ref_scaff]
+    mismatching_24_ref_scaffolds = set()
+    mismatching_24_bam_scaffolds = set()
+    # check if some of the largest 24 scaffolds of the reference are absent in the input BAM file
+    for large_ref_scaff, ref_scaff_length in largest_24_ref:
+        try:
+            bam_scaff_length = bam_scaffolds[large_ref_scaff]
             if bam_scaff_length != ref_scaff_length:
+                mismatching_24_ref_scaffolds.update((large_ref_scaff, ))
                 long_scaffolds_present_same_length = False
-                break
-    except KeyError:
-        long_scaffolds_present_same_length = False
+        except KeyError:
+            mismatching_24_ref_scaffolds.update((large_ref_scaff, ))
+            long_scaffolds_present_same_length = False
+    # check if some of the largest 24 scaffolds of the input BAM file are absent in the reference
+    for large_bam_scaff, bam_scaff_length in largest_24_bam:
+        try:
+            ref_scaff_length = reference_scaffolds[large_bam_scaff]
+            if bam_scaff_length != ref_scaff_length:
+                mismatching_24_bam_scaffolds.update((large_bam_scaff, ))
+                long_scaffolds_present_same_length = False
+        except KeyError:
+            mismatching_24_bam_scaffolds.update((large_bam_scaff, ))
+            long_scaffolds_present_same_length = False
+    longest_scaffolds_message = (f"the largest 24 scaffolds did not match between the input BAM file "
+                                 f"({len(largest_24_bam):} scaffolds) and the 2bit reference file "
+                                 f"({len(largest_24_ref):} scaffolds)!")
+    
+    # check 3: are all scaffolds from the input BAM file present in the reference and vice versa
+    # (complete match -> only raises a warning message if the previous check did not fail)
+    complete_scaffold_match = True
+    mismatching_ref_scaffolds = set()
+    mismatching_bam_scaffolds = set()
+    # check if some of the scaffolds of the reference are absent in the input BAM file
+    for large_ref_scaff, ref_scaff_length in reference_scaffolds:
+        try:
+            bam_scaff_length = bam_scaffolds[large_ref_scaff]
+            if bam_scaff_length != ref_scaff_length:
+                mismatching_ref_scaffolds.update((large_ref_scaff,))
+                complete_scaffold_match = False
+        except KeyError:
+            mismatching_ref_scaffolds.update((large_ref_scaff,))
+            complete_scaffold_match = False
+    # check if some of the scaffolds of the input BAM file are absent in the reference
+    for large_bam_scaff, bam_scaff_length in bam_scaffolds:
+        try:
+            ref_scaff_length = reference_scaffolds[large_bam_scaff]
+            if bam_scaff_length != ref_scaff_length:
+                mismatching_bam_scaffolds.update((large_bam_scaff,))
+                complete_scaffold_match = False
+        except KeyError:
+            mismatching_bam_scaffolds.update((large_bam_scaff,))
+            complete_scaffold_match = False
+    complete_scaffolds_message = (f"some scaffolds did not match between the input BAM file "
+                                 f"({len(mismatching_bam_scaffolds):,} absent/mismatching scaffolds) and the 2bit "
+                                  f"reference file "
+                                 f"({len(mismatching_ref_scaffolds):,} absent/mismatching scaffolds)!")
+
     # depending on the analysis type (GC bias computation/correction via tagged BAM file output), issue warnings or
     # errors; longest 24 scaffolds have to be present
     msg_start = '*** '
     msg_end = ' ***'
+    
+    # check 1 consequences:
     if not all_processing_present_in_bam:
-        complete_message_lines = [f"Pre-Selected genomic intervals vs BAM: {processing_scaffold_message}",
+        complete_message_lines = [f"chromosome naming inconsistency detected: {processing_scaffold_message}",
                                   f"These were:"] + \
                                  [f" - '{agis}'" for agis in absent_preselected_interval_scaffolds]
-        longest_line = max([len(msg_l) for msg_l complete_message_lines])
+        longest_line = max([len(msg_l) for msg_l in complete_message_lines])
         decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
         complete_message = '\n'.join([decorator_line] +
                                      [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
@@ -2955,14 +3038,50 @@ def check_scaffold_setup(  # TODO: IMPLEMENT!
             log(message=complete_message, log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
             sys.exit(2)
         else:
-            log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER, close_handlers=False)
-    if not mito_matches:  # TODO: continue implementation!
-        warning_message = f"*** Mitochondrial scaffold name mismatch: {mito_mismatch_message} ***"
-        complete_message = '\n' + '*' * len(warning_message) + '\n' + \
-                           f"{warning_message}\n" + \
-                           '*' * len(warning_message)
-        log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER, close_handlers=False)
-    return do_not_correct_missing_scaffolds
+            log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER)
+    
+    # check 2 consequences:
+    if not long_scaffolds_present_same_length:
+        assert output_tagged_bam_file and not compute_gc_bias  # expect this clause to be entered only if GC bias is not
+        # computed (GCparagon would have exited otherwise as a consequence of failed check 1 because the preselected
+        # genomic intervals should be located on the largest 24 scaffolds of the reference)
+        complete_message_lines = [f"chromosome naming inconsistency/scaffold absence detected: "
+                                  f"{longest_scaffolds_message}"] + \
+                                 (([f"Inconsistent large scaffolds from input BAM file:"] +
+                                   [f' - {abs_bam_scaff}'
+                                    for abs_bam_scaff in sorted(list(mismatching_24_bam_scaffolds))])
+                                  if len(mismatching_24_bam_scaffolds) else []) + \
+                                 (([f"Inconsistent large scaffolds from 2bit reference:"] +
+                                   [f' - {abs_ref_scaff}'
+                                    for abs_ref_scaff in sorted(list(mismatching_24_ref_scaffolds))])
+                                  if len(mismatching_24_ref_scaffolds) else [])
+        longest_line = max([len(msg_l) for msg_l in complete_message_lines])
+        decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
+        complete_message = '\n'.join([decorator_line] +
+                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+                                      for ln in complete_message_lines] + [decorator_line])
+        log(message=complete_message, log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
+        sys.exit(2)
+
+    # check 3 consequences:
+    if not complete_scaffold_match:  # assume check 2 passed -> GCparagon would have exited otherwise
+        complete_message_lines = [f"chromosome naming inconsistency/scaffold absence detected: "
+                                  f"{complete_scaffolds_message}"] + \
+                                 (([f"Inconsistent scaffolds from input BAM file:"] +
+                                   [f' - {abs_bam_scaff}'
+                                    for abs_bam_scaff in sorted(list(mismatching_bam_scaffolds))])
+                                  if len(mismatching_bam_scaffolds) else []) + \
+                                 (([f"Inconsistent scaffolds from 2bit reference:"] +
+                                   [f' - {abs_ref_scaff}'
+                                    for abs_ref_scaff in sorted(list(mismatching_ref_scaffolds))])
+                                  if len(mismatching_ref_scaffolds) else [])
+        longest_line = max([len(msg_l) for msg_l in complete_message_lines])
+        decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
+        complete_message = '\n'.join([decorator_line] +
+                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+                                      for ln in complete_message_lines] + [decorator_line])
+        log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER)
+    return tuple(humansorted(list(mismatching_bam_scaffolds), reverse=False))
 
 
 def main() -> int:
@@ -3252,7 +3371,7 @@ def main() -> int:
             sample_temp_dir = str(sample_temp_dir_path)
             # check if index is there. if not, create it!
             bam_scaffolds = fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
-            check_scaffold_setup(  # TODO: IMPLEMENT!
+            dont_correct_these_bam_scaffolds = check_scaffold_setup(  # TODO: TEST!
                 reference_scaffolds=ref_scaffs,  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
                 # absolutely must be identical (chr1-22, chrX, chrY, chrM)
@@ -3300,7 +3419,11 @@ def main() -> int:
                             f"|   Repetitions for simulation of expected GC-content per interval: {n_simulations:,}\n"
                             f"|   Random seed was: {random_seed}\n"
                             f"|   Temporary data will be written to: {sample_temp_dir}\n"
-                            f"|   Final results will be moved from temporary path to directory: {sample_out_dir}\n"
+                            f"|   Final results will be moved from temporary path to directory: {sample_out_dir}\n" +
+                            ((f"|   WARNING - skipping these scaffolds from the BAM file as they are absent from the "
+                              f"2bit reference:\n" +
+                              '\n'.join([f"|   {abs_scaff}" for abs_scaff in dont_correct_these_bam_scaffolds] + []))
+                             if dont_correct_these_bam_scaffolds else '') +
                             f"|---------------------------------------------------------------------------------",
                     log_level=logging.INFO, logger_name=LOGGER)
                 if not expect_sufficient_fragment_count:
@@ -3335,7 +3458,8 @@ def main() -> int:
                     reference_fgcd=ref_gc_dist, bam_file=input_bam, target_fragment_number=process_n_fragments,
                     interval_fgcds=interval_gc_content_distributions, output_path=sample_out_dir_path,
                     fragment_length_range=range(lower_limit_fragment_length, upper_limit_fragment_length),
-                    show_figures=show_plots, sample_name=sample_id, temporary_directrory=sample_temp_dir)
+                    show_figures=show_plots, sample_name=sample_id, temporary_directrory=sample_temp_dir,
+                    skip_scaffolds=dont_correct_these_bam_scaffolds)
                 # get intervals with weights from estimated reference genome fragment GC content reconstruction!
                 # -> linear combination of selected intervals GC content that best approximates the reference GC content
                 # following a typical cfDNA fragment length distribution (provided for blood plasma cfDNA, plasmaSeq
@@ -3385,10 +3509,10 @@ def main() -> int:
                     bam_path=input_bam, tag_name=gc_tag_name, samtools_path=samtools_path,
                     correction_matrix=weights_matrix_for_tagging, gc_base_limits=gc_bas_range,
                     output_unaligned=output_unaligned_reads,
-                    two_bit_genome_file=two_bit_reference_file_path,
+                    two_bit_genome_file=two_bit_reference_file_path, ref_lengths=reference_contig_lengths,
                     temporary_directory_sample=sample_temp_dir, threads=total_number_threads,
-                    default_fragment_weight=default_fragment_weight,
-                    ref_lengths=reference_contig_lengths, frag_len_range=flen_range, sample_output_dir=sample_out_dir)
+                    default_fragment_weight=default_fragment_weight, frag_len_range=flen_range,
+                    dont_correct_scaffolds=dont_correct_these_bam_scaffolds, sample_output_dir=sample_out_dir)
                 # compute duration of execution and message user
                 computation_end_time = time.localtime()
                 elapsed_time = datetime.timedelta(seconds=time.mktime(computation_end_time) - time.mktime(start_time))

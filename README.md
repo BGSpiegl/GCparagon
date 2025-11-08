@@ -297,7 +297,7 @@ To gain access to the four BAM files used in the publication, go to EGA, create 
 To recreate the **tagged** BAM files and matrix visualisations for the three presets and four samples from [EGAS00001006963],
 first download the 2bit version of the reference genome sequence which was used to create the four aligned BAM files.
 
-After downloadingthe hg38 reference genome (see installation), you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
+After downloading the hg38 reference genome (see installation), you can run the [driver script](driver_scripts/drv_compute_GC_presets.sh) from
 **within the activated conda environment**:
 
 `bash driver_scripts/drv_compute_GC_presets.sh`

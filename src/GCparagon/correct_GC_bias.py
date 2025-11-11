@@ -38,7 +38,7 @@ OneOf = Union
 # version
 MAJOR_RELEASE = 0
 MINOR_RELEASE = 6
-PATCH_NUMBER = 14
+PATCH_NUMBER = 15
 VERSION_STRING = f'v{MAJOR_RELEASE}.{MINOR_RELEASE}.{PATCH_NUMBER}'
 
 # GitHub link
@@ -70,12 +70,21 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 
 # TEST gcparagon with scaffold checks:
 # (after pulling sif from sylabs:
-# singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14:latest && singularity verify gcparagon_0.6.14_latest.sif
+# singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_0.6.15_latest.sif
 # run the following analyses:)
+#
+# WORKSTATION:
 # (should work!)
-# gcparagon_0.6.14_singularity --bam /home/servitorbeta/DATA/WGS/NPH_011.GCtagged.50pc.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
 # (did not work but should work now!)
-# gcparagon_0.6.14_singularity --bam /home/servitorbeta/DATA/VILLANUEVA_DEBUG-gcparagon/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
+# (should also work now but the short fraction should be gone)
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
+# NOTEBOOK:
+# (should work!)
+# gcparagon_0.6.15_singularity --bam /home/servitorbeta/DATA/WGS/NPH_011.GCtagged.50pc.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
+# (did not work but should work now!)
+# gcparagon_0.6.15_singularity --bam /home/servitorbeta/DATA/VILLANUEVA_DEBUG-gcparagon/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
 
 # TIMEOUT DEFINITIONS
 READS_EXTRACTION_TIMEOUT = 1800  # seconds; wait a maximum of 30 minutes for single pass through entire file,

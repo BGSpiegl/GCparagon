@@ -93,7 +93,7 @@ The gc_weights matrix can be loaded in Python using the `numpy.loadtxt()` functi
 from [plot_distributions.py](src/GCparagon/utilities/plot_distributions.py).
 The tag string can be redefined using the `--tag-name` parameter.
 
-Latest version is v0.6.14
+Latest version is v0.6.15
 
 
 ## How to use cfDNA Fragment Weights
@@ -177,10 +177,10 @@ A singularity image of the latest version is created by the maintainer using the
 The tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14:latest && singularity verify gcparagon_0.6.14_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_0.6.15_latest.sif`
 
 If this would not work, you can also try to pull the sif file by its unique ID:
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.14:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.14_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.14_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
 
 If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
 it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
@@ -502,7 +502,7 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                                                              
 -----------------------------------------------------------------------------
                                                                              
-             GCparagon (v0.6.14) maintained by @BGSpiegl
+             GCparagon (v0.6.15) maintained by @BGSpiegl
                  Copyright (c) 2023 Benjamin Spiegl
             GitHub: https://github.com/BGSpiegl/GCparagon
 
@@ -630,7 +630,7 @@ Output options:
                         the whole directory will be deleted before writing to it
                         in the GC-bias computation step! If none is provided, a
                         new subdirectory named
-                        'GC_bias_correction_GCparagon_v0.6.14' will be created in
+                        'GC_bias_correction_GCparagon_v0.6.15' will be created in
                         the input BAM's parent directory and used as output
                         directory. The output for each sample will be gathered in
                         a subdirectory of this --out-dir which will be named

@@ -69,17 +69,30 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 
 
 # TEST gcparagon with scaffold checks:
-# (after pulling sif from sylabs:
-# singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_0.6.15_latest.sif
-# run the following analyses:)
+# (DON'T PULL JUST YET!
+#  Instead, test cmdline call using conda env from image build
+#  Only if that worked, actually BUILD the image by running: 'sudo singularity build gcparagon_v0.6.15_feature-inputstdchrmcheck.sif gcparagon-testfeature-inputstdchrmcheckBranch.def'
+#  DONT THIS -> after pulling sif from sylabs:
+#  singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_v0.6.15_latest.sif
+#  run the following analyses:)
 #
 # WORKSTATION:
+# 1) GCparagon - CONDA ENV CALLS (from within the singiularity building dir; after 'conda env create -f /mnt/NVMeScratch/PycharmProjects/GCparagon_public/conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml --name GCparagon_test_inputstdchrmcheck')
+# (should work!) -> WORKED.
+# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
+# (did not work but should work now!) -> WORKED.
+# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
+# (should also work now but the short fraction should be gone) -> WORKED.
+# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
+#
+# 2) GCparagon - SINGULARITY IMAGE CALLS (after building the image)
 # (should work!)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
 # (did not work but should work now!)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
 # (should also work now but the short fraction should be gone)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
+# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
+#
 # NOTEBOOK:
 # (should work!)
 # gcparagon_0.6.15_singularity --bam /home/servitorbeta/DATA/WGS/NPH_011.GCtagged.50pc.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
@@ -1955,41 +1968,12 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
     with silently_open_alignment_file(bam_path, mode='rb') as input_bam_file:
         for c_idx, (chromosome, start_coord, stop_coord, _ch_len) in enumerate(tagging_intervals_list):
             dont_correct = chromosome in dont_correct_scaffolds
-            scaffold_length = reference_lengths[chromosome]
-            chromosome_handle = reference_handle[chromosome]  # is large; just slice for interval sequence retrieval
             tagged_bam_file = str(Path(temp_dir) /
                                   '.'.join(Path(bam_path).name.split('.')[:-2] +
                                            [f"{Path(bam_path).name.split('.')[-2]}"
                                             f"+GcPaRa+{chromosome}-GcPaRa-{start_coord}-GcPaRa-{stop_coord}"
                                             f".GCcorr.bam"]))
             with silently_open_alignment_file(tagged_bam_file, mode='wb', template=input_bam_file) as f_gc_tagged:
-                # reference scaffold handle management:
-                # ______________________________________________________________________________________________________
-                # preload first 5 Mbp of reference sequence; use 2 lists, one stores the sequences, the other stores
-                # loading status of each interval as boolean value (intervals are loaded consecutively without gaps)
-                if ref_interval_loading_size > scaffold_length:
-                    ref_interval_sequences = [chromosome_handle[0:scaffold_length].upper()]
-                    loaded_ref_intervals = [True]
-                elif scaffold_length < 2 * ref_interval_loading_size:
-                    ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
-                                              chromosome_handle[ref_interval_loading_size:scaffold_length].upper()]
-                    loaded_ref_intervals = [True, True]
-                else:
-                    ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
-                                              chromosome_handle[ref_interval_loading_size:2 * ref_interval_loading_size].upper()]
-                    loaded_ref_intervals = [True, True]
-                # fastforward until no N-contigs are in ref_contig_intervals-deque any more
-                try:
-                    ref_interval_sequences, loaded_ref_intervals = load_until_leftmost_not_poly_n(
-                        loaded_sequences=ref_interval_sequences, loaded_intervals=loaded_ref_intervals, max_loaded=10,
-                        chrom_seq=chromosome_handle, interval_loading_size=ref_interval_loading_size)
-                except AttributeError:
-                    log(message=f"An error occurred when trying to load initial intervals for tagging. Cannot continue "
-                                f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
-                        log_level=logging.ERROR, logger_name=parent_logger)
-                    sender_connection.send(-1)
-                    sender_connection.close()
-                    return -1
                 # ______________________________________________________________________________________________________
                 # binary filter:
                 exclude_flags = np.uint32(12)
@@ -2010,6 +1994,7 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                 # iterate over alignments from specified reference scaffolds
                 aln_buffer = []  # (re-) set alignment buffer
                 if dont_correct:
+                    # don't retrieve reference scaffold handle in this case
                     for aln_seg in alignments_mapped_to_interval:
                         aln_seg.set_tag(tag_name, value=corr_factor, value_type="f", replace=True)
                         aln_buffer.append(aln_seg)
@@ -2021,6 +2006,39 @@ def bam_tagging_worker_single_interval(bam_path: str, correction_weights: np.arr
                     if len(aln_buffer):
                         _ = deque(map(lambda a: f_gc_tagged.write(a), aln_buffer), maxlen=0)  # overwrites existing tags
                 else:
+                    # reference scaffold handle management:
+                    # ______________________________________________________________________________________________________
+                    # preload first 5 Mbp of reference sequence; use 2 lists, one stores the sequences, the other stores
+                    # loading status of each interval as boolean value (intervals are loaded consecutively without gaps)
+                    scaffold_length = reference_lengths[chromosome]
+                    chromosome_handle = reference_handle[
+                        chromosome]  # is large; just slice for interval sequence retrieval
+                    if ref_interval_loading_size > scaffold_length:
+                        ref_interval_sequences = [chromosome_handle[0:scaffold_length].upper()]
+                        loaded_ref_intervals = [True]
+                    elif scaffold_length < 2 * ref_interval_loading_size:
+                        ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
+                                                  chromosome_handle[
+                                                      ref_interval_loading_size:scaffold_length].upper()]
+                        loaded_ref_intervals = [True, True]
+                    else:
+                        ref_interval_sequences = [chromosome_handle[0:ref_interval_loading_size].upper(),
+                                                  chromosome_handle[
+                                                      ref_interval_loading_size:2 * ref_interval_loading_size].upper()]
+                        loaded_ref_intervals = [True, True]
+                    # fastforward until no N-contigs are in ref_contig_intervals-deque any more
+                    try:
+                        ref_interval_sequences, loaded_ref_intervals = load_until_leftmost_not_poly_n(
+                            loaded_sequences=ref_interval_sequences, loaded_intervals=loaded_ref_intervals,
+                            max_loaded=10,
+                            chrom_seq=chromosome_handle, interval_loading_size=ref_interval_loading_size)
+                    except AttributeError:
+                        log(message=f"An error occurred when trying to load initial intervals for tagging. Cannot continue "
+                                    f"processing scaffold '{chromosome}'. Exiting BAM tagging worker..",
+                            log_level=logging.ERROR, logger_name=parent_logger)
+                        sender_connection.send(-1)
+                        sender_connection.close()
+                        return -1
                     for aln_seg in alignments_mapped_to_interval:
                         try:
                             frag_size = abs(aln_seg.template_length)
@@ -2258,7 +2276,8 @@ def order_bams(bam_list: List[str]) -> List[str]:
         strt = locus_info.group('START')
         bam_paths_with_locus.append(((chrm, int(strt)), str(bam_nm)))
     return [bam_path for _, bam_path in
-            sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))]
+            sorted(bam_paths_with_locus, key=lambda s: (scaffold_order.index(s[0][0]), s[0][1]))
+            if Path(bam_path).is_file()]  # scaffold BAMs are only created if there are alignments for the scaffold
 
 
 def get_genomic_intervals_for_tagging(bam_for_tagging: OneOf[str, Path], interval_size=TAGGING_INTERVAL_SIZE,
@@ -2963,12 +2982,15 @@ def check_scaffold_setup(  # TODO: TEST!
                 # (so this is a subset of the reference_scaffolds)
                 bam_scaffolds:  Dict[str, int],
         compute_gc_bias: bool, output_tagged_bam_file: bool, bam_name: str) -> Tuple[str, ...]:
+    log("SCAFFOLD/CONTIG CHECK  -  "
+        "Checking if scaffold/contig names match between 2bit reference and input BAM file... ",
+        log_level=logging.INFO, logger_name=LOGGER)
     # check 1 (CRITICAL for bias computation): are the scaffolds that we need for processing present in the BAM file?
     # (only relevant if compute_gc_bias)
     absent_preselected_interval_scaffolds = [preselected_scaff
                                              for preselected_scaff in scaffolds_to_process
                                              if bam_scaffolds.get(preselected_scaff) is None]
-    all_processing_present_in_bam = len(absent_preselected_interval_scaffolds)
+    all_processing_present_in_bam = not len(absent_preselected_interval_scaffolds)
     processing_scaffold_message = (f"{len(absent_preselected_interval_scaffolds):,} "
                                    f"scaffold{'' if len(absent_preselected_interval_scaffolds) == 1 else 's'} of "
                                    f"pre-selected genomic intervals "
@@ -2982,8 +3004,9 @@ def check_scaffold_setup(  # TODO: TEST!
                             reverse=True, key=lambda t: t[1])[:24]
     largest_24_bam = sorted([(chrm, sz) for chrm, sz in bam_scaffolds.items()], reverse=True, key=lambda t: t[1])[:24]
     long_scaffolds_present_same_length = True
-    mismatching_24_ref_scaffolds = set()
-    mismatching_24_bam_scaffolds = set()
+    mismatching_24_ref_scaffolds = set()  # these are different/not present in the BAM file
+    mismatching_24_bam_scaffolds = set()  # these are different/not present in the 2bit reference
+
     # check if some of the largest 24 scaffolds of the reference are absent in the input BAM file
     for large_ref_scaff, ref_scaff_length in largest_24_ref:
         try:
@@ -2994,6 +3017,7 @@ def check_scaffold_setup(  # TODO: TEST!
         except KeyError:
             mismatching_24_ref_scaffolds.update((large_ref_scaff, ))
             long_scaffolds_present_same_length = False
+
     # check if some of the largest 24 scaffolds of the input BAM file are absent in the reference
     for large_bam_scaff, bam_scaff_length in largest_24_bam:
         try:
@@ -3004,9 +3028,10 @@ def check_scaffold_setup(  # TODO: TEST!
         except KeyError:
             mismatching_24_bam_scaffolds.update((large_bam_scaff, ))
             long_scaffolds_present_same_length = False
-    longest_scaffolds_message = (f"the largest 24 scaffolds did not match between the input BAM file "
-                                 f"({len(largest_24_bam):} scaffolds) and the 2bit reference file "
-                                 f"({len(largest_24_ref):} scaffolds)!")
+    longest_scaffolds_message = (f"the largest 24 scaffolds did not match between the input BAM file " +
+                                 (f"({len(largest_24_bam):} scaffolds)" if len(largest_24_bam) else '') +
+                                 " and the 2bit reference file " +
+                                 (f"({len(largest_24_ref):} scaffolds)" if len(largest_24_ref) else '') + "!")
     
     # check 3: are all scaffolds from the input BAM file present in the reference and vice versa
     # (complete match -> only raises a warning message if the previous check did not fail)
@@ -3014,7 +3039,7 @@ def check_scaffold_setup(  # TODO: TEST!
     mismatching_ref_scaffolds = set()
     mismatching_bam_scaffolds = set()
     # check if some of the scaffolds of the reference are absent in the input BAM file
-    for large_ref_scaff, ref_scaff_length in reference_scaffolds:
+    for large_ref_scaff, ref_scaff_length in reference_scaffolds.items():
         try:
             bam_scaff_length = bam_scaffolds[large_ref_scaff]
             if bam_scaff_length != ref_scaff_length:
@@ -3024,7 +3049,7 @@ def check_scaffold_setup(  # TODO: TEST!
             mismatching_ref_scaffolds.update((large_ref_scaff,))
             complete_scaffold_match = False
     # check if some of the scaffolds of the input BAM file are absent in the reference
-    for large_bam_scaff, bam_scaff_length in bam_scaffolds:
+    for large_bam_scaff, bam_scaff_length in bam_scaffolds.items():
         try:
             ref_scaff_length = reference_scaffolds[large_bam_scaff]
             if bam_scaff_length != ref_scaff_length:
@@ -3033,25 +3058,27 @@ def check_scaffold_setup(  # TODO: TEST!
         except KeyError:
             mismatching_bam_scaffolds.update((large_bam_scaff,))
             complete_scaffold_match = False
-    complete_scaffolds_message = (f"some scaffolds did not match between the input BAM file "
-                                 f"({len(mismatching_bam_scaffolds):,} absent/mismatching scaffolds) and the 2bit "
-                                  f"reference file "
-                                 f"({len(mismatching_ref_scaffolds):,} absent/mismatching scaffolds)!")
+    complete_scaffolds_message = (f"some scaffolds did not match between the input BAM file " +
+                                  (f"({len(mismatching_bam_scaffolds):,} absent/mismatching scaffolds)) "
+                                   if len(mismatching_bam_scaffolds) else '') +
+                                  "and the 2bit reference file " +
+                                  (f"({len(mismatching_ref_scaffolds):,} absent/mismatching scaffolds)"
+                                   if len(mismatching_ref_scaffolds) else '') + "!")
 
     # depending on the analysis type (GC bias computation/correction via tagged BAM file output), issue warnings or
     # errors; longest 24 scaffolds have to be present
     msg_start = '*** '
     msg_end = ' ***'
     
-    # check 1 consequences:
+    # check 1 - consequences:
     if not all_processing_present_in_bam:
         complete_message_lines = [f"chromosome naming inconsistency detected: {processing_scaffold_message}",
-                                  f"These were:"] + \
-                                 [f" - '{agis}'" for agis in absent_preselected_interval_scaffolds]
+                                  f"These were: "] + \
+                                 [f" - '{agis}' MISSING IN BAM FILE !!" for agis in absent_preselected_interval_scaffolds]
         longest_line = max([len(msg_l) for msg_l in complete_message_lines])
         decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
-        complete_message = '\n'.join([decorator_line] +
-                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+        complete_message = '\n'.join(['\n' + decorator_line] +
+                                     [f"{msg_start}{ln}{'!' * (longest_line - len(ln))}{msg_end}"
                                       for ln in complete_message_lines] + [decorator_line])
         if compute_gc_bias:
             log(message=complete_message, log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
@@ -3059,47 +3086,57 @@ def check_scaffold_setup(  # TODO: TEST!
         else:
             log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER)
     
-    # check 2 consequences:
+    # check 2 - consequences:
     if not long_scaffolds_present_same_length:
         assert output_tagged_bam_file and not compute_gc_bias  # expect this clause to be entered only if GC bias is not
         # computed (GCparagon would have exited otherwise as a consequence of failed check 1 because the preselected
         # genomic intervals should be located on the largest 24 scaffolds of the reference)
         complete_message_lines = [f"chromosome naming inconsistency/scaffold absence detected: "
                                   f"{longest_scaffolds_message}"] + \
-                                 (([f"Inconsistent large scaffolds from input BAM file:"] +
-                                   [f' - {abs_bam_scaff}'
+                                 (([f"Inconsistent large scaffolds from input BAM file: "] +
+                                   [f" - '{abs_bam_scaff}' MISSING IN 2BIT-REFERENCE FILE !!"
                                     for abs_bam_scaff in sorted(list(mismatching_24_bam_scaffolds))])
                                   if len(mismatching_24_bam_scaffolds) else []) + \
                                  (([f"Inconsistent large scaffolds from 2bit reference:"] +
-                                   [f' - {abs_ref_scaff}'
+                                   [f" - '{abs_ref_scaff}' MISSING IN BAM FILE !!"
                                     for abs_ref_scaff in sorted(list(mismatching_24_ref_scaffolds))])
                                   if len(mismatching_24_ref_scaffolds) else [])
         longest_line = max([len(msg_l) for msg_l in complete_message_lines])
         decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
-        complete_message = '\n'.join([decorator_line] +
-                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+        complete_message = '\n'.join(['\n' + decorator_line] +
+                                     [f"{msg_start}{ln}{'!' * (longest_line - len(ln))}{msg_end}"
                                       for ln in complete_message_lines] + [decorator_line])
         log(message=complete_message, log_level=logging.ERROR, logger_name=LOGGER, close_handlers=True)
         sys.exit(2)
 
-    # check 3 consequences:
+    # check 3 - consequences:
     if not complete_scaffold_match:  # assume check 2 passed -> GCparagon would have exited otherwise
         complete_message_lines = [f"chromosome naming inconsistency/scaffold absence detected: "
                                   f"{complete_scaffolds_message}"] + \
-                                 (([f"Inconsistent scaffolds from input BAM file:"] +
-                                   [f' - {abs_bam_scaff}'
+                                 (([f"Inconsistent scaffolds from input BAM file: "] +
+                                   [f" - '{abs_bam_scaff}' MISSING IN 2BIT-REFERENCE FILE !!"
                                     for abs_bam_scaff in sorted(list(mismatching_bam_scaffolds))])
                                   if len(mismatching_bam_scaffolds) else []) + \
                                  (([f"Inconsistent scaffolds from 2bit reference:"] +
-                                   [f' - {abs_ref_scaff}'
+                                   [f" - '{abs_ref_scaff}' MISSING IN BAM FILE !!"
                                     for abs_ref_scaff in sorted(list(mismatching_ref_scaffolds))])
                                   if len(mismatching_ref_scaffolds) else [])
         longest_line = max([len(msg_l) for msg_l in complete_message_lines])
         decorator_line = '*' * (longest_line + len(msg_start) + len(msg_end))
-        complete_message = '\n'.join([decorator_line] +
-                                     [f"{msg_start}{ln}{' ' * (longest_line - len(ln))}{msg_end}"
+        complete_message = '\n'.join(['\n' + decorator_line] +
+                                     [f"{msg_start}{ln}{'!' * (longest_line - len(ln))}{msg_end}"
                                       for ln in complete_message_lines] + [decorator_line])
         log(message=complete_message, log_level=logging.WARNING, logger_name=LOGGER)
+
+    # issue success message if everything turned out fine
+    if long_scaffolds_present_same_length and all_processing_present_in_bam and complete_scaffold_match:
+        log(message="SCAFFOLD/CONTIG CHECK WAS SUCCESSFUL  -  all scaffolds matched in name and length "
+                    "between the 2bit reference and the input BAM file.", log_level=logging.INFO,
+            logger_name=LOGGER)
+    else:
+        log(message="if you see this line, the SCAFFOLD/CONTIG CHECK was not successful  -  some scaffolds "
+                    "mismatched in name and/or length or were entirely absent in either the 2bit reference "
+                    "file or the input AM file.", log_level=logging.WARNING, logger_name=LOGGER)
     return tuple(humansorted(list(mismatching_bam_scaffolds), reverse=False))
 
 
@@ -3439,8 +3476,9 @@ def main() -> int:
                             f"|   Random seed was: {random_seed}\n"
                             f"|   Temporary data will be written to: {sample_temp_dir}\n"
                             f"|   Final results will be moved from temporary path to directory: {sample_out_dir}\n" +
-                            ((f"|   WARNING - skipping these scaffolds from the BAM file as they are absent from the "
-                              f"2bit reference:\n" +
+                            ((f"|   WARNING - will disregard these scaffolds (in BAM file; absent in 2bit reference) "
+                              f"during bias computation"
+                              f"{' (aligned fragments will receive a correction weight of 1.0 there)' if output_corrected_bam else ''}:\n" +
                               '\n'.join([f"|   {abs_scaff}" for abs_scaff in dont_correct_these_bam_scaffolds] + []))
                              if dont_correct_these_bam_scaffolds else '') +
                             f"|---------------------------------------------------------------------------------",

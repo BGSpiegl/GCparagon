@@ -111,7 +111,7 @@ To this end, Faruk Kapidzic created a Pysam fork which can directly use the tags
 GCparagon can be run from the repository code `python3 GCparagon.py` using an appropriate Python 3.10+ 
 software environment containing the [dependencies](#software-dependencies).
 
-The easiest way to set up the software environent is by useing singularity: [Using the Singularity container](#using-the-singularity-container)
+The easiest way to set up the software environment is by using singularity: [Using the Singularity container](#using-the-singularity-container)
 
 IF someone does not want to or cannot use the singularity image, the software environment can also be set up via the provided [GCparagon_py3.10_env_lenient.yml](conda_env/GCparagon_py3.10_env_lenient.yml) file in the 
 [conda_env](conda_env) subdirectory by following the installation steps described [below](#not-recommended---conda-installation).
@@ -177,15 +177,19 @@ A singularity image of the latest version is created by the maintainer using the
 The tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_0.6.15_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_v0.6.15_latest.sif`
 
 If this would not work, you can also try to pull the sif file by its unique ID:
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.15_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.14_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
 
 If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
 it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 
 use the `remote` command to specify cloud.sylabs.io as remote endpoint to be able to pull the latest GCparagon container 
 (see [here][singularity_remotes]).
+
+A note on singularity disk space usage: singularity stores a cache of pulled images, temporary build files 
+(if you've built an image in the past), and session/runtime files in a folder `.singularity` in the user's home directory.
+It is a good idea to clear this directory once in a while when you don't currently use singularity to avoid excessive storage space usage in your home directory.
 
 #### Not Recommended - Building the GCparagon Singularity Image
 Although NOT recommended, it can be used to build the singularity image anew by the user (e.g., for the purpose of testing in software development).
@@ -194,7 +198,10 @@ Although NOT recommended, it can be used to build the singularity image anew by 
 GCparagon can then be run WITH RESTRICED ACCESS to your system from the singularity image file like this 
 (from within the image's parent directory):
 
-`singularity run gcparagon.sif <YOUR PARAMETERS HERE>` 
+`singularity run gcparagon_<version>_latest.sif <YOUR PARAMETERS HERE>`
+
+NOTE: if you do not grant singularity access to your I/O folders, the command won't work.
+See [Granting Access to Folders](#granting-access-to-folders) for a description how to do that.
 
 NOTE: do not run singularity commands with the activated conda environment that includes singularity!
 Rather use the absolute path to the singularity executable from with deactivated conda like this:
@@ -211,8 +218,7 @@ simulation rounds. Note that **per default, the tagged BAM file is _NOT_ output*
 To deactivate output of the tagged BAM file, use the `--dont-output-bam` flag.
 
 Be mindful of setting the `--temporary-directory` to a reasonable path!
-(i.e. high IOPS hardware if available +
-sufficient storage space available for tagged BAM)
+(i.e. high IOPS hardware if available + sufficient storage space available for tagged BAM)
 
 
 #### Granting Access to Folders

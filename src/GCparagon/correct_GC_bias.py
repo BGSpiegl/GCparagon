@@ -67,38 +67,6 @@ github_url = 'https://github.com/BGSpiegl/GCparagon'
 #   - pybedtools
 #   - polars
 
-
-# TEST gcparagon with scaffold checks:
-# (DON'T PULL JUST YET!
-#  Instead, test cmdline call using conda env from image build
-#  Only if that worked, actually BUILD the image by running: 'sudo singularity build gcparagon_v0.6.15_feature-inputstdchrmcheck.sif gcparagon-testfeature-inputstdchrmcheckBranch.def'
-#  DONT THIS -> after pulling sif from sylabs:
-#  singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_v0.6.15_latest.sif
-#  run the following analyses:)
-#
-# WORKSTATION:
-# 1) GCparagon - CONDA ENV CALLS (from within the singiularity building dir; after 'conda env create -f /mnt/NVMeScratch/PycharmProjects/GCparagon_public/conda_env/GCparagon_Ubuntu22_py3.10_for_sif_creation.yml --name GCparagon_test_inputstdchrmcheck')
-# (should work!) -> WORKED.
-# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
-# (did not work but should work now!) -> WORKED.
-# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
-# (should also work now but the short fraction should be gone) -> WORKED.
-# python3 ../src/GCparagon/correct_GC_bias.py --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
-#
-# 2) GCparagon - SINGULARITY IMAGE CALLS (after building the image)
-# (should work!)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/B01.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
-# (did not work but should work now!)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24 --unclipped-min-aln-fraction 0.1
-# (should also work now but the short fraction should be gone)
-# singularity run -B /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST -B /mnt/NVMeScratch/NVMe_data/tmp /mnt/NVMeScratch/PycharmProjects/GCparagon_public/singularity_definition_file/gcparagon_v0.6.15_latest.sif --bam /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/input_BAMs/Villanueva_DEBUG/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /media/benjamin/Analyses/GC_PARAGON_PUBLIC_TEST/GCparagon_output_v0.6.15_BAMscaffTest-Villanueva  --temporary-directory /mnt/NVMeScratch/NVMe_data/tmp --output-unaligned-reads --preset 1 --threads 24
-#
-# NOTEBOOK:
-# (should work!)
-# gcparagon_0.6.15_singularity --bam /home/servitorbeta/DATA/WGS/NPH_011.GCtagged.50pc.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
-# (did not work but should work now!)
-# gcparagon_0.6.15_singularity --bam /home/servitorbeta/DATA/VILLANUEVA_DEBUG-gcparagon/CF24_0064.rh.bam --reference-genome-build hg38 --out-dir /home/servitorbeta/DATA/GCparagon_test/test_output --temporary-directory /home/servitorbeta/DATA/GCparagon_test/tmp_dir --output-unaligned-reads --preset 1 --threads 2 --unclipped-min-aln-fraction 0.1
-
 # TIMEOUT DEFINITIONS
 READS_EXTRACTION_TIMEOUT = 1800  # seconds; wait a maximum of 30 minutes for single pass through entire file,
 # extracting mates where at least one dir not align
@@ -2973,7 +2941,7 @@ def preselect_genomic_intervals(genomic_intervals_sorted: List[Tuple[str, int, i
                      for hrm, strt, nd in ordered_intervals], ordered_intervals)), reconstruction_residual
 
 
-def check_scaffold_setup(  # TODO: TEST!
+def check_scaffold_setup(
                 reference_scaffolds: Dict[str, int],  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
                 # absolutely must be identical (chr1-22, chrX, chrY, chrM)
@@ -3136,7 +3104,7 @@ def check_scaffold_setup(  # TODO: TEST!
     else:
         log(message="if you see this line, the SCAFFOLD/CONTIG CHECK was not successful  -  some scaffolds "
                     "mismatched in name and/or length or were entirely absent in either the 2bit reference "
-                    "file or the input AM file.", log_level=logging.WARNING, logger_name=LOGGER)
+                    "file or the input BAM file.", log_level=logging.WARNING, logger_name=LOGGER)
     return tuple(humansorted(list(mismatching_bam_scaffolds), reverse=False))
 
 
@@ -3427,7 +3395,7 @@ def main() -> int:
             sample_temp_dir = str(sample_temp_dir_path)
             # check if index is there. if not, create it!
             bam_scaffolds = fix_bam_index(bam_path=input_bam, samtools_path=samtools_path, silent=False)
-            dont_correct_these_bam_scaffolds = check_scaffold_setup(  # TODO: TEST!
+            dont_correct_these_bam_scaffolds = check_scaffold_setup(
                 reference_scaffolds=ref_scaffs,  # this are all scaffolds from the 2bit reference; ideally, all are
                 # identical between the 2bit reference and the BAM file while only the standard chromosomes
                 # absolutely must be identical (chr1-22, chrX, chrY, chrM)

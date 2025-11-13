@@ -75,8 +75,8 @@ MAX_FRAGMENT_LENGTH = 1200  # maximum allowed fragment length; THIS MUST BE CHAN
 DEFAULT_MIN_FRAGMENT_LENGTH = 20  # do not set to 0!
 DEFAULT_MAX_FRAGMENT_LENGTH = 550
 DEFAULT_GC_TAG_NAME = 'GC'
-DEFAULT_MAPPABILITY_TAG_NAME = 'MP'
-DEFAULT_COMBINED_TAG_NAME = 'MG'
+# DEFAULT_MAPPABILITY_TAG_NAME = 'MP'  # not supported atm
+# DEFAULT_COMBINED_TAG_NAME = 'MG'  # not supported atm
 DEFAULT_WEIGHT = 1.0
 DEFAULT_MIN_OCCURRENCES = 3
 ABSOLUTE_MIN_OCCURRENCES = 2
@@ -308,11 +308,12 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                                       'across 4 samples). Other fragment weights default to 1.0). The primary '
                                       'advantage of processing more fragments is the reduction of noise in computed '
                                       "weights and a better reconstruction of the reference fragment GC content "
-                                      "distribution. It is recommended to use a higher preset for a 'preprocess-once,"
-                                      "analyze often' scenario and/or when a high bias is expected/observed (e.g. "
-                                      'FastQC average GC percentage). Correction by preset 1, 2, and 3 was found to '
-                                      'yield 100.74%%, 99.98%%, and 99,91%% of the raw fragment count respectively '
-                                      f'(average percentage across 4 samples). [ DEFAULT: {DEFAULT_PRESET} ]')
+                                      "distribution by the picked genomic intervals. It is recommended to use a higher "
+                                      "preset for a 'preprocess-once, analyze often' scenario and/or when a high bias "
+                                      'is expected/observed (e.g. FastQC average GC percentage). Correction by '
+                                      'preset 1, 2, and 3 was found to yield 100.74%%, 99.98%%, and 99,91%% of the raw '
+                                      'fragment count respectively (average percentage across 4 samples). '
+                                      f'[ DEFAULT: {DEFAULT_PRESET} ]')
     # individual processing options
     processing_args.add_argument('-to', '--tag-only', dest='only_tag_bam', action='store_true',
                                  help='Optional flag which makes the software switch to tag-only mode. A correction '
@@ -533,17 +534,17 @@ v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v^v
                              help='Name of the GC-bias correction weight tag that will be added to alignments in the '
                                   'BAM file. If none is provided, the default tag will be used. Must not be longer '
                                   f'than 2 characters! [ DEFAULT: {DEFAULT_GC_TAG_NAME} ]')
-    output_args.add_argument('-mtg', '--mappability-tag-name', dest='gc_tag_name', default=DEFAULT_GC_TAG_NAME,
-                             metavar='String',
-                             help='Name of the mappability bias correction weight tag that will be added to alignments in the '
-                                  'BAM file. If none is provided, the default tag will be used. Must not be longer '
-                                  f'than 2 characters! [ DEFAULT: {DEFAULT_MAPPABILITY_TAG_NAME} ]')
-    output_args.add_argument('-ctg', '--combined-tag-name', dest='combined_tag_name', default=DEFAULT_MAPPABILITY_TAG_NAME,
-                             metavar='String',
-                             help='Name of the combined GC bias and mappability correction weight '
-                                  '(GC-bias-correction-weight * mappability-correction-weight) tag that will be added '
-                                  'to alignments in the BAM file. If none is provided, the default tag will be used. '
-                                  f'Must NOT be longer than 2 characters! [ DEFAULT: {DEFAULT_COMBINED_TAG_NAME} ]')
+    # output_args.add_argument('-mtg', '--mappability-tag-name', dest='mp_tag_name', default=DEFAULT_GC_TAG_NAME,  # not supported atm
+    #                          metavar='String',
+    #                          help='Name of the mappability bias correction weight tag that will be added to alignments in the '
+    #                               'BAM file. If none is provided, the default tag will be used. Must not be longer '
+    #                               f'than 2 characters! [ DEFAULT: {DEFAULT_MAPPABILITY_TAG_NAME} ]')
+    # output_args.add_argument('-ctg', '--combined-tag-name', dest='combined_tag_name', default=DEFAULT_MAPPABILITY_TAG_NAME,  # not supported atm
+    #                          metavar='String',
+    #                          help='Name of the combined GC bias and mappability correction weight '
+    #                               '(GC-bias-correction-weight * mappability-correction-weight) tag that will be added '
+    #                               'to alignments in the BAM file. If none is provided, the default tag will be used. '
+    #                               f'Must NOT be longer than 2 characters! [ DEFAULT: {DEFAULT_COMBINED_TAG_NAME} ]')
     output_args.add_argument('-wie', '--write-interval-exclusion', dest='write_updated_bad_intervals_library',
                              action='store_true',
                              help='Optional flag for writing an updated version of the library listing intervals '
@@ -1589,7 +1590,7 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
                     f"{total_processed_fragments - total_ignored_fragments:,}", log_level=logging.INFO,
             logger_name=LOGGER)
         if total_ignored_fragments / total_processed_fragments > 0.05:
-            log(message="More than 5% of all processed fragments with length out of bounds, were extensively clipped, "
+            log(message="More than 5% of all processed fragments were outside of length boundaries, were extensively clipped, "
                         "or had extensive reference base N-content! You may want to re-run this analysis with a higher "
                         "maximum fragment length!", log_level=logging.WARNING, logger_name=LOGGER)
     else:
@@ -1603,8 +1604,8 @@ def compute_gc_bias_parallel(weighted_intervals_to_process: List[Tuple[float, Tu
                                     target_dist=reference_gc_content_distribution, abs_err=absolute_error_pc,
                                     reconstructed_dist=reconstructed_fgcd, residual_dists=residual_distribution,
                                     sample_id=sample_name, reduced_bins=True)
-    log(message="Actual cumulative reconstruction error of the fragment GC content distribution of the reference "
-                f"genome: {absolute_error_pc:.2%}", log_level=logging.INFO, logger_name=LOGGER)
+    log(message="Actual cumulative reconstruction error (that is, picked genomic intervals GC content vs. analyzable reference GC content): "
+                f"{absolute_error_pc:.2%}", log_level=logging.INFO, logger_name=LOGGER)
     _ = deque(map(lambda w: w.join(), gc_bias_workers), maxlen=0)  # wait until all processes have finished
     _ = deque(map(lambda w: w.close(), gc_bias_workers), maxlen=0)
     # update bad intervals library
@@ -2858,7 +2859,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
 
     elapsed_time_ns = time.perf_counter_ns() - start_time
     if residual_error > initial_re:
-        log(message=f"Could not achieve a reduction of the initial reconstruction error of {initial_re:.3f} "
+        log(message=f"Could not achieve a reduction of the initial genomic GC content reconstruction error of {initial_re:.3f} "
                     f"(elapsed time: {elapsed_time_ns / 10**6:,.2f} ms). Will average results from genomic intervals "
                     f"instead of using a weighted mean.",
             log_level=logging.INFO, logger_name=LOGGER)
@@ -2866,7 +2867,7 @@ def reconstruct_distribution(target_distribution: np.array, components: Dict[str
         for comp in fallback_weights_per_component.keys():
             fallback_weights_per_component[comp] = 1 / n_components
         return fallback_weights_per_component, initial_re, False, 1
-    log(message=f"Successfully reduced the AES reconstruction error of the genomic GC content from {initial_re:.3f} to "
+    log(message=f"Successfully reduced the AES reconstruction error of the selected genomic interval GC content from {initial_re:.3f} to "
                 f"{residual_error:.3f} (took {elapsed_time_ns / 10**6:,.2f} ms).", log_level=logging.INFO,
         logger_name=LOGGER)
     if verbose:

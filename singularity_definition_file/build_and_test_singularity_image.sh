@@ -16,7 +16,7 @@ singularity remote login
 # (and then paste the newly created access token)
 
 # finally, push the sif to your repository:
-singularity push gcparagon_<VERSION>.sif library://<YOUR_USER>/<TARGET_REPO>/<SIF_NAME>:latest
+singularity push gcparagon_<VERSION>.sif library://<YOUR_USER>/gcparagon/<SIF_NAME>:latest
 
 
 # ++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++++

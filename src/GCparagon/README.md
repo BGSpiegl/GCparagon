@@ -192,7 +192,9 @@ A note on singularity disk space usage: singularity stores a cache of pulled ima
 It is a good idea to clear this directory once in a while when you don't currently use singularity to avoid excessive storage space usage in your home directory.
 
 #### Not Recommended - Building the GCparagon Singularity Image
-Although NOT recommended, it can be used to build the singularity image anew by the user (e.g., for the purpose of testing in software development).
+Although NOT recommended, 
+the [gcparagon-mainBranch.def](singularity_definition_file/gcparagon-mainBranch.def) file can be used to build the singularity image anew by the user 
+(e.g., for the purpose of testing in software development).
 
 #### Running GCparagon as a Singularity Container
 GCparagon can then be run WITH RESTRICED ACCESS to your system from the singularity image file like this 

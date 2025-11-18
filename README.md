@@ -177,10 +177,10 @@ A singularity image of the latest version is created by the maintainer using the
 The tested and pre-built Apptainer/SingularityCE container can be pulled from `cloud.sylabs.io` into the current 
 directory and verified using a functioning singularity installation:
 
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:latest && singularity verify gcparagon_v0.6.15_latest.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_v0.6.15:latest && singularity verify gcparagon_v0.6.15_latest.sif`
 
 If this would not work, you can also try to pull the sif file by its unique ID:
-`singularity pull library://bgspiegl/gcparagon/gcparagon_0.6.15:sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee && singularity verify gcparagon_0.6.14_sha256.bd65a22a429483f3a2be70604252dc81b17c43347c26da10ce9cb5e30662e0ee.sif`
+`singularity pull library://bgspiegl/gcparagon/gcparagon_v0.6.15:sha256.87ae12481169e5e4890ab008a0b210a23689929506793657d3fac884de9028ab && singularity verify gcparagon_v0.6.15_sha256.87ae12481169e5e4890ab008a0b210a23689929506793657d3fac884de9028ab.sif`
 
 If you get an error like the following "*Unable to get library client configuration: remote has no library client*",
 it is likely that no remote was specified for your installation of Apptainer/SingularityCE. You might want to 

@@ -40,4 +40,4 @@ singularity run gcparagon_<VERSION>.sif --bam /home/<USER>/<INPUT>.bam --tempora
 singularity run -B /mnt gcparagon_<VERSION>.sif --bam /mnt/<INPUT>.bam --temporary-directory /mnt/tmp --out-dir /mnt/test_output --preset 1 --threads 4 --reference-genome-build hg19
 
 # test BAM outputting
-singularity run -B /mnt gcparagon_<VERSION>.sif --bam /mnt/<INPUT>.bam --temporary-directory /mnt/tmp --out-dir /mnt/test_output --preset 1 --threads 4 --output-bam
+singularity run -B /mnt gcparagon_<VERSION>.sif --bam /mnt/<INPUT>.bam --temporary-directory /mnt/tmp --out-dir /mnt/test_output --preset 1 --threads 4 --dont-output-bam
